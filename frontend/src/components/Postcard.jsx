@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
 import {Heart,
         MessageCircleMore,
@@ -13,6 +13,19 @@ const PostCard = ({ post }) => {
   const [saved, setSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(post.totalLikes || 0);
   const [showComments, setShowComments] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(post.totalComments || 0);
+
+  useEffect(() => {
+    const onCommentCountChanged = (e) => {
+      const { postId, delta } = e.detail || {};
+      if (String(postId) === String(post._id) && typeof delta === 'number') {
+        setCommentsCount((c) => Math.max(0, c + delta));
+      }
+    };
+
+    window.addEventListener('commentCountChanged', onCommentCountChanged);
+    return () => window.removeEventListener('commentCountChanged', onCommentCountChanged);
+  }, [post._id]);
 
   const handleToggleLike = async () => {
     try {
@@ -26,7 +39,7 @@ const PostCard = ({ post }) => {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[614px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
+    <div className="mx-auto w-full max-w-153.5 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
 
       {/* 🔝 HEADER */}
       <div className="flex items-center justify-between p-4">
@@ -67,7 +80,7 @@ const PostCard = ({ post }) => {
         <img
           src={post.images[0].url}
           alt="post"
-          className="h-auto max-h-[760px] w-full object-cover"
+          className="h-auto max-h-190 w-full object-cover"
         />
       )}
 
@@ -76,7 +89,7 @@ const PostCard = ({ post }) => {
         <video
           src={post.video.url}
           controls
-          className="h-auto max-h-[760px] w-full object-cover"
+          className="h-auto max-h-190 w-full object-cover"
         />
       )}
 
@@ -151,7 +164,7 @@ const PostCard = ({ post }) => {
           onClick={() => setShowComments(true)}
           className="mt-2 text-sm text-gray-500"
         >
-          View all {post.totalComments || 0} comments
+          View all {commentsCount || 0} comments
         </button>
 
         {/* DATE */}
@@ -164,6 +177,7 @@ const PostCard = ({ post }) => {
       {showComments && (
         <CommentsModal 
           post={post} 
+          commentsCount={commentsCount}
           closeModal={() => setShowComments(false)} 
         />
       )}
