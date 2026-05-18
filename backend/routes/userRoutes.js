@@ -6,6 +6,7 @@ const User=require("../models/User.js")
 const { generateAccessToken,generateRefreshToken } = require("../utils/generateToken.js")
 const transporter= require("../utils/sendEmail.js")
 
+
 router.post("/send-otp",async(req,res)=>{
     const {email} = req.body
     try{
