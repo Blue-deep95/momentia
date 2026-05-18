@@ -3,13 +3,10 @@ require("dotenv").config()
 const cors = require("cors")
 const cookieParser = require("cookie-parser")
 
-// to implement socket io properly need to create http server
-const { createServer } = require('node:http')
-const { Server } = require('socket.io')
-const app = express()
-const server = createServer(app)
-const io = new Server(server) // create web socket server along with 
+// since we first created the socket server import express ,server from that file first 
+const {app,server} = require('./socket/socket.js')
 
+// import protect middleware 
 const { protect } = require('./middleware/authMiddleware.js')
 
 // import routes
@@ -20,6 +17,8 @@ const commentRoutes = require('./routes/commentRoutes.js')
 const followRoutes = require('./routes/followRoutes.js')
 const feedRoutes = require('./routes/feedRoutes.js')
 const searchRoutes = require('./routes/searchRoutes.js')
+const notificationRoutes = require('./routes/notificationRoutes.js')
+const messageRoutes = require('./routes/messageRoutes.js')
 
 // import db 
 const connectDB = require('./db/db.js')
@@ -62,23 +61,13 @@ app.use("/api/comment", protect, commentRoutes)
 app.use("/api/follow", protect, followRoutes)
 app.use("/api/feed", protect, feedRoutes)
 app.use("/api/search", protect, searchRoutes)
+app.use("/api/notifications",protect,notificationRoutes)
+app.use("/api/message",protect,messageRoutes)
 
+// event listeners
+require('./services/notificationService.js')
+require('./services/messageService.js')
 
-// web socket implementation starts here 
-io.on('connection', (socket) => {
-    console.log(`A user logged in ${socket.id}`)
-
-    socket.on('disconnect', () => {
-        console.log(`A user disconnected ${socket.id}`)
-    })
-
-    socket.on('message', (msg) => {
-        console.log(`Message from the user${socket.id} is  ${msg}`)
-        io.emit('msg', `${msg}`)
-    })
-
-
-})
 
 // newer listen that handles both http and web socket connections
 server.listen(PORT, () => console.log('server running on', PORT))

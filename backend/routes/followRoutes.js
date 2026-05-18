@@ -4,6 +4,7 @@
 
 const express = require("express")
 const router = express.Router()
+const {notificationBus} = require('../events/event.js')
 
 const Follow = require('../models/Follow.js')
 const User = require('../models/User.js')
@@ -30,12 +31,14 @@ router.post("/follow-user",
             if (isFollowing) {
                 return res.status(403).json({ message: "Already following the user" })
             }
+            const newFollow = new Follow(
+                {host: user._id,
+                target: targetId})
 
-            // Create follow record
-            await Follow.create({
-                host: user._id,
-                target: targetId
-            })
+                await newFollow.save()
+                // emit notification 
+                notificationBus.emit('follow-user',{...newFollow.toObject()})
+            
 
             // Update counts
             await User.findByIdAndUpdate(user._id, { $inc: { following: 1 } })
@@ -66,6 +69,9 @@ router.delete("/unfollow-user/:targetId",
             if (!followRecord) {
                 return res.status(400).json({ message: "You are not following this user" })
             }
+
+            // emit unfollow event to cleanup notification
+            notificationBus.emit('unfollow-user', {...followRecord.toObject()})
 
             // Update counts
             await User.findByIdAndUpdate(user._id, { $inc: { following: -1 } })

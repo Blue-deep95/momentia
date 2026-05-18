@@ -13,13 +13,15 @@ const Comment = require('../models/Comment')
 const uploadToCloudinary = require('../utils/uploadToCloudinary')
 const deleteFromCloudinary = require('../utils/deleteFromCloudinary')
 
+// import the notification service here to send notifications
+const {notificationBus} = require('../events/event')
+
 let upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 30 * 1024 * 1024 } // gives 30mb limit for file uploads
 })
 
 // this route is for getting a singular post and it's contents with additional information
-// like 
 router.get("/get-singlepost/:postid",
     async (req, res) => {
         try {
@@ -387,7 +389,7 @@ router.post("/toggle-like/:postid",
             const user = req.user
 
             if (!postid) {
-                return res.status(400).json({ message: "Invalid post id" })
+                return res.status(400).json({ message: "Invalid or missing post id" })
             }
 
             // Check if the post exists
@@ -402,6 +404,11 @@ router.post("/toggle-like/:postid",
             if (existingLike) {
                 // If it exists, UNLIKE it
                 await Like.findByIdAndDelete(existingLike._id)
+
+                // again emit event to indicate the post has been unliked 
+                // convert to object for safety
+                notificationBus.emit('post-unliked',{...existingLike.toObject(),postAuthor:post.author})
+
                 await Post.findByIdAndUpdate(postid, { $inc: { totalLikes: -1 } })
                 return res.status(200).json({ message: "Post unliked successfully", isLiked: false })
             } else {
@@ -413,6 +420,9 @@ router.post("/toggle-like/:postid",
                     postTarget: postid
                 })
                 await newLike.save()
+                // after the new Like is saved send notification 
+                notificationBus.emit('post-liked',{...newLike.toObject(),postAuthor:post.author})
+                
                 await Post.findByIdAndUpdate(postid, { $inc: { totalLikes: 1 } })
                 return res.status(200).json({ message: "Post liked successfully", isLiked: true })
             }
