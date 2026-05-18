@@ -1,25 +1,29 @@
 const jwt=require("jsonwebtoken")
 const User=require("../models/User.js")
 
-const protect=async(req,res,next)=>{
+const protect = async (req, res, next) => {
     let token
-    if (req.headers.Authorization && req.headers.Authorization.startsWith("Bearer")) {
-        try{
-            token=req.headers.Authorization.split(" ")[1]
-            const decoded=jwt.verify(token, process.env.JWT_ACCESS_TOKEN)
-            req.user= await User.findById(decoded.id)
-               .select("-password -refreshToken")
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+        try {
+            token = req.headers.authorization.split(" ")[1]
+            const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN)
+
+            // const user = await User.findById(decoded.id)
+            //     .select("-password -refreshToken -otp -otpExpiry -savedPosts -blockedUsers")
+            // if (!user) {
+            //     return res.status(401).json({ message: "Invalid token" })
+            // }
+            
+            req.user = {_id:decoded.id}
             next()
         }
-        catch(err){
-            return res.status(401).json({ messasge:"Invalid access token" })
+        catch (err) {
+            return res.status(401).json({ message: "Invalid access token" })
         }
+    } else {
+        return res.status(401).json({ message: "Not authorized, no token" })
     }
 }
-
-
-
-
 
 
 module.exports={protect}

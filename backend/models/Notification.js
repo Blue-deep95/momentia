@@ -1,8 +1,7 @@
 // The main model that handles notifications
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
 
-
-const notificationSchema = new mongoose.Schema( 
+const notificationSchema = new mongoose.Schema(
   {
     // target/recipient here refers to the user the notification is meant for
     recipient: {
