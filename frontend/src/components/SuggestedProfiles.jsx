@@ -11,7 +11,7 @@ const Toast = ({ message, type = "success", onClose }) => {
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 z-[60] p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
+    <div className={`fixed top-4 right-4 z-60 p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
       type === "error" ? "bg-red-500 border-red-400" : "bg-green-500 border-green-400"
     }`}>
       <div className="flex items-center gap-2">
