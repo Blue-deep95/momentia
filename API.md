@@ -317,6 +317,30 @@ Retrieves paginated posts for the main feed with interaction metadata.
     }
     ```
 
+### 2. Get Reels
+Retrieves paginated reels (video posts) for the reels feed.
+*   **URL:** `/feed/get-reels/:page`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "reels": [
+        {
+          "_id": "...",
+          "authorDetails": { 
+            "username": "...", 
+            "profilePicture": { ... },
+            "fullName": "..."
+          },
+          "isLiked": true/false,
+          "isSaved": true/false,
+          "isFollowing": true/false
+        }
+      ],
+      "message": "reels retrieved successfully"
+    }
+    ```
+
 ---
 
 ## 🔍 Search (`/search`)
@@ -602,4 +626,103 @@ Removes a user from your own followers list and updates counts.
 *   **Success Response (200):**
     ```json
     { "message": "User removed from your followers" }
+    ```
+
+---
+
+## 🔔 Notifications (`/notifications`)
+*All routes in this section require a valid Bearer Token.*
+
+### 1. Get Notifications
+Retrieves paginated notifications for the authenticated user, sorted by unread first and then by recency.
+*   **URL:** `/notifications/get-notifications/:page`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "notifications": [
+        {
+          "_id": "...",
+          "recipient": "...",
+          "notificationType": "post/comment/follow",
+          "notificationSubType": "like/comment/reply",
+          "actors": [ { "username": "...", "profilePicture": { ... } } ],
+          "actorCount": 1,
+          "isRead": true/false,
+          "postDetails": { "caption": "...", "thumbImage": "..." },
+          "commentDetails": { "content": "...", "postInfo": { "thumbImage": "..." } }
+        }
+      ],
+      "message": "Notifications retrieved succesfully!"
+    }
+    ```
+
+### 2. Mark as Read
+Marks a list of notifications as read and sets a 2-day TTL for their deletion.
+*   **URL:** `/notifications/mark-as-read`
+*   **Method:** `PUT`
+*   **Body:**
+    ```json
+    { "seenNotifications": ["id1", "id2"] }
+    ```
+*   **Success Response (200):**
+    ```json
+    { "message": "Notifications read successfully" }
+    ```
+
+---
+
+## 💬 Messages (`/message`)
+*All routes in this section require a valid Bearer Token.*
+
+### 1. Create Room
+Starts a new DM or Group Chat. Automatically creates a DM if 2 people are involved, or a Group if 3+ are provided.
+*   **URL:** `/message/create-room`
+*   **Method:** `POST`
+*   **Body:**
+    ```json
+    {
+      "participants": ["userId1", "userId2"],
+      "roomName": "Group Name", (Required for 3+ participants)
+      "roomDescription": "Optional description"
+    }
+    ```
+*   **Success Response (201):**
+    ```json
+    { "room": { ... }, "message": "Room created successfully" }
+    ```
+
+### 2. Get Rooms
+Retrieves all chat rooms (DMs and Groups) the user is a member of, including unread counts and DM partner info.
+*   **URL:** `/message/get-rooms`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "userRooms": [
+        {
+          "_id": "...",
+          "roomType": "dm/group",
+          "currentMessageCount": 10,
+          "unreadCount": 2,
+          "dmUserInfo": { "username": "...", "profilePicture": { ... } },
+          "lastMessage": { "content": "...", "sender": "..." },
+          "lastMessageAt": "..."
+        }
+      ],
+      "message": "User rooms retrieved successfully"
+    }
+    ```
+
+### 3. Send Message
+Sends a message to a room. Synchronizes unread counts and triggers real-time updates.
+*   **URL:** `/message/send-message`
+*   **Method:** `POST`
+*   **Body:**
+    ```json
+    { "roomId": "...", "content": "Hello!" }
+    ```
+*   **Success Response (201):**
+    ```json
+    { "message": { ... }, "success": true }
     ```
