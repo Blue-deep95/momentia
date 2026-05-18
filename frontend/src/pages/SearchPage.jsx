@@ -3,9 +3,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import api from "../services/api";
 import { Virtuoso, VirtuosoGrid } from "react-virtuoso";
 import { useNavigate } from "react-router-dom";
+import FollowButton from "../components/FollowButton";
 import {
   Search,
-  User,
   Image as ImageIcon,
   Loader2,
 } from "lucide-react";
@@ -25,36 +25,26 @@ export default function SearchPage() {
 
   const navigate = useNavigate();
 
-  // Debounce effect: update debouncedQuery after 1 sec of no typing
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(query);
     }, 1000);
-
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [query]);
 
-  // Fetch Search Results
   const fetchResults = useCallback(
     async (currentPage = 1, reset = false) => {
       if (!debouncedQuery.trim()) return;
       try {
         setLoading(true);
-
         const endpoint = activeTab === "Users" ? "search/search-users" : "search/search-posts";
         const res = await api.get(`${endpoint}/${encodeURIComponent(debouncedQuery)}/${currentPage}`);
-
         const newResults = res.data.results || [];
-
         if (reset) {
           setResults(newResults);
         } else {
           setResults((prev) => [...prev, ...newResults]);
         }
-
-        // Infer hasMore from length (assuming limit is 30)
         setHasMore(newResults.length === 30);
       } catch (error) {
         console.error("Search fetch error:", error);
@@ -65,10 +55,8 @@ export default function SearchPage() {
     [debouncedQuery, activeTab]
   );
 
-  // Search whenever debounced query or tab changes
   useEffect(() => {
     setPage(1);
-
     if (debouncedQuery.trim() !== "") {
       fetchResults(1, true);
     } else {
@@ -77,25 +65,19 @@ export default function SearchPage() {
     }
   }, [debouncedQuery, activeTab, fetchResults]);
 
-  // Infinite Scroll
   const loadMore = async () => {
     if (!hasMore || loading) return;
-
     const nextPage = page + 1;
     setPage(nextPage);
-
     await fetchResults(nextPage);
   };
 
   return (
     <div className="w-full h-screen bg-black text-white flex flex-col lg:pl-[72px] z-1 ">
-      {/* Search Header */}
       <div className="sticky top-0 z-10 bg-black border-b border-zinc-800">
         <div className="max-w-5xl mx-auto px-4 py-3">
-          {/* Search Input */}
           <div className="flex items-center bg-zinc-900 rounded-xl px-3 py-2">
             <Search size={18} className="text-zinc-400" />
-
             <input
               type="text"
               placeholder={`Search ${activeTab}`}
@@ -104,8 +86,6 @@ export default function SearchPage() {
               className="bg-transparent outline-none flex-1 px-3 text-sm"
             />
           </div>
-
-          {/* Tabs */}
           <div className="flex gap-5 mt-4 overflow-x-auto scrollbar-hide">
             {TABS.map((tab) => (
               <button
@@ -123,8 +103,6 @@ export default function SearchPage() {
           </div>
         </div>
       </div>
-
-      {/* Results */}
       <div className="flex-1 overflow-hidden">
         <div className="max-w-5xl mx-auto h-full">
           {results.length === 0 && debouncedQuery && !loading ? (
@@ -173,13 +151,8 @@ export default function SearchPage() {
   );
 }
 
-/* ------------------------------------------------ */
-/* User Card */
-/* ------------------------------------------------ */
-
 function UserCard({ item, navigate }) {
   const profilePic = item.profilePicture?.profileView || item.profilePicture?.original?.url || "https://via.placeholder.com/150";
-
   return (
     <div 
       onClick={() => navigate(`/profile/${item._id}`)}
@@ -191,24 +164,15 @@ function UserCard({ item, navigate }) {
           alt={item.username}
           className="w-12 h-12 rounded-full object-cover border border-zinc-800"
         />
-
         <div>
-          <h3 className="font-semibold text-sm">
-            {item.username}
-          </h3>
-          <p className="text-zinc-400 text-xs">
-            {item.name}
-          </p>
+          <h3 className="font-semibold text-sm">{item.username}</h3>
+          <p className="text-zinc-400 text-xs">{item.name}</p>
         </div>
       </div>
-      <User size={18} className="text-zinc-600" />
+      <FollowButton userId={item._id} isFollowing={item.isFollowing || false} />
     </div>
   );
 }
-
-/* ------------------------------------------------ */
-/* Post Grid Item */
-/* ------------------------------------------------ */
 
 function PostGridItem({ item, navigate }) {
   return (
@@ -221,8 +185,6 @@ function PostGridItem({ item, navigate }) {
         alt="post"
         className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
       />
-      
-      {/* Overlay on hover */}
       <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
         <div className="flex items-center gap-1 text-white font-bold text-sm">
           <ImageIcon size={16} />

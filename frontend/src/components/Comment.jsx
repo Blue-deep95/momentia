@@ -13,7 +13,6 @@ import {
 import { Virtuoso } from "react-virtuoso";
 import CommentInput from "./CommentInput.jsx";
 import { useGetCommentsQuery, useCreateCommentMutation } from "../slices/commentApi.js";
-
 // Toast Component
 const Toast = ({ message, type = "error", onClose }) => {
   useEffect(() => {
