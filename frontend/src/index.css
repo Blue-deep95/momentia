@@ -58,19 +58,21 @@
 @layer utilities {
   .glass-card {
     background-color: rgba(255, 255, 255, 0.6);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.8);
   }
 
   .glass-header {
     background-color: rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .text-gradient {
-    background-clip: text;
     -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
     background-image: linear-gradient(to right, #22d3ee, #a855f7, #ec4899);
   }

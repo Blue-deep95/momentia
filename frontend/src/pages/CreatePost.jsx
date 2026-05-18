@@ -13,7 +13,7 @@ const Toast = ({ message, type = "error", onClose }) => {
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 z-[60] p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
+    <div className={`fixed top-4 right-4 z-60 p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
       type === "error" ? "bg-red-500 border-red-400" : "bg-green-500 border-green-400"
     }`}>
       <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ const CreatePost = () => {
 
               {/* PREVIEW */}
               {preview && (
-                <div className="flex h-[400px] w-full items-center justify-center overflow-hidden rounded-2xl border bg-black">
+                <div className="h-100 flex w-full items-center justify-center overflow-hidden rounded-2xl border bg-black">
                   {fileType === "video" ? (
                     <video
                       src={preview}
@@ -228,7 +228,7 @@ const CreatePost = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 py-4 text-lg font-semibold text-white transition hover:opacity-90"
+                className="bg-linear-to-r w-full rounded-xl from-cyan-500 via-purple-500 to-pink-500 py-4 text-lg font-semibold text-white transition hover:opacity-90"
               >
                 {loading ? "Posting..." : "Share Post"}
               </button>

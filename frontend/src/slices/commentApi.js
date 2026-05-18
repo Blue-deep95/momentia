@@ -110,6 +110,14 @@ export const commentApi = createApi({
       },
       // Removed invalidatesTags: No more GET request after a Like!
     }),
+    deleteComment: builder.mutation({
+      query: ({ commentId }) => ({
+        url: `/comment/delete-comment/${commentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { parent }) =>
+        parent ? [{ type: 'Reply', id: parent }, { type: 'Comment', id: 'LIST' }] : [{ type: 'Comment', id: 'LIST' }],
+    }),
   }),
 });
 
@@ -118,4 +126,5 @@ export const {
   useGetRepliesQuery,
   useCreateCommentMutation,
   useToggleLikeMutation,
+  useDeleteCommentMutation,
 } = commentApi;
