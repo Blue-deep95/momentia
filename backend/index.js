@@ -18,6 +18,7 @@ const followRoutes = require('./routes/followRoutes.js')
 const feedRoutes = require('./routes/feedRoutes.js')
 const searchRoutes = require('./routes/searchRoutes.js')
 const notificationRoutes = require('./routes/notificationRoutes.js')
+const messageRoutes = require('./routes/messageRoutes.js')
 
 // import db 
 const connectDB = require('./db/db.js')
@@ -61,9 +62,11 @@ app.use("/api/follow", protect, followRoutes)
 app.use("/api/feed", protect, feedRoutes)
 app.use("/api/search", protect, searchRoutes)
 app.use("/api/notifications",protect,notificationRoutes)
+app.use("/api/message",protect,messageRoutes)
 
 // event listeners
 require('./services/notificationService.js')
+require('./services/messageService.js')
 
 
 // newer listen that handles both http and web socket connections

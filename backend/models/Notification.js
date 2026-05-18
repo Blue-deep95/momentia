@@ -49,6 +49,12 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    
+    // TTL index for automatic deletion after 2 days of being read
+    expiresAt: {
+      type: Date,
+      index: { expires: 0 },
+    },
   },
   { timestamps: true },
 );

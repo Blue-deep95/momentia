@@ -8,8 +8,9 @@ const EventEmitter = require("events");
 // create a new notification and chat events emitter to handle their respective
 // events
 class NotificationEmitter extends EventEmitter {}
-class ChatEmitter extends EventEmitter {}
-const notificationBus = new NotificationEmitter();
-const chatBus = new ChatEmitter();
+class MessageEmitter extends EventEmitter {}
 
-module.exports = { notificationBus, chatBus };
+const notificationBus = new NotificationEmitter();
+const messageBus = new MessageEmitter();
+
+module.exports = { notificationBus, messageBus };
