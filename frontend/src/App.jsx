@@ -6,6 +6,7 @@ import Feed from "./pages/Feed.jsx"
 import ForgotPassword from "./pages/ForgotPassword.jsx"
 import Profile from "./pages/Profile.jsx"
 import SearchPage from "./pages/SearchPage.jsx"
+import Reels from "./pages/Reels.jsx"
 import CreatePost from "./pages/CreatePost.jsx"
 
 
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/profile/:userId" element={<Profile />} />
             
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/reels" element={<Reels />} />
             <Route path="/" element={<Feed />} />
             <Route path="/create-post" element={<CreatePost />} />
 

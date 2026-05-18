@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
 import CommentInput from "./CommentInput.jsx";
-import { useGetCommentsQuery, useCreateCommentMutation } from "../slices/commentApi.js";
+import { useGetCommentsQuery, useCreateCommentMutation, useDeleteCommentMutation } from "../slices/commentApi.js";
 
 // Toast Component
 const Toast = ({ message, type = "error", onClose }) => {
@@ -22,7 +22,7 @@ const Toast = ({ message, type = "error", onClose }) => {
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 z-[60] p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
+    <div className={`fixed top-4 right-4 z-60 p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
       type === "error" ? "bg-red-500 border-red-400" : "bg-green-500 border-green-400"
     }`}>
       <div className="flex items-center gap-2">
@@ -63,6 +63,33 @@ const CommentItem = ({ comment, postId, onReply }) => {
       setLikesCount(prev => res.data.isLiked ? prev + 1 : prev - 1);
     } catch (err) {
       console.error("Error liking comment", err);
+    }
+  };
+
+  const currentUser = useSelector((state) => state.auth.user);
+  const [deleteComment] = useDeleteCommentMutation();
+
+  const normalizeId = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return val;
+    if (val._id) return String(val._id);
+    if (val.id) return String(val.id);
+    return null;
+  };
+
+  const currentUserId = normalizeId(currentUser);
+  const commentAuthorId = normalizeId(author) || normalizeId(comment.author);
+
+  const handleDelete = async () => {
+    if (!window.confirm('Delete this comment?')) return;
+    try {
+      const res = await deleteComment({ commentId: comment._id, parent: comment.parent }).unwrap();
+      const deletedCount = res?.deletedCount || 1;
+      // notify post card to update count
+      window.dispatchEvent(new CustomEvent('commentCountChanged', { detail: { postId, delta: -deletedCount } }));
+    } catch (err) {
+      console.error('Error deleting comment', err);
+      alert(err?.data?.message || 'Failed to delete comment.');
     }
   };
 
@@ -127,6 +154,11 @@ const CommentItem = ({ comment, postId, onReply }) => {
               <button onClick={() => onReply(comment)} className="hover:text-zinc-300">
                 Reply
               </button>
+              {currentUserId && commentAuthorId && String(currentUserId) === String(commentAuthorId) && (
+                <button onClick={handleDelete} className="text-red-400 hover:text-red-200">
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -152,7 +184,7 @@ const CommentItem = ({ comment, postId, onReply }) => {
             onClick={handleToggleReplies}
             className="flex items-center gap-2 text-xs font-semibold text-zinc-500 transition hover:text-zinc-300"
           >
-            <div className="h-[1px] w-6 bg-zinc-700" />
+            <div className="h-px w-6 bg-zinc-700" />
             {showReplies ? (
               <>Hide replies <ChevronUp size={14} /></>
             ) : (
@@ -186,7 +218,7 @@ const CommentItem = ({ comment, postId, onReply }) => {
   );
 };
 
-export default function CommentsModal({ post, closeModal }) {
+export default function CommentsModal({ post, closeModal, commentsCount }) {
   const [page, setPage] = useState(1);
   const [input, setInput] = useState("");
   const [replyTo, setReplyTo] = useState(null);
@@ -215,8 +247,10 @@ export default function CommentsModal({ post, closeModal }) {
         payload.reference = (replyTo.authorDetails?._id || replyTo.author?._id || replyTo.author);
       }
 
-      await createComment(payload).unwrap();
-      
+      const res = await createComment(payload).unwrap();
+      // notify post card to increment comment count
+      window.dispatchEvent(new CustomEvent('commentCountChanged', { detail: { postId: post._id, delta: 1 } }));
+
       setInput("");
       setReplyTo(null);
 
@@ -266,7 +300,7 @@ export default function CommentsModal({ post, closeModal }) {
       {/* MODAL */}
       <div className="animate-slideUp flex h-[80vh] w-full max-w-md flex-col rounded-t-3xl bg-black">
     <div 
-      className="fixed inset-0 z-[100] flex items-end justify-center overflow-hidden bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="z-100 fixed inset-0 flex items-end justify-center overflow-hidden bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={closeModal}
     >
       <div 
@@ -281,10 +315,10 @@ export default function CommentsModal({ post, closeModal }) {
 
         {/* HEADER */}
         <div className="flex items-center justify-between border-b border-zinc-900 bg-zinc-950 px-6 py-4">
-          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
             <h2 className="text-lg font-bold tracking-tight text-white">Comments</h2>
             <div className="rounded bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-400">
-              {post.totalComments || 0}
+              {typeof commentsCount === 'number' ? commentsCount : (post.totalComments || 0)}
             </div>
           </div>
           <button 
@@ -333,7 +367,7 @@ export default function CommentsModal({ post, closeModal }) {
               </div>
               <div className="space-y-1 text-center">
                 <p className="text-xl font-bold text-white">No comments yet</p>
-                <p className="max-w-[250px] text-sm text-zinc-500">Start the conversation by sharing your thoughts on this post.</p>
+                <p className="max-w-62.5 text-sm text-zinc-500">Start the conversation by sharing your thoughts on this post.</p>
               </div>
             </div>
           )}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
+import { Virtuoso } from "react-virtuoso";
 
 // Components
 import Navbar from "../components/Navbar.jsx";
@@ -34,10 +35,10 @@ const Feed = () => {
       <Navbar />
 
       {/* MAIN CONTENT */}
-      <div className="mx-auto flex max-w-[1100px] justify-between gap-6 px-4 py-6">
+      <div className="max-w-275 mx-auto flex justify-between gap-6 px-4 py-6">
 
         {/* LEFT / CENTER FEED */}
-        <div className="w-full space-y-6 md:mx-auto md:max-w-[614px] lg:mx-0 lg:max-w-[614px]">
+        <div className="lg:max-w-153.5 md:max-w-153.5 w-full space-y-6 md:mx-auto lg:mx-0">
 
           {/* STORIES */}
           <StoryBar />
@@ -49,9 +50,15 @@ const Feed = () => {
             ) : posts.length === 0 ? (
               <p className="text-center text-gray-500">No posts yet</p>
             ) : (
-              posts.map((post) => (
-                <PostCard key={post._id} post={post} />
-              ))
+              <Virtuoso
+                useWindowScroll
+                data={posts.slice(0, 20)}
+                itemContent={(index, post) => (
+                  <div className="w-full">
+                    <PostCard key={post._id} post={post} />
+                  </div>
+                )}
+              />
             )}
           </div>
 

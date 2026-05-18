@@ -2,89 +2,128 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 
-/* ─── Floating Activity Card (same as Login) ───────────────── */
-const FloatCard = ({ avatar, title, sub, delay, className }) => (
+/* ─── Floating Activity Card (matches Login exactly) ───────── */
+const FloatCard = ({ avatar, title, sub, delay, className = "" }) => (
   <div
-    className={`absolute flex items-center gap-3 rounded-2xl px-4 py-3 min-w-[190px] z-10 ${className}`}
+    className={`flex items-center gap-3 rounded-2xl px-4 py-3 min-w-[180px] ${className}`}
     style={{
-      background: "rgba(255,255,255,0.04)",
-      border: "1px solid rgba(110,231,183,0.1)",
-      backdropFilter: "blur(20px)",
-      animation: `floatUp 6s ${delay} ease-in-out infinite alternate`,
+      background: "rgba(255,255,255,0.07)",
+      border: "1px solid rgba(255,255,255,0.12)",
+      backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      animation: `floatUD 5s ${delay} ease-in-out infinite alternate`,
     }}
   >
     {avatar ? (
-      <img src={avatar} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
-        style={{ outline: "1.5px solid rgba(110,231,183,0.2)" }} />
+      <img
+        src={avatar} alt=""
+        className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+        style={{ outline: "2px solid rgba(77,217,172,0.35)", outlineOffset: 1 }}
+      />
     ) : (
-      <span className="h-2 w-2 flex-shrink-0 rounded-full"
-        style={{ background: "#34EEB0", boxShadow: "0 0 10px 3px rgba(52,238,176,0.5)" }} />
+      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+        style={{ background: "#4DD9AC", boxShadow: "0 0 8px 3px rgba(77,217,172,0.55)" }} />
     )}
     <div>
-      <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.88)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{title}</div>
-      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.38)", marginTop: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{sub}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "rgba(255,255,255,0.92)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+        {title}
+      </div>
+      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", marginTop: 2, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+        {sub}
+      </div>
     </div>
   </div>
 );
 
-/* ─── Input Field (matches Login's Field exactly) ───────────── */
-const Field = ({ label, type = "text", name, placeholder, value, onChange, disabled = false }) => {
+/* ─── Input Field (matches Login's Field) ───────────────────── */
+const Field = ({ label, type = "text", name, placeholder, value, onChange, disabled = false, extra }) => {
   const [focused, setFocused] = useState(false);
   return (
-    <div className="mb-4">
-      <label className="mb-2 block" style={{ fontSize: 10, fontWeight: 600, color: "#8896B3", letterSpacing: "0.9px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="mb-5">
+      <label className="block mb-2"
+        style={{ fontSize: 10.5, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.9px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
         {label}
       </label>
-      <input
-        type={type} name={name} placeholder={placeholder} value={value}
-        onChange={onChange} required disabled={disabled}
-        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        className="w-full rounded-xl px-5 py-3.5 text-sm outline-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
-        style={{
-          background: disabled ? "#F0EEF8" : focused ? "#fff" : "#F8F7FF",
-          border: focused ? "1.5px solid #10B981" : "1.5px solid #E2DCFF",
-          color: "#0D0A26",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          boxShadow: focused ? "0 0 0 4px rgba(16,185,129,0.1)" : "none",
-        }}
-      />
+      <div className="relative">
+        <input
+          type={type} name={name} placeholder={placeholder} value={value}
+          onChange={onChange} required disabled={disabled}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          className="w-full rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            paddingRight: extra ? 44 : 16,
+            background: disabled ? "#F3F4F6" : "#fff",
+            border: focused ? "1.5px solid #0D9488" : "1.5px solid #E5E7EB",
+            color: "#111827",
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            boxShadow: focused ? "0 0 0 3px rgba(13,148,136,0.1)" : "0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        />
+        {extra && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">{extra}</div>
+        )}
+      </div>
     </div>
   );
 };
 
-/* ─── OTP Input ─────────────────────────────────────────────── */
-const OtpField = ({ value, onChange }) => {
-  const [focused, setFocused] = useState(false);
+/* ─── Social Button (matches Login) ─────────────────────────── */
+const SocialBtn = ({ label }) => {
+  const [hov, setHov] = useState(false);
   return (
-    <input
-      type="text"
-      placeholder="Enter 6-digit OTP"
-      value={value}
-      onChange={onChange}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      maxLength={6}
-      className="flex-1 rounded-xl px-5 py-3.5 text-sm outline-none transition-all duration-200"
+    <button type="button"
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all duration-200"
       style={{
-        background: focused ? "#fff" : "#F8F7FF",
-        border: focused ? "1.5px solid #10B981" : "1.5px solid #E2DCFF",
-        color: "#0D0A26",
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        boxShadow: focused ? "0 0 0 4px rgba(16,185,129,0.1)" : "none",
-        letterSpacing: "0.2em",
-      }}
-    />
+        border: hov ? "1.5px solid #0D9488" : "1.5px solid #E5E7EB",
+        background: hov ? "#F0FDFB" : "#fff",
+        color: "#374151",
+        fontFamily: "'Plus Jakarta Sans',sans-serif",
+        cursor: "pointer",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+      }}>
+      {label === "Google" ? (
+        <svg width="16" height="16" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877F2">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+      )}
+      {label}
+    </button>
   );
 };
+
+/* ─── Eye Toggle Icon ────────────────────────────────────────── */
+const EyeIcon = ({ show, onToggle }) => (
+  <button type="button" onClick={onToggle} className="text-gray-400 hover:text-gray-600 transition-colors">
+    {show ? (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+      </svg>
+    ) : (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+    )}
+  </button>
+);
 
 /* ─── Main Register Component ───────────────────────────────── */
 const Register = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
-  const [otp, setOtp] = useState("");
+  const [formData, setFormData]   = useState({ name: "", email: "", password: "" });
+  const [otp, setOtp]             = useState("");
+  const [showPass, setShowPass]   = useState(false);
   const [otpStatus, setOtpStatus] = useState("idle"); // idle | sending | sent | verifying | verified
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
 
   const handleChange = (e) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
 
@@ -126,218 +165,190 @@ const Register = () => {
   };
 
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
-    * { box-sizing: border-box; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; }
 
-    @keyframes floatUp   { 0% { transform: translateY(0) } 100% { transform: translateY(-16px) } }
-    @keyframes fadeForm  { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
-    @keyframes pulse     { 0%,100% { opacity:1; transform:scale(1) } 50% { opacity:.35; transform:scale(.7) } }
-    @keyframes spin      { to { transform: rotate(360deg) } }
-    @keyframes rotateSlow  { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-    @keyframes rotateSlowR { from { transform: rotate(0deg) } to { transform: rotate(-360deg) } }
-    @keyframes scanLine  { 0% { top: -2px } 100% { top: 100% } }
-    @keyframes gridPulse { 0%,100% { opacity: 0.05 } 50% { opacity: 0.11 } }
-    @keyframes orbitDot  { 0% { transform: rotate(0deg) translateX(170px) } 100% { transform: rotate(360deg) translateX(170px) } }
-    @keyframes orbitDot2 { 0% { transform: rotate(120deg) translateX(250px) } 100% { transform: rotate(480deg) translateX(250px) } }
-    @keyframes fadeSlide { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+    @keyframes floatUD  { 0%{ transform:translateY(0) } 100%{ transform:translateY(-12px) } }
+    @keyframes fadeForm { from{ opacity:0; transform:translateY(20px) } to{ opacity:1; transform:translateY(0) } }
+    @keyframes pulse    { 0%,100%{ opacity:1; transform:scale(1) } 50%{ opacity:.35; transform:scale(.65) } }
+    @keyframes spin     { to{ transform:rotate(360deg) } }
+    @keyframes fadeSlide { from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:translateY(0) } }
 
-    .register-root { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .right-form { animation: fadeForm .75s cubic-bezier(.22,1,.36,1) both; }
-    .submit-btn:hover:not(:disabled) { transform: translateY(-1.5px) !important; box-shadow: 0 14px 40px -8px rgba(16,185,129,0.5) !important; }
-    .submit-btn:active:not(:disabled) { transform: translateY(0) !important; }
-    .send-otp-btn:hover:not(:disabled) { background: rgba(16,185,129,0.15) !important; border-color: #10B981 !important; }
-    .verify-btn:hover:not(:disabled) { transform: translateY(-1px) !important; box-shadow: 0 8px 24px -4px rgba(16,185,129,0.4) !important; }
-    input::placeholder { color: #B0AACF; }
-    .otp-appear { animation: fadeSlide .3s cubic-bezier(.22,1,.36,1) both; }
+    .register-root { display:grid; grid-template-columns:1fr 1fr; min-height:100vh; }
+    .right-form  { animation:fadeForm .7s cubic-bezier(.22,1,.36,1) both; }
+    .submit-btn  { transition:all .2s; }
+    .submit-btn:hover:not(:disabled) { transform:translateY(-1.5px); box-shadow:0 14px 36px -6px rgba(13,148,136,0.52)!important; }
+    .submit-btn:active:not(:disabled){ transform:translateY(0); }
+    .send-otp-btn:hover:not(:disabled) { border-color:#0D9488!important; background:rgba(13,148,136,0.06)!important; color:#0D9488!important; }
+    .verify-btn:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 8px 24px -4px rgba(13,148,136,0.45)!important; }
+    .otp-appear { animation:fadeSlide .3s cubic-bezier(.22,1,.36,1) both; }
+    input::placeholder { color:#C4C4CF; }
 
-    @media (max-width: 1023px) {
-      .register-root { grid-template-columns: 1fr !important; }
-      .left-panel { display: none !important; }
-      .right-panel { min-height: 100vh; padding: 36px 24px !important; }
-    }
-    @media (max-width: 480px) {
-      .right-panel { padding: 28px 20px !important; }
+    @media(max-width:1023px){
+      .register-root { grid-template-columns:1fr!important; }
+      .left-panel { display:none!important; }
+      .right-panel{ min-height:100vh; padding:36px 24px!important; }
     }
   `;
-
-  const ringCount = 24;
 
   return (
     <>
       <style>{css}</style>
-      <div className="register-root">
+      <div className="register-root" style={{ fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
 
-        {/* ── LEFT PANEL — identical sci-fi panel to Login ── */}
-        <div className="left-panel" style={{ position: "relative", background: "#04050F", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* ══ LEFT — dark teal (identical to Login) ══ */}
+        <div
+          className="left-panel relative overflow-hidden flex flex-col"
+          style={{ background: "linear-gradient(150deg,#071c1a 0%,#0b2e2b 45%,#0d3532 75%,#082622 100%)", minHeight: "100vh" }}
+        >
+          {/* Diagonal texture */}
+          <div className="absolute inset-0 pointer-events-none z-0" style={{
+            backgroundImage: "repeating-linear-gradient(155deg, transparent, transparent 40px, rgba(255,255,255,0.022) 40px, rgba(255,255,255,0.022) 41px)",
+          }} />
 
-          {/* Animated grid */}
-          <div style={{ position: "absolute", inset: 0, zIndex: 0, animation: "gridPulse 5s ease-in-out infinite",
-            backgroundImage: "linear-gradient(rgba(110,231,183,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(110,231,183,0.07) 1px, transparent 1px)",
-            backgroundSize: "52px 52px" }} />
+          {/* Ambient glows */}
+          <div className="absolute pointer-events-none z-0"
+            style={{ right:-80, top:"40%", width:440, height:440, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(45,180,150,0.1) 0%, transparent 65%)" }} />
+          <div className="absolute pointer-events-none z-0"
+            style={{ left:-80, top:-80, width:320, height:320, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(20,120,100,0.09) 0%, transparent 65%)" }} />
 
-          {/* Diagonal SVG lines */}
-          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 0 }} preserveAspectRatio="none">
-            <line x1="0" y1="30%" x2="100%" y2="72%" stroke="rgba(110,231,183,0.06)" strokeWidth="1" />
-            <line x1="0" y1="65%" x2="100%" y2="18%" stroke="rgba(110,231,183,0.04)" strokeWidth="0.8" />
-            <line x1="25%" y1="0" x2="75%" y2="100%" stroke="rgba(99,102,241,0.05)" strokeWidth="1" />
-            <line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(99,102,241,0.03)" strokeWidth="0.5" />
-          </svg>
-
-          {/* Scan line */}
-          <div style={{ position: "absolute", left: 0, right: 0, height: "1px", zIndex: 2,
-            background: "linear-gradient(90deg, transparent 0%, rgba(110,231,183,0.4) 50%, transparent 100%)",
-            animation: "scanLine 9s linear infinite" }} />
-
-          {/* Outer rotating ring with tick marks */}
-          <div style={{ position: "absolute", top: "50%", left: "50%",
-            width: 560, height: 560, marginLeft: -280, marginTop: -280,
-            borderRadius: "50%", border: "1px solid rgba(110,231,183,0.07)",
-            animation: "rotateSlow 50s linear infinite" }}>
-            {[...Array(ringCount)].map((_, i) => (
-              <div key={i} style={{
-                position: "absolute", width: i % 6 === 0 ? 3 : 1.5, height: i % 6 === 0 ? 14 : 8,
-                background: i % 6 === 0 ? "rgba(110,231,183,0.55)" : "rgba(110,231,183,0.18)",
-                left: "50%", top: 0, transformOrigin: `${i % 6 === 0 ? 1.5 : 0.75}px 280px`,
-                transform: `rotate(${i * (360 / ringCount)}deg) translateX(-${i % 6 === 0 ? 1.5 : 0.75}px)`,
-              }} />
-            ))}
+          {/* TOP card */}
+          <div className="relative z-10 pt-5 px-5">
+            <FloatCard
+              avatar="https://picsum.photos/seed/rc1/80/80"
+              title="@Blue_deep just joined"
+              sub="Welcome to Momentia!"
+              delay="0s"
+            />
           </div>
 
-          {/* Middle ring dashed */}
-          <div style={{ position: "absolute", top: "50%", left: "50%",
-            width: 360, height: 360, marginLeft: -180, marginTop: -180,
-            borderRadius: "50%", border: "1px dashed rgba(99,102,241,0.18)",
-            animation: "rotateSlowR 30s linear infinite" }} />
+          {/* CENTRE */}
+          <div className="relative z-10 flex-1 flex items-center px-8 py-4 gap-4">
 
-          {/* Inner ring solid */}
-          <div style={{ position: "absolute", top: "50%", left: "50%",
-            width: 200, height: 200, marginLeft: -100, marginTop: -100,
-            borderRadius: "50%", border: "1px solid rgba(110,231,183,0.12)" }} />
+            {/* Text block */}
+            <div className="flex-1 min-w-0">
+              {/* Join badge */}
+              <div className="inline-flex items-center gap-2 mb-6"
+                style={{ padding:"5px 13px", borderRadius:20, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.11)" }}>
+                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0"
+                  style={{ background:"#4DD9AC", boxShadow:"0 0 6px 2px rgba(77,217,172,0.6)", animation:"pulse 2s ease infinite" }} />
+                <span style={{ fontSize:9.5, color:"#4DD9AC", letterSpacing:"1.8px", textTransform:"uppercase", fontWeight:600, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Join today</span>
+              </div>
 
-          {/* Orbiting dots */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 0, height: 0, zIndex: 3 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#6EE7B7",
-              boxShadow: "0 0 12px 4px rgba(110,231,183,0.6)",
-              animation: "orbitDot 8s linear infinite" }} />
-          </div>
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 0, height: 0, zIndex: 3 }}>
-            <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#818CF8",
-              boxShadow: "0 0 8px 3px rgba(129,140,248,0.5)",
-              animation: "orbitDot2 14s linear infinite" }} />
-          </div>
+              <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:42, fontWeight:300, color:"#fff", lineHeight:1.16, letterSpacing:"-0.5px", marginBottom:20 }}>
+                Start your<br />
+                <em style={{ fontStyle:"italic", color:"#4DD9AC" }}>creative</em><br />
+                <span style={{ color:"rgba(255,255,255,0.28)" }}>journey today</span>
+              </h1>
 
-          {/* Center glow */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 4 }}>
-            <div style={{ width: 110, height: 110, borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(110,231,183,0.18) 0%, rgba(99,102,241,0.08) 55%, transparent 75%)" }} />
-          </div>
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-            width: 52, height: 52, borderRadius: "50%", zIndex: 5,
-            background: "rgba(110,231,183,0.08)", border: "1px solid rgba(110,231,183,0.35)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: "#6EE7B7" }}>
-            M
-          </div>
+              {/* M logo */}
+              <div className="mb-5 flex items-center gap-3">
+                <div style={{ width:44, height:44, borderRadius:"50%", border:"1.5px solid rgba(77,217,172,0.4)",
+                  background:"rgba(77,217,172,0.06)", display:"flex", alignItems:"center", justifyContent:"center",
+                  fontFamily:"'Fraunces',serif", fontSize:22, fontWeight:700, color:"#4DD9AC" }}>M</div>
+              </div>
 
-          {/* Corner brackets */}
-          {[
-            { top: 20, left: 20, borderTop: "2px solid rgba(110,231,183,0.35)", borderLeft: "2px solid rgba(110,231,183,0.35)" },
-            { top: 20, right: 20, borderTop: "2px solid rgba(110,231,183,0.35)", borderRight: "2px solid rgba(110,231,183,0.35)" },
-            { bottom: 20, left: 20, borderBottom: "2px solid rgba(110,231,183,0.35)", borderLeft: "2px solid rgba(110,231,183,0.35)" },
-            { bottom: 20, right: 20, borderBottom: "2px solid rgba(110,231,183,0.35)", borderRight: "2px solid rgba(110,231,183,0.35)" },
-          ].map((s, i) => (
-            <div key={i} style={{ position: "absolute", width: 28, height: 28, ...s }} />
-          ))}
+              <p style={{ fontSize:12.5, color:"rgba(255,255,255,0.32)", fontWeight:300, lineHeight:1.8, marginBottom:24, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                Join millions of creators sharing<br />their stories every day.
+              </p>
 
-          {/* Floating cards */}
-          <FloatCard avatar="https://picsum.photos/seed/rc1/80/80" title="@Luna just joined" sub="Welcome to Momentia!" delay="0s" className="left-[8%] top-[17%]" />
-          <FloatCard avatar={null} title="New story posted" sub="2 min ago" delay="-3s" className="right-[7%] top-[62%]" />
-          <FloatCard avatar="https://picsum.photos/seed/rc3/80/80" title="@Kai shared a moment" sub="Bali, Indonesia" delay="-5s" className="bottom-[12%] left-[12%]" />
-
-          {/* Brand text */}
-          <div style={{ position: "relative", zIndex: 5, textAlign: "center", padding: "0 52px", marginTop: -20 }}>
-            <div style={{ marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "4px 13px", borderRadius: 20,
-              background: "rgba(110,231,183,0.06)", border: "1px solid rgba(110,231,183,0.14)" }}>
-              <span style={{ width: 5.5, height: 5.5, borderRadius: "50%", background: "#6EE7B7",
-                display: "inline-block", animation: "pulse 2s ease infinite" }} />
-              <span style={{ fontSize: 9.5, color: "#6EE7B7", letterSpacing: "1.6px", textTransform: "uppercase", fontWeight: 500, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Join today</span>
+              {/* Stats */}
+              <div style={{ display:"flex", borderRadius:12, overflow:"hidden", border:"1px solid rgba(255,255,255,0.07)", background:"rgba(255,255,255,0.03)", backdropFilter:"blur(8px)" }}>
+                {[["2.1M","Creators"],["14M","Moments"],["98%","Happiness"]].map(([n,l],i) => (
+                  <div key={l} style={{ flex:1, textAlign:"center", padding:"11px 6px", borderRight: i<2 ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
+                    <div style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:700, color:"#4DD9AC" }}>{n}</div>
+                    <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.28)", marginTop:2, letterSpacing:"1px", textTransform:"uppercase", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 50, fontWeight: 300, color: "#fff",
-              lineHeight: 1.13, letterSpacing: "-1px", marginBottom: 14 }}>
-              Start your<br />
-              <em style={{ fontStyle: "italic", color: "#6EE7B7" }}>creative</em><br />
-              <span style={{ color: "rgba(255,255,255,0.32)" }}>journey today</span>
-            </h1>
-
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.32)", fontWeight: 300, lineHeight: 1.85, marginBottom: 30, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Join millions of creators sharing<br />their stories every day.
-            </p>
-
-            <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(110,231,183,0.09)" }}>
-              {[["2.1M", "Creators"], ["14M", "Moments"], ["98%", "Happiness"]].map(([n, l], i) => (
-                <div key={l} style={{ flex: 1, textAlign: "center", padding: "13px 10px",
-                  background: "rgba(255,255,255,0.02)",
-                  borderRight: i < 2 ? "1px solid rgba(110,231,183,0.07)" : "none" }}>
-                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: "#6EE7B7" }}>{n}</div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginTop: 3, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{l}</div>
-                </div>
-              ))}
+            {/* Circle photo */}
+            <div className="flex-shrink-0 relative" style={{
+              width:200, height:200, borderRadius:"50%", overflow:"hidden",
+              border:"1.5px solid rgba(77,217,172,0.22)",
+              boxShadow:"0 0 48px 8px rgba(13,148,136,0.18), inset 0 0 30px rgba(0,0,0,0.35)",
+            }}>
+              <img
+                src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80"
+                alt="landscape"
+                style={{ width:"100%", height:"100%", objectFit:"cover", filter:"saturate(0.8) brightness(0.85)" }}
+              />
             </div>
+          </div>
+
+          {/* BOTTOM cards */}
+          <div className="relative z-10 pb-5 px-5 flex items-end justify-between gap-3">
+            <FloatCard
+              avatar="https://picsum.photos/seed/rc3/80/80"
+              title="@indeti shared a moment"
+              sub="Bali, Indonesia"
+              delay="-4s"
+            />
+            <FloatCard
+              avatar="https://picsum.photos/seed/rc2/80/80"
+              title="@Mohana_rupa posted"
+              sub="shared today"
+              delay="-2s"
+            />
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
-        <div className="right-panel" style={{ background: "#F4F2FF", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 52px", position: "relative", overflow: "hidden" }}>
+        {/* ══ RIGHT — clean white form ══ */}
+        <div
+          className="right-panel flex items-center justify-center"
+          style={{ background:"#ffffff", padding:"48px 52px", position:"relative", overflow:"hidden" }}
+        >
+          {/* Subtle glows */}
+          <div className="absolute pointer-events-none"
+            style={{ top:-140, right:-140, width:380, height:380, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(13,148,136,0.05) 0%, transparent 70%)" }} />
+          <div className="absolute pointer-events-none"
+            style={{ bottom:-100, left:-100, width:300, height:300, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(13,148,136,0.04) 0%, transparent 70%)" }} />
 
-          {/* Decorative blobs */}
-          <div style={{ position: "absolute", top: -130, right: -130, width: 400, height: 400, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(110,231,183,0.09) 0%, transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -100, left: -100, width: 300, height: 300, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-          <form onSubmit={handleRegister} className="right-form w-full" style={{ maxWidth: 400, position: "relative", zIndex: 2 }}>
+          <form onSubmit={handleRegister} className="right-form w-full" style={{ maxWidth:400, position:"relative", zIndex:2 }}>
 
             {/* Mobile brand */}
-            <div className="mb-8 flex items-center gap-3 lg:hidden">
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: "#04050F",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Fraunces', serif", fontSize: 20, color: "#6EE7B7", fontWeight: 700 }}>M</div>
-              <span style={{ fontWeight: 600, color: "#0D0A26", fontSize: 15, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Momentia</span>
+            <div className="flex items-center gap-3 mb-8 lg:hidden">
+              <div style={{ width:38, height:38, borderRadius:10, background:"#0b2d2a",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontFamily:"'Fraunces',serif", fontSize:20, color:"#4DD9AC", fontWeight:700 }}>M</div>
+              <span style={{ fontWeight:700, color:"#111827", fontSize:15, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Momentia</span>
             </div>
 
             {/* Badge */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, borderRadius: 20, padding: "5px 14px",
-              fontSize: 10.5, fontWeight: 500, background: "rgba(16,185,129,0.08)",
-              border: "1px solid rgba(16,185,129,0.2)", color: "#059669", marginBottom: 20, letterSpacing: "0.3px",
-              fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              <span style={{ width: 5.5, height: 5.5, borderRadius: "50%", background: "#10B981", display: "inline-block", animation: "pulse 2s ease infinite" }} />
+            <div className="inline-flex items-center gap-2 mb-6"
+              style={{ borderRadius:20, padding:"5px 14px", fontSize:11.5, fontWeight:500,
+                background:"rgba(13,148,136,0.07)", border:"1px solid rgba(13,148,136,0.18)",
+                color:"#0D9488", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+              <span className="w-[5px] h-[5px] rounded-full" style={{ background:"#0D9488", animation:"pulse 2s ease infinite" }} />
               Create your free account
             </div>
 
-            <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 42, fontWeight: 400, color: "#0D0A26",
-              letterSpacing: "-1px", lineHeight: 1.08, marginBottom: 4 }}>Sign up</h2>
-            <p style={{ fontSize: 13, color: "#8896B3", marginBottom: 28, fontWeight: 300, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:44, fontWeight:400, color:"#111827",
+              letterSpacing:"-1px", lineHeight:1.08, marginBottom:6 }}>Sign up</h2>
+            <p style={{ fontSize:13.5, color:"#9CA3AF", marginBottom:28, fontWeight:400, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
               Begin your creative journey on Momentia
             </p>
 
             {/* Error */}
             {error && (
-              <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)",
-                borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#DC2626", marginBottom: 16,
-                fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                {error}
-              </div>
+              <div style={{ background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)",
+                borderRadius:12, padding:"10px 14px", fontSize:13, color:"#DC2626", marginBottom:20,
+                fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{error}</div>
             )}
 
-            {/* Name */}
+            {/* Full Name */}
             <Field label="Full name" type="text" name="name" placeholder="Teddy Smith"
               value={formData.name} onChange={handleChange} />
 
             {/* Email + Send OTP */}
-            <div className="mb-4">
-              <label className="mb-2 block" style={{ fontSize: 10, fontWeight: 600, color: "#8896B3", letterSpacing: "0.9px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <div className="mb-5">
+              <label className="block mb-2"
+                style={{ fontSize:10.5, fontWeight:700, color:"#9CA3AF", letterSpacing:"0.9px", textTransform:"uppercase", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                 Email address
               </label>
               <div className="flex gap-2">
@@ -345,33 +356,33 @@ const Register = () => {
                   type="email" name="email" placeholder="teddy@gmail.com"
                   value={formData.email} onChange={handleChange} required
                   disabled={otpStatus === "verified"}
-                  className="flex-1 rounded-xl px-5 py-3.5 text-sm outline-none transition-all duration-200 disabled:opacity-60"
+                  className="flex-1 rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    background: otpStatus === "verified" ? "#F0EEF8" : "#F8F7FF",
-                    border: "1.5px solid #E2DCFF",
-                    color: "#0D0A26",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    background: otpStatus === "verified" ? "#F3F4F6" : "#fff",
+                    border: "1.5px solid #E5E7EB",
+                    color: "#111827",
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
                   }}
                 />
                 <button
                   type="button"
                   onClick={handleSendOtp}
                   disabled={otpStatus === "sending" || otpStatus === "verifying" || otpStatus === "verified"}
-                  className="send-otp-btn font-600 flex-shrink-0 rounded-xl px-4 py-3 text-xs transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="send-otp-btn flex-shrink-0 rounded-xl px-4 text-xs font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
-                    background: otpStatus === "verified" ? "rgba(16,185,129,0.1)" : "transparent",
-                    border: otpStatus === "verified" ? "1.5px solid #10B981" : "1.5px solid #E2DCFF",
-                    color: otpStatus === "verified" ? "#059669" : "#6B7280",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontWeight: 600,
-                    fontSize: 12,
-                    whiteSpace: "nowrap",
+                    background: otpStatus === "verified" ? "rgba(13,148,136,0.07)" : "transparent",
+                    border: otpStatus === "verified" ? "1.5px solid #0D9488" : "1.5px solid #E5E7EB",
+                    color: otpStatus === "verified" ? "#0D9488" : "#6B7280",
+                    fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    fontSize: 12, whiteSpace: "nowrap",
                     cursor: otpStatus === "verified" ? "default" : "pointer",
+                    minWidth: 90,
                   }}
                 >
                   {otpStatus === "sending" ? (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      <span style={{ width: 10, height: 10, border: "1.5px solid rgba(107,114,128,0.3)", borderTop: "1.5px solid #6B7280", borderRadius: "50%", animation: "spin .7s linear infinite", display: "inline-block" }} />
+                    <span className="inline-flex items-center gap-1.5">
+                      <span style={{ width:10, height:10, border:"1.5px solid rgba(107,114,128,0.3)", borderTop:"1.5px solid #6B7280", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />
                       Sending
                     </span>
                   ) : otpStatus === "verified" ? "✓ Verified" : "Send OTP"}
@@ -381,36 +392,49 @@ const Register = () => {
 
             {/* OTP verify row */}
             {(otpStatus === "sent" || otpStatus === "verifying") && (
-              <div className="otp-appear mb-4">
-                <label className="mb-2 block" style={{ fontSize: 10, fontWeight: 600, color: "#8896B3", letterSpacing: "0.9px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              <div className="otp-appear mb-5">
+                <label className="block mb-2"
+                  style={{ fontSize:10.5, fontWeight:700, color:"#9CA3AF", letterSpacing:"0.9px", textTransform:"uppercase", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   Verification code
                 </label>
                 <div className="flex gap-2">
-                  <OtpField value={otp} onChange={(e) => setOtp(e.target.value)} />
+                  <input
+                    type="text" placeholder="Enter 6-digit OTP"
+                    value={otp} onChange={(e) => setOtp(e.target.value)}
+                    maxLength={6}
+                    className="flex-1 rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200"
+                    style={{
+                      background: "#fff",
+                      border: "1.5px solid #E5E7EB",
+                      color: "#111827",
+                      fontFamily: "'Plus Jakarta Sans',sans-serif",
+                      letterSpacing: "0.25em",
+                      boxShadow: "0 0 0 3px rgba(13,148,136,0.08)",
+                      borderColor: "#0D9488",
+                    }}
+                  />
                   <button
                     type="button"
                     onClick={handleVerifyOtp}
                     disabled={otpStatus === "verifying" || otp.length < 4}
                     className="verify-btn flex-shrink-0 rounded-xl px-5 py-3 text-xs font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                     style={{
-                      background: "linear-gradient(135deg, #059669 0%, #10B981 100%)",
-                      color: "#fff",
-                      border: "none",
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: 12,
-                      whiteSpace: "nowrap",
-                      boxShadow: "0 4px 14px -4px rgba(16,185,129,0.4)",
+                      background: "linear-gradient(135deg, #0D9488 0%, #14B8A6 55%, #2DD4BF 100%)",
+                      color: "#fff", border: "none",
+                      fontFamily: "'Plus Jakarta Sans',sans-serif",
+                      fontSize: 12, whiteSpace: "nowrap",
+                      boxShadow: "0 4px 14px -4px rgba(13,148,136,0.4)",
                     }}
                   >
                     {otpStatus === "verifying" ? (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        <span style={{ width: 10, height: 10, border: "1.5px solid rgba(255,255,255,0.3)", borderTop: "1.5px solid #fff", borderRadius: "50%", animation: "spin .7s linear infinite", display: "inline-block" }} />
+                      <span className="inline-flex items-center gap-1.5">
+                        <span style={{ width:10, height:10, border:"1.5px solid rgba(255,255,255,0.3)", borderTop:"1.5px solid #fff", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />
                         Checking
                       </span>
                     ) : "Verify →"}
                   </button>
                 </div>
-                <p style={{ fontSize: 11, color: "#A09BC4", marginTop: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <p style={{ fontSize:11.5, color:"#9CA3AF", marginTop:6, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   Check your inbox — OTP expires in 10 minutes
                 </p>
               </div>
@@ -418,65 +442,67 @@ const Register = () => {
 
             {/* Verified pill */}
             {otpStatus === "verified" && (
-              <div className="otp-appear mb-4" style={{ display: "inline-flex", alignItems: "center", gap: 7,
-                borderRadius: 20, padding: "5px 14px", fontSize: 12, fontWeight: 500,
-                background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", color: "#059669",
-                fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                <span style={{ fontSize: 14 }}>✓</span> Email verified successfully
+              <div className="otp-appear mb-5 inline-flex items-center gap-2"
+                style={{ borderRadius:20, padding:"5px 14px", fontSize:11.5, fontWeight:500,
+                  background:"rgba(13,148,136,0.07)", border:"1px solid rgba(13,148,136,0.18)",
+                  color:"#0D9488", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                <span style={{ fontSize:13 }}>✓</span> Email verified successfully
               </div>
             )}
 
             {/* Password */}
-            <Field label="Create password" type="password" name="password" placeholder="••••••••••"
-              value={formData.password} onChange={handleChange}
-              disabled={otpStatus !== "verified"} />
+            <Field
+              label="Create password"
+              type={showPass ? "text" : "password"}
+              name="password"
+              placeholder="••••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              disabled={otpStatus !== "verified"}
+              extra={otpStatus === "verified" ? <EyeIcon show={showPass} onToggle={() => setShowPass(!showPass)} /> : null}
+            />
 
             {/* Submit */}
             <button
               type="submit"
               disabled={otpStatus !== "verified" || loading}
-              className="submit-btn"
+              className="submit-btn w-full flex items-center justify-center gap-2.5"
               style={{
-                width: "100%", padding: "15px", borderRadius: 14, border: "none",
-                background: "linear-gradient(135deg, #059669 0%, #10B981 55%, #34D399 100%)",
-                color: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 14, fontWeight: 600,
+                padding:"15px", borderRadius:14, border:"none",
+                background:"linear-gradient(135deg, #0D9488 0%, #14B8A6 55%, #2DD4BF 100%)",
+                color:"#fff", fontFamily:"'Plus Jakarta Sans',sans-serif",
+                fontSize:14.5, fontWeight:700,
                 cursor: otpStatus !== "verified" || loading ? "not-allowed" : "pointer",
-                opacity: otpStatus !== "verified" ? 0.55 : loading ? 0.75 : 1,
-                letterSpacing: "0.2px", marginBottom: 22, marginTop: 4,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                transition: "all 0.2s", boxShadow: "0 8px 28px -6px rgba(16,185,129,0.4)",
+                opacity: otpStatus !== "verified" ? 0.5 : loading ? 0.75 : 1,
+                letterSpacing:"0.15px", marginBottom:24,
+                boxShadow:"0 6px 24px -4px rgba(13,148,136,0.38)",
               }}
             >
               {loading ? (
                 <>
-                  <span style={{ width: 15, height: 15, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} />
+                  <span style={{ width:15, height:15, border:"2px solid rgba(255,255,255,0.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />
                   Creating account…
                 </>
               ) : "Create Account →"}
             </button>
 
             {/* Divider */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
-              <div style={{ flex: 1, height: 1, background: "#DDD8FF" }} />
-              <span style={{ fontSize: 11, color: "#A09BC4", whiteSpace: "nowrap", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or sign up with</span>
-              <div style={{ flex: 1, height: 1, background: "#DDD8FF" }} />
+            <div className="flex items-center gap-3 mb-5">
+              <div style={{ flex:1, height:1, background:"#F3F4F6" }} />
+              <span style={{ fontSize:11.5, color:"#C4C4CF", whiteSpace:"nowrap", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>or continue with</span>
+              <div style={{ flex:1, height:1, background:"#F3F4F6" }} />
             </div>
 
-            {/* Social buttons */}
-            <div style={{ display: "flex", gap: 12, marginBottom: 28 }}>
-              {[
-                { icon: "G", label: "Google",   iconBg: "#fff",    iconColor: "#EA4335" },
-                { icon: "f", label: "Facebook", iconBg: "#1877F2", iconColor: "#fff"    },
-              ].map(({ icon, label, iconBg, iconColor }) => (
-                <SocialBtn key={label} icon={icon} label={label} iconBg={iconBg} iconColor={iconColor} />
-              ))}
+            {/* Social */}
+            <div className="flex gap-3 mb-7">
+              <SocialBtn label="Google" />
+              <SocialBtn label="Facebook" />
             </div>
 
-            {/* Login link */}
-            <p style={{ textAlign: "center", fontSize: 13, color: "#8896B3", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <p style={{ textAlign:"center", fontSize:13.5, color:"#9CA3AF", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
               Already have an account?{" "}
-              <span onClick={() => navigate("/login")} style={{ color: "#059669", fontWeight: 600, cursor: "pointer" }}>
+              <span onClick={() => navigate("/login")}
+                style={{ color:"#0D9488", fontWeight:700, cursor:"pointer" }}>
                 Sign in
               </span>
             </p>
@@ -486,30 +512,6 @@ const Register = () => {
 
       </div>
     </>
-  );
-};
-
-/* ─── Social Button (matches Login) ─────────────────────────── */
-const SocialBtn = ({ icon, label, iconBg, iconColor }) => {
-  const [hov, setHov] = useState(false);
-  return (
-    <button type="button"
-      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      className="flex flex-1 items-center justify-center gap-2.5 rounded-xl px-4 py-3 text-[13px] font-medium transition-all duration-200"
-      style={{
-        border: hov ? "1.5px solid #10B981" : "1.5px solid #E2DCFF",
-        background: hov ? "#F0FDF8" : "#fff",
-        color: "#1A1535",
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-        cursor: "pointer",
-      }}
-    >
-      <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
-        style={{ background: iconBg, color: iconColor, border: label === "Google" ? "1px solid #eee" : "none" }}>
-        {icon}
-      </span>
-      {label}
-    </button>
   );
 };
 

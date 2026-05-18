@@ -2,629 +2,997 @@ import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
+
 import Sidebar from "../components/Sidebar.jsx";
 import FollowersModal from "../components/FollowersModal.jsx";
 import FollowingModal from "../components/FollowingModal.jsx";
 import FollowButton from "../components/FollowButton.jsx";
+
 import {
-  Camera, Heart, MapPin, Link2, Calendar, BadgeCheck,
-  LayoutGrid, User, Images, Bookmark, ThumbsUp, Plus,
-  Settings, Share2, MoreHorizontal, Zap,
+  Camera,
+  Heart,
+  MapPin,
+  Link2,
+  Calendar,
+  BadgeCheck,
+  LayoutGrid,
+  Bookmark,
+  Plus,
+  MoreHorizontal,
+  MessageCircle,
+  Send,
+  X,
+  Loader2,
+  Clapperboard,
+  Image as ImageIcon,
+  Play,
+  Share2,
 } from "lucide-react";
 
-/* ─── TABS ─────────────────────────────────────────────────── */
 const TABS = [
-  { key: "posts",  label: "Posts",  Icon: LayoutGrid },
-  { key: "about",  label: "About",  Icon: User       },
-  { key: "photos", label: "Photos", Icon: Images     },
-  { key: "saved",  label: "Saved",  Icon: Bookmark   },
-  { key: "liked",  label: "Liked",  Icon: ThumbsUp   },
+  { key: "posts", label: "Posts", Icon: LayoutGrid },
+  { key: "reels", label: "Reels", Icon: Clapperboard },
+  { key: "photos", label: "Photos", Icon: ImageIcon },
+  { key: "saved", label: "Saved", Icon: Bookmark },
 ];
 
-/* ─── CSS ───────────────────────────────────────────────────── */
-const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
-  * { box-sizing: border-box; }
-
-  @keyframes fadeUp   { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
-  @keyframes fadeIn   { from { opacity:0 } to { opacity:1 } }
-  @keyframes pulse    { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.7)} }
-  @keyframes spin     { to { transform:rotate(360deg) } }
-  @keyframes shimmer  { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
-  @keyframes gridPulse{ 0%,100%{opacity:0.04} 50%{opacity:0.09} }
-  @keyframes rotateSlow { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-  @keyframes rotateSlowR{ from{transform:rotate(0)} to{transform:rotate(-360deg)} }
-  @keyframes floatUp  { 0%{transform:translateY(0)} 100%{transform:translateY(-10px)} }
-  @keyframes orbitDot { 0%{transform:rotate(0deg) translateX(110px)} 100%{transform:rotate(360deg) translateX(110px)} }
-  @keyframes avatarGlow { 0%,100%{box-shadow:0 0 0 0 rgba(110,231,183,0)} 50%{box-shadow:0 0 28px 6px rgba(110,231,183,0.25)} }
-  @keyframes scanLine { 0%{top:-2px} 100%{top:100%} }
-  @keyframes countUp  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-
-  .profile-root { font-family:'Plus Jakarta Sans',sans-serif; min-height:100vh; background:#04050F; display:flex; }
-  .profile-body { flex:1; padding:24px; overflow-y:auto; }
-
-  /* cover */
-  .cover-wrap { position:relative; height:200px; border-radius:24px 24px 0 0; overflow:hidden; }
-  @media(min-width:768px){ .cover-wrap{height:260px;} }
-
-  /* grid bg */
-  .grid-bg {
-    position:absolute; inset:0; z-index:0;
-    animation:gridPulse 5s ease-in-out infinite;
-    background-image: linear-gradient(rgba(110,231,183,0.07) 1px,transparent 1px),
-                      linear-gradient(90deg,rgba(110,231,183,0.07) 1px,transparent 1px);
-    background-size:42px 42px;
-  }
-
-  /* card */
-  .profile-card {
-    background:rgba(255,255,255,0.03);
-    border:1px solid rgba(110,231,183,0.1);
-    border-radius:24px;
-    overflow:hidden;
-    backdrop-filter:blur(10px);
-    animation:fadeUp .6s cubic-bezier(.22,1,.36,1) both;
-  }
-
-  /* tab */
-  .tab-btn { transition:all .2s; border-bottom:2px solid transparent; white-space:nowrap; }
-  .tab-btn.active { border-color:#10B981; color:#10B981; }
-  .tab-btn:not(.active) { color:rgba(255,255,255,0.4); }
-  .tab-btn:not(.active):hover { color:rgba(255,255,255,0.75); }
-
-  /* post card */
-  .post-card { position:relative; overflow:hidden; border-radius:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(110,231,183,0.08); cursor:pointer; transition:transform .25s,border-color .25s; }
-  .post-card:hover { transform:translateY(-4px); border-color:rgba(110,231,183,0.3); }
-  .post-card img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s; }
-  .post-card:hover img { transform:scale(1.06); }
-  .post-overlay { position:absolute;inset:0;background:linear-gradient(to top,rgba(4,5,15,0.75) 0%,transparent 55%);opacity:0;transition:opacity .25s;display:flex;align-items:flex-end;padding:12px; }
-  .post-card:hover .post-overlay { opacity:1; }
-
-  /* edit input */
-  .edit-input {
-    background:rgba(255,255,255,0.05); border:1.5px solid rgba(110,231,183,0.2);
-    border-radius:12px; padding:12px 16px; color:#fff; font-family:'Plus Jakarta Sans',sans-serif;
-    font-size:14px; outline:none; width:100%; transition:border-color .2s,box-shadow .2s;
-  }
-  .edit-input:focus { border-color:#10B981; box-shadow:0 0 0 4px rgba(16,185,129,0.12); }
-  .edit-input::placeholder { color:rgba(255,255,255,0.3); }
-
-  /* btn */
-  .btn-primary {
-    background:linear-gradient(135deg,#059669 0%,#10B981 55%,#34D399 100%);
-    border:none; border-radius:12px; color:#fff; font-family:'Plus Jakarta Sans',sans-serif;
-    font-weight:600; font-size:13px; padding:10px 20px; cursor:pointer;
-    transition:transform .2s,box-shadow .2s;
-    box-shadow:0 6px 20px -4px rgba(16,185,129,0.4);
-  }
-  .btn-primary:hover { transform:translateY(-1.5px); box-shadow:0 12px 32px -6px rgba(16,185,129,0.55); }
-  .btn-secondary {
-    background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.1);
-    border-radius:12px; color:rgba(255,255,255,0.75); font-family:'Plus Jakarta Sans',sans-serif;
-    font-weight:600; font-size:13px; padding:10px 20px; cursor:pointer; transition:all .2s;
-  }
-  .btn-secondary:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2); }
-
-  /* stat */
-  .stat-item { text-align:center; cursor:pointer; padding:8px 16px; border-radius:14px; transition:background .2s; }
-  .stat-item:hover { background:rgba(110,231,183,0.07); }
-
-  /* shimmer skeleton */
-  .skeleton { background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%); background-size:400px 100%; animation:shimmer 1.4s infinite; border-radius:8px; }
-
-  /* avatar ring */
-  .avatar-ring { animation:avatarGlow 3s ease-in-out infinite; }
-
-  /* camera icon hover */
-  @keyframes cameraHover { 
-    0% { transform:scale(1); }
-    50% { transform:scale(1.15); }
-    100% { transform:scale(1); }
-  }
-  
-  .camera-icon-btn {
-    position:absolute; bottom:4px; right:4px; width:32px; height:32px;
-    border-radius:50%; background:linear-gradient(135deg, #059669 0%, #10B981 100%);
-    border:2px solid #04050F; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; transition:all .2s ease; box-shadow:0 4px 14px rgba(16,185,129,0.3);
-    z-index:10;
-  }
-  
-  .camera-icon-btn:hover:not(:disabled) {
-    transform:scale(1.1); box-shadow:0 6px 20px rgba(16,185,129,0.5), 0 0 16px rgba(16,185,129,0.3);
-  }
-  
-  .camera-icon-btn:active:not(:disabled) {
-    transform:scale(0.95);
-  }
-  
-  .camera-icon-btn:disabled {
-    cursor:not-allowed; opacity:0.8;
-  }
-
-  /* scrollbar */
-  ::-webkit-scrollbar { width:4px; height:4px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:rgba(110,231,183,0.2); border-radius:4px; }
-
-  /* responsive */
-  @media(max-width:768px) {
-    .profile-body { padding:12px; }
-    .cover-wrap { height:150px; }
-    .hide-mobile { display:none !important; }
-  }
-`;
-
-/* ─── MAIN ───────────────────────────────────────────────────── */
 const Profile = () => {
   const { user } = useSelector((s) => s.auth);
   const { userId } = useParams();
 
   const profileUserId = userId || user?.id;
-  const isOwnProfile  = !userId || userId === user?.id;
+  const isOwnProfile = !userId || userId === user?.id;
 
-  const [profile,      setProfile]      = useState(null);
-  const [posts,        setPosts]        = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [isFollowing,  setIsFollowing]  = useState(false);
-  const [editMode,     setEditMode]     = useState(false);
-  const [activeTab,    setActiveTab]    = useState("posts");
-  const [avatarFile,   setAvatarFile]   = useState(null);
-  const [avatarPrev,   setAvatarPrev]   = useState(null);
-  const [saving,       setSaving]       = useState(false);
-  const [avatarUploading, setAvatarUploading] = useState(false);
-  const [showFollowers,setShowFollowers]= useState(false);
-  const [showFollowing,setShowFollowing]= useState(false);
-  const [form, setForm] = useState({ name:"", bio:"", gender:"" });
+  const [profile, setProfile] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [activeTab, setActiveTab] = useState("posts");
+
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+
+  const [selectedPost, setSelectedPost] = useState(null);
+
+  const [showEdit, setShowEdit] = useState(false);
+
+  const [uploading, setUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const fetchProfile = async () => {
     try {
-      const res  = await api.get(`/profile/get-profile/${profileUserId}`);
-      const data = res.data.profile;
-      setProfile(data);
-      if (res.data.following !== undefined) setIsFollowing(res.data.following);
-      setForm({ name: data.name||"", bio: data.bio||"", gender: data.gender||"" });
-    } catch (err) { console.error(err); }
+      const res = await api.get(`/profile/get-profile/${profileUserId}`);
+      setProfile(res.data.profile);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  const fetchProfilePosts = async () => {
+  const fetchPosts = async () => {
     try {
       const res = await api.get(`/profile/get-userposts/${profileUserId}`);
       setPosts(res.data.posts || []);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   useEffect(() => {
     if (!profileUserId) return;
+
     (async () => {
-      setLoading(true);
-      await Promise.all([fetchProfile(), fetchProfilePosts()]);
-      setLoading(false);
+      try {
+        setLoading(true);
+
+        await Promise.all([fetchProfile(), fetchPosts()]);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [profileUserId]);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleProfileUpload = async (e) => {
+    try {
+      const file = e.target.files[0];
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // Instant preview
-    setAvatarFile(file);
-    setAvatarPrev(URL.createObjectURL(file));
-    
-    // Auto-upload if not in edit mode (for seamless UX)
-    if (!editMode) {
-      const uploadAvatar = async () => {
-        setAvatarUploading(true);
-        try {
-          const fd = new FormData();
-          fd.append("avatar", file);
-          await api.post("/profile/upload-avatar", fd);
-          setAvatarFile(null);
-          await fetchProfile();
-        } catch (err) {
-          console.error("Avatar upload failed:", err);
-          setAvatarUploading(false);
-        }
-      };
-      uploadAvatar();
+      if (!file) return;
+
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        return alert("Only jpg, jpeg, png and webp allowed");
+      }
+
+      const localPreview = URL.createObjectURL(file);
+
+      setPreviewImage(localPreview);
+
+      const formData = new FormData();
+
+      formData.append("avatar", file);
+
+      setUploading(true);
+
+      await api.post("/profile/upload-avatar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      await fetchProfile();
+    } catch (err) {
+      console.log(err);
+      alert("Profile upload failed");
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await api.post("/profile/edit-profile", form);
-      if (avatarFile) {
-        const fd = new FormData();
-        fd.append("avatar", avatarFile);
-        await api.post("/profile/upload-avatar", fd);
-      }
-      setEditMode(false); setAvatarFile(null); setAvatarPrev(null);
-      fetchProfile();
-    } finally { setSaving(false); }
-  };
-
-  const handleCancel = () => {
-    setEditMode(false); setAvatarFile(null); setAvatarPrev(null);
-    setForm({ name: profile?.name||"", bio: profile?.bio||"", gender: profile?.gender||"" });
-  };
-
-  /* LOADING */
-  if (loading) return (
-    <>
-      <style>{css}</style>
-      <div className="profile-root" style={{ alignItems:"center", justifyContent:"center" }}>
-        <div style={{ textAlign:"center" }}>
-          <div style={{ width:48, height:48, border:"2px solid rgba(110,231,183,0.2)", borderTop:"2px solid #10B981", borderRadius:"50%", animation:"spin .8s linear infinite", margin:"0 auto 16px" }} />
-          <p style={{ color:"rgba(255,255,255,0.4)", fontSize:13, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Loading profile…</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F6FB] flex items-center justify-center">
+        <div className="bg-white px-6 py-4 rounded-2xl shadow-lg">
+          <p className="text-[#2F3EDB] font-semibold animate-pulse">
+            Loading profile...
+          </p>
         </div>
       </div>
-    </>
-  );
-
-  const avatarSrc = avatarPrev || profile?.profilePicture?.profileView || null;
+    );
+  }
 
   return (
-    <>
-      <style>{css}</style>
-      <div className="profile-root">
+    <div className="min-h-screen bg-[#F5F6FB] flex text-[#111827]">
 
-        {/* SIDEBAR */}
-        <div className="hide-mobile">
-          <Sidebar />
-        </div>
+      {/* SIDEBAR */}
 
-        {/* BODY */}
-        <div className="profile-body" style={{ paddingLeft: 24 }}>
-          <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+      <div className="hidden lg:block">
+        <Sidebar />
+      </div>
 
-            {/* ── PROFILE CARD ── */}
-            <div className="profile-card">
+      {/* MAIN */}
 
-              {/* COVER / HERO */}
-              <div className="cover-wrap">
-                {/* Grid bg */}
-                <div className="grid-bg" />
+      <div className="flex-1 overflow-y-auto">
 
-                {/* Scan line */}
-                <div style={{ position:"absolute", left:0, right:0, height:"1px", zIndex:2,
-                  background:"linear-gradient(90deg,transparent 0%,rgba(110,231,183,0.5) 50%,transparent 100%)",
-                  animation:"scanLine 10s linear infinite" }} />
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
 
-                {/* Decorative rings */}
-                <div style={{ position:"absolute", top:"50%", left:"50%", width:340, height:340,
-                  marginLeft:-170, marginTop:-170, borderRadius:"50%",
-                  border:"1px solid rgba(110,231,183,0.06)", animation:"rotateSlow 50s linear infinite" }} />
-                <div style={{ position:"absolute", top:"50%", left:"50%", width:220, height:220,
-                  marginLeft:-110, marginTop:-110, borderRadius:"50%",
-                  border:"1px dashed rgba(99,102,241,0.12)", animation:"rotateSlowR 28s linear infinite" }} />
+          {/* PROFILE HEADER */}
 
-                {/* Orbit dot */}
-                <div style={{ position:"absolute", top:"50%", left:"50%", width:0, height:0, zIndex:3 }}>
-                  <div style={{ width:6, height:6, borderRadius:"50%", background:"#6EE7B7",
-                    boxShadow:"0 0 10px 3px rgba(110,231,183,0.7)",
-                    animation:"orbitDot 8s linear infinite" }} />
-                </div>
+          <div className="relative overflow-hidden rounded-[35px] bg-gradient-to-r from-[#2F3EDB] via-[#5160F5] to-[#FF7A3D] p-[1px] shadow-2xl">
 
-                {/* Diagonal lines */}
-                <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", zIndex:0 }} preserveAspectRatio="none">
-                  <line x1="0" y1="30%" x2="100%" y2="72%" stroke="rgba(110,231,183,0.05)" strokeWidth="1" />
-                  <line x1="0" y1="70%" x2="100%" y2="20%" stroke="rgba(99,102,241,0.04)" strokeWidth="0.8" />
-                  <line x1="20%" y1="0" x2="80%" y2="100%" stroke="rgba(110,231,183,0.03)" strokeWidth="0.6" />
-                </svg>
+            <div className="bg-[#F8FAFF]/95 backdrop-blur-xl rounded-[35px] p-6 md:p-10">
 
-                {/* Corner brackets */}
-                {[
-                  { top:14, left:14,   borderTop:"1.5px solid rgba(110,231,183,0.4)", borderLeft:"1.5px solid rgba(110,231,183,0.4)"   },
-                  { top:14, right:14,  borderTop:"1.5px solid rgba(110,231,183,0.4)", borderRight:"1.5px solid rgba(110,231,183,0.4)"  },
-                  { bottom:14, left:14, borderBottom:"1.5px solid rgba(110,231,183,0.4)", borderLeft:"1.5px solid rgba(110,231,183,0.4)" },
-                  { bottom:14, right:14,borderBottom:"1.5px solid rgba(110,231,183,0.4)", borderRight:"1.5px solid rgba(110,231,183,0.4)"},
-                ].map((s, i) => (
-                  <div key={i} style={{ position:"absolute", width:22, height:22, zIndex:2, ...s }} />
-                ))}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-[#FF7A3D]/20 blur-3xl rounded-full" />
+              <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#2F3EDB]/20 blur-3xl rounded-full" />
 
-                {/* Live badge */}
-                <div style={{ position:"absolute", top:18, left:"50%", transform:"translateX(-50%)",
-                  display:"inline-flex", alignItems:"center", gap:6, padding:"4px 12px", borderRadius:20,
-                  background:"rgba(110,231,183,0.06)", border:"1px solid rgba(110,231,183,0.15)", zIndex:3 }}>
-                  <span style={{ width:5, height:5, borderRadius:"50%", background:"#6EE7B7",
-                    display:"inline-block", animation:"pulse 2s ease infinite" }} />
-                  <span style={{ fontSize:9.5, color:"#6EE7B7", letterSpacing:"1.5px", textTransform:"uppercase",
-                    fontWeight:500, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Momentia</span>
-                </div>
+              <div className="relative flex flex-col xl:flex-row gap-10">
 
-                {/* Cover gradient overlay at bottom */}
-                <div style={{ position:"absolute", inset:0, background:"linear-gradient(to bottom, transparent 40%, rgba(4,5,15,0.95) 100%)", zIndex:1 }} />
-              </div>
+                {/* PROFILE IMAGE */}
 
-              {/* ── AVATAR + INFO ROW ── */}
-              <div style={{ padding:"0 28px 28px", position:"relative" }}>
+                <div className="flex justify-center">
 
-                {/* Avatar — overlaps cover */}
-                <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between",
-                  marginTop:-52, position:"relative", zIndex:4, flexWrap:"wrap", gap:16 }}>
+                  <div className="relative group">
 
-                  {/* LEFT: avatar + name */}
-                  <div style={{ display:"flex", alignItems:"flex-end", gap:20, flexWrap:"wrap" }}>
+                    <div className="p-1 rounded-full bg-gradient-to-br from-[#2F3EDB] to-[#FF7A3D] shadow-2xl">
 
-                    {/* AVATAR */}
-                    <div style={{ position:"relative", flexShrink:0 }}>
-                      <div className="avatar-ring" style={{ width:108, height:108, borderRadius:"50%",
-                        border:"3px solid rgba(110,231,183,0.5)", padding:3, background:"#04050F" }}>
-                        {avatarSrc ? (
-                          <img src={avatarSrc} alt="avatar"
-                            style={{ width:"100%", height:"100%", borderRadius:"50%", objectFit:"cover", display:"block", opacity: avatarUploading ? 0.6 : 1, transition: "opacity .2s" }} />
+                      <div className="w-40 h-40 md:w-52 md:h-52 rounded-full overflow-hidden bg-white border-[6px] border-white">
+
+                        {previewImage ? (
+                          <img
+                            src={previewImage}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : profile?.profilePicture?.profileView ? (
+                          <img
+                            src={profile.profilePicture.profileView}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <div style={{ width:"100%", height:"100%", borderRadius:"50%",
-                            background:"linear-gradient(135deg, rgba(110,231,183,0.15) 0%, rgba(99,102,241,0.1) 100%)",
-                            display:"flex", alignItems:"center", justifyContent:"center", opacity: avatarUploading ? 0.6 : 1, transition: "opacity .2s" }}>
-                            <span style={{ fontFamily:"'Fraunces',serif", fontSize:36, fontWeight:700, color:"#6EE7B7" }}>
-                              {profile?.name?.[0] || "U"}
-                            </span>
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#2F3EDB] to-[#FF7A3D] text-white text-6xl font-bold">
+                            {profile?.name?.[0]}
                           </div>
                         )}
+
                       </div>
 
-                      {/* Camera icon - show always if own profile */}
-                      {isOwnProfile && (
-                        <label className="camera-icon-btn" title={avatarSrc ? "Change profile picture" : "Add profile picture"} style={{ opacity: avatarUploading ? 0.7 : 1 }}>
-                          {avatarUploading ? (
-                            <span style={{ width:16, height:16, border:"2px solid rgba(255,255,255,0.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />
-                          ) : (
-                            <Camera size={16} color="#fff" />
-                          )}
-                          <input 
-                            type="file" 
-                            hidden 
-                            accept="image/*" 
-                            onChange={handleAvatarChange}
-                            disabled={avatarUploading}
-                          />
-                        </label>
-                      )}
                     </div>
 
-                    {/* NAME + USERNAME + BIO */}
-                    <div style={{ paddingBottom:6 }}>
-                      {editMode ? (
-                        <input className="edit-input" name="name" value={form.name} onChange={handleChange}
-                          placeholder="Your name" style={{ fontSize:20, fontWeight:700, marginBottom:8 }} />
+                    {isOwnProfile && (
+                      <label className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-300">
+
+                        {uploading ? (
+                          <Loader2
+                            size={20}
+                            className="animate-spin text-[#2F3EDB]"
+                          />
+                        ) : (
+                          <Camera
+                            size={20}
+                            className="text-[#2F3EDB]"
+                          />
+                        )}
+
+                        <input
+                          type="file"
+                          hidden
+                          accept=".jpg,.jpeg,.png,.webp"
+                          onChange={handleProfileUpload}
+                        />
+
+                      </label>
+                    )}
+
+                  </div>
+
+                </div>
+
+                {/* INFO */}
+
+                <div className="flex-1">
+
+                  {/* USERNAME */}
+
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+
+                    <div>
+
+                      <div className="flex items-center gap-3 flex-wrap">
+
+                        <h1 className="text-3xl md:text-5xl font-bold text-[#111827]">
+                          {profile?.username}
+                        </h1>
+
+                        <BadgeCheck
+                          size={28}
+                          className="text-[#2F3EDB]"
+                        />
+
+                      </div>
+
+                      <p className="text-[#6B7280] mt-2 text-lg">
+                        @{profile?.username}
+                      </p>
+
+                    </div>
+
+                    {/* ACTIONS */}
+
+                    <div className="flex flex-wrap gap-3">
+
+                      {isOwnProfile ? (
+                        <>
+                          <button
+                            onClick={() => setShowEdit(true)}
+                            className="px-6 py-3 rounded-2xl bg-white border border-[#E5E7EB] text-[#111827] font-semibold shadow-md hover:shadow-xl hover:-translate-y-1 transition-all"
+                          >
+                            Edit Profile
+                          </button>
+
+                          <button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#2F3EDB] to-[#5160F5] text-white font-semibold shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+                            <Plus size={18} />
+                            Create Post
+                          </button>
+
+                          <button className="px-5 py-3 rounded-2xl bg-[#FF7A3D] text-white font-semibold shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+                            <Share2 size={18} />
+                            Share
+                          </button>
+                        </>
                       ) : (
-                        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
-                          <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:26, fontWeight:700, color:"#fff",
-                            letterSpacing:"-0.5px", margin:0 }}>
-                            {profile?.name}
-                          </h1>
-                          <BadgeCheck size={20} color="#10B981" />
+                        <FollowButton userId={profileUserId} />
+                      )}
+
+                      <button className="w-12 h-12 rounded-2xl bg-white border border-[#E5E7EB] flex items-center justify-center shadow-md hover:shadow-xl transition-all">
+                        <MoreHorizontal
+                          size={20}
+                          className="text-[#111827]"
+                        />
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                  {/* STATS */}
+
+                  <div className="grid grid-cols-3 gap-4 mt-8">
+
+                    <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white shadow-lg hover:-translate-y-1 transition-all">
+
+                      <h3 className="text-3xl font-bold text-[#2F3EDB]">
+                        {profile?.totalPosts || 0}
+                      </h3>
+
+                      <p className="text-[#6B7280] mt-1">
+                        Posts
+                      </p>
+
+                    </div>
+
+                    <button
+                      onClick={() => setShowFollowers(true)}
+                      className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white shadow-lg hover:-translate-y-1 transition-all text-left"
+                    >
+
+                      <h3 className="text-3xl font-bold text-[#FF7A3D]">
+                        {profile?.followers || 0}
+                      </h3>
+
+                      <p className="text-[#6B7280] mt-1">
+                        Followers
+                      </p>
+
+                    </button>
+
+                    <button
+                      onClick={() => setShowFollowing(true)}
+                      className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white shadow-lg hover:-translate-y-1 transition-all text-left"
+                    >
+
+                      <h3 className="text-3xl font-bold text-[#2F3EDB]">
+                        {profile?.following || 0}
+                      </h3>
+
+                      <p className="text-[#6B7280] mt-1">
+                        Following
+                      </p>
+
+                    </button>
+
+                  </div>
+
+                  {/* BIO */}
+
+                  <div className="mt-8 bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-lg border border-white">
+
+                    <h2 className="text-2xl font-bold text-[#111827]">
+                      {profile?.name}
+                    </h2>
+
+                    {profile?.bio && (
+                      <p className="text-[#4B5563] mt-4 leading-8 text-[15px]">
+                        {profile.bio}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap gap-5 mt-5">
+
+                      {profile?.location && (
+                        <div className="flex items-center gap-2 text-[#6B7280]">
+                          <MapPin size={16} />
+                          {profile.location}
                         </div>
                       )}
 
-                      <p style={{ fontSize:12, color:"rgba(255,255,255,0.35)", fontFamily:"'Plus Jakarta Sans',sans-serif", margin:"0 0 8px" }}>
-                        @{profile?.username || "momentia_user"}
-                      </p>
-
-                      {!editMode && (
-                        <p style={{ fontSize:13, color:"rgba(255,255,255,0.6)", fontFamily:"'Plus Jakarta Sans',sans-serif",
-                          maxWidth:380, lineHeight:1.6, margin:0 }}>
-                          {profile?.bio || "Traveler · Dreamer · Moment collector ✨"}
-                        </p>
+                      {profile?.website && (
+                        <a
+                          href={profile.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-2 text-[#2F3EDB] font-medium"
+                        >
+                          <Link2 size={16} />
+                          Website
+                        </a>
                       )}
+
+                      <div className="flex items-center gap-2 text-[#6B7280]">
+                        <Calendar size={16} />
+                        Joined 2026
+                      </div>
+
                     </div>
+
                   </div>
 
-                  {/* RIGHT: action buttons */}
-                  <div style={{ display:"flex", alignItems:"center", gap:10, paddingBottom:6 }}>
-                    {isOwnProfile ? (
-                      editMode ? (
-                        <>
-                          <button className="btn-secondary" onClick={handleCancel}>Cancel</button>
-                          <button className="btn-primary" onClick={handleSave} disabled={saving}>
-                            {saving ? (
-                              <span style={{ display:"flex", alignItems:"center", gap:8 }}>
-                                <span style={{ width:12, height:12, border:"2px solid rgba(255,255,255,0.3)", borderTop:"2px solid #fff", borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />
-                                Saving…
-                              </span>
-                            ) : "Save Changes"}
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button className="btn-secondary" onClick={() => setEditMode(true)}
-                            style={{ display:"flex", alignItems:"center", gap:6 }}>
-                            <Settings size={13} />
-                            Edit Profile
-                          </button>
-                          <button className="btn-primary" style={{ display:"flex", alignItems:"center", gap:6 }}>
-                            <Plus size={14} />
-                            <span>Create Post</span>
-                          </button>
-                        </>
-                      )
-                    ) : (
-                      <FollowButton userId={profileUserId} isFollowing={isFollowing}
-                        onFollowStatusChange={() => fetchProfile()} />
-                    )}
-
-                    <button style={{ width:38, height:38, borderRadius:10,
-                      background:"rgba(255,255,255,0.05)", border:"1.5px solid rgba(255,255,255,0.1)",
-                      display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer" }}>
-                      <MoreHorizontal size={16} color="rgba(255,255,255,0.6)" />
-                    </button>
-                  </div>
                 </div>
 
-                {/* ── EDIT FIELDS ── */}
-                {editMode && (
-                  <div style={{ marginTop:20, display:"grid", gap:12, gridTemplateColumns:"1fr 1fr",
-                    animation:"fadeUp .3s cubic-bezier(.22,1,.36,1) both" }}>
-                    <div style={{ gridColumn:"1/-1" }}>
-                      <label style={{ fontSize:10, fontWeight:600, color:"rgba(255,255,255,0.35)", letterSpacing:"0.9px",
-                        textTransform:"uppercase", display:"block", marginBottom:6, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Bio</label>
-                      <textarea className="edit-input" name="bio" value={form.bio} onChange={handleChange}
-                        rows={3} placeholder="Write your bio…" style={{ resize:"none" }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize:10, fontWeight:600, color:"rgba(255,255,255,0.35)", letterSpacing:"0.9px",
-                        textTransform:"uppercase", display:"block", marginBottom:6, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Gender</label>
-                      <select className="edit-input" name="gender" value={form.gender} onChange={handleChange}>
-                        <option value="">Select gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="nonbinary">Non-binary</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── META ROW ── */}
-                {!editMode && (
-                  <div style={{ marginTop:16, display:"flex", flexWrap:"wrap", gap:16,
-                    alignItems:"center", borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:16 }}>
-
-                    {profile?.location && (
-                      <span style={{ display:"flex", alignItems:"center", gap:5, fontSize:12,
-                        color:"rgba(255,255,255,0.4)", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-                        <MapPin size={12} color="#10B981" /> {profile.location}
-                      </span>
-                    )}
-                    {profile?.website && (
-                      <a href={profile.website} target="_blank" rel="noreferrer"
-                        style={{ display:"flex", alignItems:"center", gap:5, fontSize:12, color:"#10B981",
-                          fontFamily:"'Plus Jakarta Sans',sans-serif", textDecoration:"none" }}>
-                        <Link2 size={12} /> {profile.website}
-                      </a>
-                    )}
-                    {profile?.joinedAt && (
-                      <span style={{ display:"flex", alignItems:"center", gap:5, fontSize:12,
-                        color:"rgba(255,255,255,0.4)", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-                        <Calendar size={12} color="#10B981" />
-                        Joined {new Date(profile.joinedAt).toLocaleDateString("en-US",{month:"long",year:"numeric"})}
-                      </span>
-                    )}
-
-                    {/* Spacer */}
-                    <div style={{ flex:1 }} />
-
-                    {/* Share */}
-                    <button style={{ display:"flex", alignItems:"center", gap:5, fontSize:12, color:"rgba(255,255,255,0.4)",
-                      background:"none", border:"none", cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-                      <Share2 size={13} /> Share profile
-                    </button>
-                  </div>
-                )}
-
-                {/* ── STATS ROW ── */}
-                <div style={{ marginTop:20, display:"flex", gap:4, background:"rgba(255,255,255,0.02)",
-                  border:"1px solid rgba(110,231,183,0.08)", borderRadius:16, padding:"4px 8px",
-                  width:"fit-content", animation:"countUp .5s .2s both" }}>
-
-                  <StatItem value={profile?.totalPosts || 0} label="Posts" onClick={null} />
-                  <div style={{ width:1, background:"rgba(255,255,255,0.07)", margin:"8px 0" }} />
-                  <StatItem value={profile?.followers || 0} label="Followers" onClick={() => setShowFollowers(true)} />
-                  <div style={{ width:1, background:"rgba(255,255,255,0.07)", margin:"8px 0" }} />
-                  <StatItem value={profile?.following || 0} label="Following" onClick={() => setShowFollowing(true)} />
-                </div>
-              </div>
-
-              {/* ── TABS ── */}
-              <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", padding:"0 28px" }}>
-                <div style={{ display:"flex", gap:0, overflowX:"auto" }}>
-                  {TABS.map(({ key, label, Icon }) => (
-                    <button key={key} className={`tab-btn ${activeTab === key ? "active" : ""}`}
-                      onClick={() => setActiveTab(key)}
-                      style={{ display:"flex", alignItems:"center", gap:6, padding:"14px 18px",
-                        fontSize:12, fontWeight:600, fontFamily:"'Plus Jakarta Sans',sans-serif",
-                        background:"none", border:"none", borderBottom:"2px solid transparent", cursor:"pointer" }}>
-                      <Icon size={13} />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── CONTENT ── */}
-              <div style={{ padding:"24px 28px 28px" }}>
-                {activeTab === "posts" ? (
-                  posts.length > 0 ? (
-                    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(170px,1fr))", gap:12 }}>
-                      {posts.map((post, i) => (
-                        <PostCard key={i} post={post} style={{ animationDelay: `${i * 0.05}s` }} />
-                      ))}
-                    </div>
-                  ) : <EmptyState />
-                ) : (
-                  <EmptyState label={`No ${activeTab} yet`} />
-                )}
               </div>
 
             </div>
+
           </div>
+
+          {/* TABS */}
+
+          <div className="sticky top-0 z-30 mt-8 backdrop-blur-xl bg-white/70 border border-white rounded-3xl shadow-lg px-2">
+
+            <div className="flex items-center justify-center overflow-x-auto">
+
+              {TABS.map(({ key, label, Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`flex items-center gap-2 px-6 py-5 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
+                    activeTab === key
+                      ? "bg-gradient-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
+                      : "text-[#6B7280] hover:text-[#111827]"
+                  }`}
+                >
+
+                  <Icon size={18} />
+
+                  {label}
+
+                </button>
+              ))}
+
+            </div>
+
+          </div>
+
+          {/* POSTS */}
+
+          {activeTab === "posts" && (
+            <>
+              {posts.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mt-8">
+
+                  {posts.map((post, i) => (
+                    <PostCard
+                      key={i}
+                      post={post}
+                      onClick={() => setSelectedPost(post)}
+                    />
+                  ))}
+
+                </div>
+              ) : (
+                <EmptyState />
+              )}
+            </>
+          )}
+
+          {/* REELS */}
+
+          {activeTab === "reels" && (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-5 mt-8">
+
+              {posts.map((post, i) => (
+                <ReelCard
+                  key={i}
+                  post={post}
+                  onClick={() => setSelectedPost(post)}
+                />
+              ))}
+
+            </div>
+          )}
+
+          {/* PHOTOS */}
+
+          {activeTab === "photos" && (
+            <div className="columns-2 md:columns-3 xl:columns-4 gap-5 mt-8 space-y-5">
+
+              {posts.map((post, i) => (
+                <PhotoCard
+                  key={i}
+                  post={post}
+                  onClick={() => setSelectedPost(post)}
+                />
+              ))}
+
+            </div>
+          )}
+
+          {/* SAVED */}
+
+          {activeTab === "saved" && (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mt-8">
+
+              {posts.map((post, i) => (
+                <PostCard
+                  key={i}
+                  post={post}
+                  onClick={() => setSelectedPost(post)}
+                />
+              ))}
+
+            </div>
+          )}
+
         </div>
+
       </div>
 
+      {/* POST MODAL */}
+
+      {selectedPost && (
+        <PostModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+        />
+      )}
+
+      {/* EDIT PROFILE */}
+
+      {showEdit && (
+        <EditProfileModal
+          profile={profile}
+          onClose={() => setShowEdit(false)}
+          refreshProfile={fetchProfile}
+        />
+      )}
+
+      {/* FOLLOWERS */}
+
       {showFollowers && (
-        <FollowersModal userId={profileUserId} onClose={() => setShowFollowers(false)} onFollowersUpdate={fetchProfile} />
+        <FollowersModal
+          userId={profileUserId}
+          onClose={() => setShowFollowers(false)}
+        />
       )}
+
+      {/* FOLLOWING */}
+
       {showFollowing && (
-        <FollowingModal userId={profileUserId} onClose={() => setShowFollowing(false)} onFollowingUpdate={fetchProfile} />
+        <FollowingModal
+          userId={profileUserId}
+          onClose={() => setShowFollowing(false)}
+        />
       )}
-    </>
+
+    </div>
   );
 };
 
-/* ─── STAT ITEM ─────────────────────────────────────────────── */
-const StatItem = ({ value, label, onClick }) => (
-  <div className="stat-item" onClick={onClick}
-    style={{ cursor: onClick ? "pointer" : "default" }}>
-    <p style={{ fontFamily:"'Fraunces',serif", fontSize:20, fontWeight:700, color:"#fff", margin:0, lineHeight:1.1 }}>
-      {Number(value).toLocaleString()}
-    </p>
-    <p style={{ fontSize:10, color: onClick ? "rgba(110,231,183,0.7)" : "rgba(255,255,255,0.35)",
-      fontFamily:"'Plus Jakarta Sans',sans-serif", margin:"2px 0 0", letterSpacing:"0.5px", textTransform:"uppercase" }}>
+/* POST CARD */
+
+const PostCard = ({ post, onClick }) => {
+  const image =
+    post.thumbImage ||
+    post.imageUrl ||
+    post.images?.[0]?.url;
+
+  return (
+    <div
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-[28px] bg-white border border-[#E5E7EB] shadow-lg cursor-pointer hover:-translate-y-2 hover:shadow-2xl transition-all duration-500"
+    >
+
+      <div className="aspect-square overflow-hidden">
+
+        <img
+          src={image}
+          alt=""
+          className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+        />
+
+      </div>
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 flex items-end justify-center pb-8">
+
+        <div className="flex items-center gap-8 text-white">
+
+          <div className="flex items-center gap-2">
+            <Heart size={20} fill="white" />
+            <span>{post.totalLikes || 0}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <MessageCircle size={20} />
+            <span>{post.comments?.length || 0}</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+};
+
+/* REEL CARD */
+
+const ReelCard = ({ post, onClick }) => {
+  const image =
+    post.thumbImage ||
+    post.imageUrl ||
+    post.images?.[0]?.url;
+
+  return (
+    <div
+      onClick={onClick}
+      className="group relative aspect-[9/16] overflow-hidden rounded-[28px] bg-white shadow-xl cursor-pointer"
+    >
+
+      <img
+        src={image}
+        alt=""
+        className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+      />
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+
+      <div className="absolute inset-0 flex items-center justify-center">
+
+        <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center">
+
+          <Play
+            fill="white"
+            className="text-white ml-1"
+          />
+
+        </div>
+
+      </div>
+
+      <div className="absolute bottom-4 left-4 text-white">
+
+        <p className="font-semibold">
+          {post.totalLikes || 0} Likes
+        </p>
+
+      </div>
+
+    </div>
+  );
+};
+
+/* PHOTO CARD */
+
+const PhotoCard = ({ post, onClick }) => {
+  const image =
+    post.thumbImage ||
+    post.imageUrl ||
+    post.images?.[0]?.url;
+
+  return (
+    <div
+      onClick={onClick}
+      className="group overflow-hidden rounded-[28px] bg-white shadow-lg cursor-pointer mb-5 break-inside-avoid"
+    >
+
+      <img
+        src={image}
+        alt=""
+        className="w-full object-cover group-hover:scale-105 transition duration-700"
+      />
+
+    </div>
+  );
+};
+
+/* POST MODAL */
+
+const PostModal = ({ post, onClose }) => {
+  const image =
+    post.thumbImage ||
+    post.imageUrl ||
+    post.images?.[0]?.url;
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
+    >
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white w-full max-w-6xl h-[95vh] rounded-[35px] overflow-hidden flex flex-col lg:flex-row shadow-2xl animate-in fade-in zoom-in"
+      >
+
+        {/* IMAGE */}
+
+        <div className="flex-1 bg-[#EEF2FF] flex items-center justify-center">
+
+          <img
+            src={image}
+            alt=""
+            className="w-full h-full object-contain"
+          />
+
+        </div>
+
+        {/* RIGHT */}
+
+        <div className="w-full lg:w-[430px] flex flex-col bg-white">
+
+          {/* HEADER */}
+
+          <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
+
+            <div className="flex items-center gap-3">
+
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#EEF2FF]">
+
+                {post.user?.profilePicture?.profileView && (
+                  <img
+                    src={post.user.profilePicture.profileView}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                )}
+
+              </div>
+
+              <div>
+
+                <h3 className="text-[#111827] font-semibold">
+                  {post.user?.username}
+                </h3>
+
+                <p className="text-[#6B7280] text-sm">
+                  {post.user?.name}
+                </p>
+
+              </div>
+
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full hover:bg-[#F3F4F6] flex items-center justify-center"
+            >
+              <X className="text-[#111827]" />
+            </button>
+
+          </div>
+
+          {/* CONTENT */}
+
+          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+
+            <p className="text-[#374151] leading-7">
+              {post.caption}
+            </p>
+
+            {post.comments?.map((comment, i) => (
+              <div key={i} className="flex gap-3">
+
+                <div className="w-10 h-10 rounded-full bg-[#E5E7EB]" />
+
+                <div className="bg-[#F9FAFB] rounded-2xl px-4 py-3">
+
+                  <p className="text-sm text-[#111827]">
+
+                    <span className="font-semibold mr-2">
+                      {comment.user?.username || "user"}
+                    </span>
+
+                    {comment.text}
+
+                  </p>
+
+                </div>
+
+              </div>
+            ))}
+
+          </div>
+
+          {/* ACTIONS */}
+
+          <div className="border-t border-[#E5E7EB] p-5">
+
+            <div className="flex items-center justify-between">
+
+              <div className="flex items-center gap-5">
+
+                <Heart className="cursor-pointer hover:text-red-500 transition" />
+
+                <MessageCircle className="cursor-pointer" />
+
+                <Send className="cursor-pointer" />
+
+              </div>
+
+              <Bookmark className="cursor-pointer" />
+
+            </div>
+
+            <p className="font-semibold mt-4 text-[#111827]">
+              {post.totalLikes || 0} likes
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+};
+
+/* EDIT PROFILE */
+
+const EditProfileModal = ({
+  profile,
+  onClose,
+  refreshProfile,
+}) => {
+  const [formData, setFormData] = useState({
+    name: profile?.name || "",
+    username: profile?.username || "",
+    bio: profile?.bio || "",
+    website: profile?.website || "",
+    location: profile?.location || "",
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      await api.put("/profile/update-profile", formData);
+
+      await refreshProfile();
+
+      onClose();
+    } catch (err) {
+      console.log(err);
+      alert("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-md flex items-center justify-center p-4"
+    >
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl bg-white rounded-[35px] p-8 shadow-2xl"
+      >
+
+        <div className="flex items-center justify-between mb-8">
+
+          <h2 className="text-3xl font-bold text-[#111827]">
+            Edit Profile
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full hover:bg-[#F3F4F6] flex items-center justify-center"
+          >
+            <X className="text-[#111827]" />
+          </button>
+
+        </div>
+
+        <div className="space-y-5">
+
+          <InputField
+            label="Name"
+            value={formData.name}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                name: e.target.value,
+              })
+            }
+          />
+
+          <InputField
+            label="Username"
+            value={formData.username}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                username: e.target.value,
+              })
+            }
+          />
+
+          <div>
+
+            <label className="text-[#6B7280] text-sm font-medium">
+              Bio
+            </label>
+
+            <textarea
+              rows={4}
+              value={formData.bio}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  bio: e.target.value,
+                })
+              }
+              className="w-full mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl px-5 py-4 text-[#111827] outline-none focus:border-[#2F3EDB] resize-none"
+            />
+
+          </div>
+
+          <InputField
+            label="Website"
+            value={formData.website}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                website: e.target.value,
+              })
+            }
+          />
+
+          <InputField
+            label="Location"
+            value={formData.location}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                location: e.target.value,
+              })
+            }
+          />
+
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2F3EDB] to-[#FF7A3D] hover:scale-[1.02] transition text-white font-semibold flex items-center justify-center gap-2 shadow-xl"
+          >
+
+            {saving && (
+              <Loader2
+                size={18}
+                className="animate-spin"
+              />
+            )}
+
+            {saving ? "Saving..." : "Save Changes"}
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+};
+
+const InputField = ({
+  label,
+  value,
+  onChange,
+}) => (
+  <div>
+
+    <label className="text-[#6B7280] text-sm font-medium">
       {label}
-    </p>
+    </label>
+
+    <input
+      value={value}
+      onChange={onChange}
+      className="w-full mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl px-5 py-4 text-[#111827] outline-none focus:border-[#2F3EDB]"
+    />
+
   </div>
 );
 
-/* ─── POST CARD ─────────────────────────────────────────────── */
-const PostCard = ({ post }) => {
-  const imageSrc = post.thumbImage || post.imageUrl || post.images?.[0]?.url || "https://via.placeholder.com/300";
-  const likes    = post.totalLikes ?? post.likes?.length ?? 0;
+/* EMPTY */
 
-  return (
-    <div className="post-card" style={{ aspectRatio:"1", animation:"fadeUp .4s both" }}>
-      <img src={imageSrc} alt="post" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-      <div className="post-overlay">
-        <div style={{ display:"flex", alignItems:"center", gap:5,
-          background:"rgba(4,5,15,0.7)", backdropFilter:"blur(8px)",
-          border:"1px solid rgba(110,231,183,0.2)", borderRadius:20,
-          padding:"5px 10px" }}>
-          <Heart size={11} fill="#10B981" color="#10B981" />
-          <span style={{ fontSize:11, fontWeight:600, color:"#fff",
-            fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{likes}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+const EmptyState = () => (
+  <div className="py-24 flex flex-col items-center justify-center text-center">
 
-/* ─── EMPTY STATE ───────────────────────────────────────────── */
-const EmptyState = ({ label = "No moments yet" }) => (
-  <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-    padding:"60px 20px", textAlign:"center" }}>
-    <div style={{ width:64, height:64, borderRadius:"50%",
-      background:"rgba(110,231,183,0.06)", border:"1px solid rgba(110,231,183,0.15)",
-      display:"flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
-      <LayoutGrid size={24} color="rgba(110,231,183,0.4)" />
+    <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#2F3EDB] to-[#FF7A3D] flex items-center justify-center shadow-xl">
+
+      <LayoutGrid size={34} className="text-white" />
+
     </div>
-    <p style={{ fontFamily:"'Fraunces',serif", fontSize:18, color:"rgba(255,255,255,0.5)", margin:"0 0 6px" }}>
-      {label}
+
+    <h2 className="text-[#111827] text-3xl font-bold mt-6">
+      No Posts Yet
+    </h2>
+
+    <p className="text-[#6B7280] text-base mt-3">
+      Shared posts will appear here.
     </p>
-    <p style={{ fontSize:12, color:"rgba(255,255,255,0.25)", fontFamily:"'Plus Jakarta Sans',sans-serif", margin:0 }}>
-      Content shared here will appear in this section.
-    </p>
+
   </div>
 );
 

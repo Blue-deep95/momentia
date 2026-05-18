@@ -1,95 +1,112 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 
-/* ─── Floating Status Card ──────────────────────────────────── */
-const FloatCard = ({ icon, title, sub, delay, className }) => (
+/* ─── Floating Activity Card (matches Login exactly) ───────── */
+const FloatCard = ({ avatar, icon, title, sub, delay, className = "" }) => (
   <div
-    className={`absolute flex items-center gap-3 rounded-2xl px-4 py-3 min-w-[200px] z-10 ${className}`}
+    className={`flex items-center gap-3 rounded-2xl px-4 py-3 min-w-[180px] ${className}`}
     style={{
-      background: "rgba(255,255,255,0.03)",
-      border: "1px solid rgba(110,231,183,0.12)",
-      backdropFilter: "blur(20px)",
-      animation: `floatUp 6s ${delay} ease-in-out infinite alternate`,
+      background: "rgba(255,255,255,0.07)",
+      border: "1px solid rgba(255,255,255,0.12)",
+      backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      animation: `floatUD 5s ${delay} ease-in-out infinite alternate`,
     }}
   >
-    <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
+    {avatar ? (
+      <img src={avatar} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+        style={{ outline: "2px solid rgba(77,217,172,0.35)", outlineOffset: 1 }} />
+    ) : (
+      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+        style={{ background: "#4DD9AC", boxShadow: "0 0 8px 3px rgba(77,217,172,0.55)" }} />
+    )}
     <div>
-      <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.88)", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{title}</div>
-      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.38)", marginTop: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{sub}</div>
+      <div style={{ fontSize: 12.5, fontWeight: 600, color: "rgba(255,255,255,0.92)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{title}</div>
+      <div style={{ fontSize: 11, color: "rgba(255,255,255,0.42)", marginTop: 2, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{sub}</div>
     </div>
   </div>
 );
 
-/* ─── OTP Single Box ────────────────────────────────────────── */
-const OtpBox = ({ id, value, onChange, onKeyDown, focused }) => (
-  <input
-    id={id}
-    type="text"
-    inputMode="numeric"
-    maxLength="1"
-    value={value}
-    onChange={onChange}
-    onKeyDown={onKeyDown}
-    autoComplete="off"
-    style={{
-      width: 52,
-      height: 58,
-      borderRadius: 14,
-      border: value ? "1.5px solid #10B981" : "1.5px solid #DDD8FF",
-      background: value ? "rgba(16,185,129,0.06)" : "#F8F7FF",
-      textAlign: "center",
-      fontSize: 22,
-      fontWeight: 700,
-      color: "#0D0A26",
-      fontFamily: "'Fraunces', serif",
-      outline: "none",
-      transition: "all 0.2s",
-      boxShadow: value ? "0 0 0 4px rgba(16,185,129,0.1)" : "none",
-      caretColor: "#10B981",
-    }}
-  />
-);
-
-/* ─── Field ─────────────────────────────────────────────────── */
-const Field = ({ label, type, name, placeholder, value, onChange }) => {
+/* ─── Input Field (matches Login's Field) ───────────────────── */
+const Field = ({ label, type = "text", name, placeholder, value, onChange, extra }) => {
   const [focused, setFocused] = useState(false);
   return (
-    <div style={{ marginBottom: 28 }}>
-      <label style={{ display: "block", marginBottom: 10, fontSize: 10, fontWeight: 600, color: "#8896B3", letterSpacing: "0.9px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="mb-5">
+      <label className="block mb-2"
+        style={{ fontSize: 10.5, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.9px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
         {label}
       </label>
-      <input
-        type={type} name={name} placeholder={placeholder} value={value} onChange={onChange}
-        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{
-          width: "100%", borderRadius: 12, padding: "14px 20px", fontSize: 14, outline: "none",
-          background: focused ? "#fff" : "#F8F7FF",
-          border: focused ? "1.5px solid #10B981" : "1.5px solid #E2DCFF",
-          color: "#0D0A26", fontFamily: "'Plus Jakarta Sans', sans-serif",
-          boxShadow: focused ? "0 0 0 4px rgba(16,185,129,0.1)" : "none",
-          transition: "all 0.2s",
-        }}
-      />
+      <div className="relative">
+        <input
+          type={type} name={name} placeholder={placeholder} value={value}
+          onChange={onChange} required
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          className="w-full rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200"
+          style={{
+            paddingRight: extra ? 44 : 16,
+            background: "#fff",
+            border: focused ? "1.5px solid #0D9488" : "1.5px solid #E5E7EB",
+            color: "#111827",
+            fontFamily: "'Plus Jakarta Sans',sans-serif",
+            boxShadow: focused ? "0 0 0 3px rgba(13,148,136,0.1)" : "0 1px 2px rgba(0,0,0,0.04)",
+          }}
+        />
+        {extra && <div className="absolute right-4 top-1/2 -translate-y-1/2">{extra}</div>}
+      </div>
     </div>
   );
 };
 
-/* ─── Step Indicator ─────────────────────────────────────────── */
+/* ─── OTP Single Box (teal theme) ───────────────────────────── */
+const OtpBox = ({ id, value, onChange, onKeyDown }) => (
+  <input
+    id={id} type="text" inputMode="numeric" maxLength="1"
+    value={value} onChange={onChange} onKeyDown={onKeyDown} autoComplete="off"
+    style={{
+      width: 52, height: 58, borderRadius: 14,
+      border: value ? "1.5px solid #0D9488" : "1.5px solid #E5E7EB",
+      background: value ? "rgba(13,148,136,0.05)" : "#fff",
+      textAlign: "center", fontSize: 22, fontWeight: 700,
+      color: "#111827", fontFamily: "'Fraunces',serif",
+      outline: "none", transition: "all 0.2s",
+      boxShadow: value ? "0 0 0 3px rgba(13,148,136,0.12)" : "0 1px 2px rgba(0,0,0,0.04)",
+      caretColor: "#0D9488",
+    }}
+  />
+);
+
+/* ─── Eye Toggle Icon ────────────────────────────────────────── */
+const EyeIcon = ({ show, onToggle }) => (
+  <button type="button" onClick={onToggle} className="text-gray-400 hover:text-gray-600 transition-colors">
+    {show ? (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+      </svg>
+    ) : (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+    )}
+  </button>
+);
+
+/* ─── Step Indicator (teal theme) ───────────────────────────── */
 const StepDots = ({ step }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
+  <div className="flex items-center gap-2 mb-7">
     {[1, 2, 3].map((s) => (
       <React.Fragment key={s}>
         <div style={{
           width: s <= step ? 28 : 8, height: 8, borderRadius: 6,
-          background: s <= step ? "linear-gradient(90deg, #059669, #10B981)" : "#DDD8FF",
+          background: s <= step ? "linear-gradient(90deg,#0D9488,#14B8A6)" : "#E5E7EB",
           transition: "all 0.4s cubic-bezier(.22,1,.36,1)",
-          boxShadow: s === step ? "0 0 12px rgba(16,185,129,0.5)" : "none",
+          boxShadow: s === step ? "0 0 12px rgba(13,148,136,0.45)" : "none",
         }} />
-        {s < 3 && <div style={{ width: 20, height: 1, background: s < step ? "#10B981" : "#DDD8FF", transition: "all 0.4s" }} />}
+        {s < 3 && <div style={{ width: 20, height: 1, background: s < step ? "#0D9488" : "#E5E7EB", transition: "all 0.4s" }} />}
       </React.Fragment>
     ))}
-    <span style={{ marginLeft: 8, fontSize: 11, color: "#8896B3", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <span className="ml-2" style={{ fontSize: 11, color: "#9CA3AF", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
       Step {step} of 3
     </span>
   </div>
@@ -99,16 +116,17 @@ const StepDots = ({ step }) => (
 const ForgotPassword = () => {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1);
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [timer, setTimer] = useState(30);
-  const [showPass, setShowPass] = useState(false);
+  const [step, setStep]                   = useState(1);
+  const [email, setEmail]                 = useState("");
+  const [otp, setOtp]                     = useState(["", "", "", "", "", ""]);
+  const [password, setPassword]           = useState("");
+  const [confirmPassword, setConfirmPass] = useState("");
+  const [loading, setLoading]             = useState(false);
+  const [message, setMessage]             = useState("");
+  const [error, setError]                 = useState("");
+  const [timer, setTimer]                 = useState(30);
+  const [showPass, setShowPass]           = useState(false);
+  const [showConfirm, setShowConfirm]     = useState(false);
 
   useEffect(() => {
     if (step === 2 && timer > 0) {
@@ -152,242 +170,169 @@ const ForgotPassword = () => {
 
   const handleOtpChange = (value, index) => {
     if (!/^[0-9]?$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+    const newOtp = [...otp]; newOtp[index] = value; setOtp(newOtp);
     if (value && index < 5) document.getElementById(`otp-${index + 1}`)?.focus();
   };
 
   const handleOtpKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
+    if (e.key === "Backspace" && !otp[index] && index > 0)
       document.getElementById(`otp-${index - 1}`)?.focus();
-    }
   };
 
   const handleOtpPaste = (e) => {
     const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (text.length === 6) {
-      setOtp(text.split(""));
-      document.getElementById(`otp-5`)?.focus();
-    }
+    if (text.length === 6) { setOtp(text.split("")); document.getElementById("otp-5")?.focus(); }
   };
 
-  const ringCount = 20;
+  /* password strength */
+  const strengthScore = [
+    password.length >= 8, /[A-Z]/.test(password),
+    /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password),
+  ].filter(Boolean).length;
+  const strengthLabel = ["", "Weak", "Fair", "Good", "Strong"][strengthScore];
+  const strengthColor = ["", "#EF4444", "#F59E0B", "#3B82F6", "#0D9488"][strengthScore];
 
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; }
 
-    @keyframes floatUp { 0% { transform: translateY(0) } 100% { transform: translateY(-14px) } }
-    @keyframes fadeForm { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
-    @keyframes pulse { 0%,100% { opacity:1; transform:scale(1) } 50% { opacity:.35; transform:scale(.7) } }
-    @keyframes spin { to { transform: rotate(360deg) } }
-    @keyframes rotateSlow { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-    @keyframes rotateSlowR { from { transform: rotate(0deg) } to { transform: rotate(-360deg) } }
-    @keyframes gridPulse { 0%,100% { opacity: 0.05 } 50% { opacity: 0.12 } }
-    @keyframes radarSweep {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    @keyframes radarPing {
-      0% { transform: scale(0.3); opacity: 0.9; }
-      100% { transform: scale(1); opacity: 0; }
-    }
-    @keyframes orbitDot {
-      0% { transform: rotate(0deg) translateX(155px); }
-      100% { transform: rotate(360deg) translateX(155px); }
-    }
-    @keyframes orbitDot2 {
-      0% { transform: rotate(200deg) translateX(230px); }
-      100% { transform: rotate(560deg) translateX(230px); }
-    }
-    @keyframes successPop {
-      0% { transform: scale(0.5); opacity: 0; }
-      60% { transform: scale(1.15); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes checkDraw {
-      from { stroke-dashoffset: 60; }
-      to { stroke-dashoffset: 0; }
-    }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
+    @keyframes floatUD   { 0%{ transform:translateY(0) } 100%{ transform:translateY(-12px) } }
+    @keyframes fadeForm  { from{ opacity:0; transform:translateY(20px) } to{ opacity:1; transform:translateY(0) } }
+    @keyframes pulse     { 0%,100%{ opacity:1; transform:scale(1) } 50%{ opacity:.35; transform:scale(.65) } }
+    @keyframes spin      { to{ transform:rotate(360deg) } }
+    @keyframes slideIn   { from{ opacity:0; transform:translateX(20px) } to{ opacity:1; transform:translateX(0) } }
+    @keyframes successPop{ 0%{ transform:scale(0.5); opacity:0 } 60%{ transform:scale(1.15) } 100%{ transform:scale(1); opacity:1 } }
+    @keyframes checkDraw { from{ stroke-dashoffset:60 } to{ stroke-dashoffset:0 } }
+    @keyframes progressBar { from{ width:0 } to{ width:100% } }
 
-    .fp-root { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; }
-    .right-form { animation: fadeForm .75s cubic-bezier(.22,1,.36,1) both; }
-    .step-content { animation: slideIn 0.4s cubic-bezier(.22,1,.36,1) both; }
-    .submit-btn:hover:not(:disabled) { transform: translateY(-1.5px) !important; box-shadow: 0 14px 40px -8px rgba(16,185,129,0.5) !important; }
-    .submit-btn:active:not(:disabled) { transform: translateY(0) !important; }
-    input::placeholder { color: #B0AACF; }
+    .fp-root    { display:grid; grid-template-columns:1fr 1fr; min-height:100vh; }
+    .right-form { animation:fadeForm .7s cubic-bezier(.22,1,.36,1) both; }
+    .step-content { animation:slideIn .4s cubic-bezier(.22,1,.36,1) both; }
+    .submit-btn { transition:all .2s; }
+    .submit-btn:hover:not(:disabled){ transform:translateY(-1.5px); box-shadow:0 14px 36px -6px rgba(13,148,136,0.52)!important; }
+    .submit-btn:active:not(:disabled){ transform:translateY(0); }
+    input::placeholder { color:#C4C4CF; }
 
-    @media (max-width: 1023px) {
-      .fp-root { grid-template-columns: 1fr !important; }
-      .left-panel { display: none !important; }
-      .right-panel { min-height: 100vh; padding: 36px 24px !important; }
+    @media(max-width:1023px){
+      .fp-root { grid-template-columns:1fr!important; }
+      .left-panel { display:none!important; }
+      .right-panel{ min-height:100vh; padding:36px 24px!important; }
     }
   `;
 
   return (
     <>
       <style>{css}</style>
-      <div className="fp-root">
+      <div className="fp-root" style={{ fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
 
-        {/* ── LEFT PANEL — Radar / Signal Theme ── */}
-        <div className="left-panel" style={{ position: "relative", background: "#04050F", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {/* ══ LEFT — dark teal (same as Login) ══ */}
+        <div
+          className="left-panel relative overflow-hidden flex flex-col"
+          style={{ background: "linear-gradient(150deg,#071c1a 0%,#0b2e2b 45%,#0d3532 75%,#082622 100%)", minHeight: "100vh" }}
+        >
+          {/* Diagonal texture */}
+          <div className="absolute inset-0 pointer-events-none z-0" style={{
+            backgroundImage: "repeating-linear-gradient(155deg, transparent, transparent 40px, rgba(255,255,255,0.022) 40px, rgba(255,255,255,0.022) 41px)",
+          }} />
 
-          {/* Animated grid */}
-          <div style={{ position: "absolute", inset: 0, zIndex: 0, animation: "gridPulse 5s ease-in-out infinite",
-            backgroundImage: "linear-gradient(rgba(110,231,183,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(110,231,183,0.07) 1px, transparent 1px)",
-            backgroundSize: "52px 52px" }} />
+          {/* Ambient glows */}
+          <div className="absolute pointer-events-none z-0"
+            style={{ right:-80, top:"40%", width:440, height:440, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(45,180,150,0.1) 0%, transparent 65%)" }} />
+          <div className="absolute pointer-events-none z-0"
+            style={{ left:-80, top:-80, width:320, height:320, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(20,120,100,0.09) 0%, transparent 65%)" }} />
 
-          {/* SVG lines */}
-          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 0 }} preserveAspectRatio="none">
-            <line x1="0" y1="40%" x2="100%" y2="60%" stroke="rgba(110,231,183,0.05)" strokeWidth="1" />
-            <line x1="30%" y1="0" x2="70%" y2="100%" stroke="rgba(99,102,241,0.04)" strokeWidth="0.8" />
-          </svg>
-
-          {/* Outer ring with ticks */}
-          <div style={{ position: "absolute", top: "50%", left: "50%",
-            width: 520, height: 520, marginLeft: -260, marginTop: -260,
-            borderRadius: "50%", border: "1px solid rgba(110,231,183,0.06)",
-            animation: "rotateSlow 60s linear infinite" }}>
-            {[...Array(ringCount)].map((_, i) => (
-              <div key={i} style={{
-                position: "absolute", width: i % 5 === 0 ? 3 : 1.5, height: i % 5 === 0 ? 12 : 7,
-                background: i % 5 === 0 ? "rgba(110,231,183,0.5)" : "rgba(110,231,183,0.15)",
-                left: "50%", top: 0, transformOrigin: `${i % 5 === 0 ? 1.5 : 0.75}px 260px`,
-                transform: `rotate(${i * (360 / ringCount)}deg) translateX(-${i % 5 === 0 ? 1.5 : 0.75}px)`,
-              }} />
-            ))}
+          {/* TOP card */}
+          <div className="relative z-10 pt-5 px-5">
+            <FloatCard title="🔐 Secure recovery" sub="End-to-end encrypted" delay="0s" />
           </div>
 
-          {/* Radar rings */}
-          {[320, 220, 130].map((size, i) => (
-            <div key={size} style={{ position: "absolute", top: "50%", left: "50%",
-              width: size, height: size, marginLeft: -size/2, marginTop: -size/2,
-              borderRadius: "50%",
-              border: i === 0 ? "1px dashed rgba(99,102,241,0.2)" : i === 1 ? "1px solid rgba(110,231,183,0.1)" : "1px solid rgba(110,231,183,0.2)",
-              animation: i === 0 ? "rotateSlowR 25s linear infinite" : "none",
-            }} />
-          ))}
+          {/* CENTRE */}
+          <div className="relative z-10 flex-1 flex items-center px-8 py-4 gap-4">
+            <div className="flex-1 min-w-0">
 
-          {/* Radar sweep */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 0, height: 0, zIndex: 3,
-            animation: "radarSweep 4s linear infinite" }}>
-            <div style={{ position: "absolute", width: 160, height: 160, top: -160, left: 0, transformOrigin: "0 160px",
-              background: "conic-gradient(from -5deg, rgba(110,231,183,0.22) 0%, rgba(110,231,183,0.08) 30deg, transparent 60deg)",
-              borderRadius: "50% 50% 0 0 / 50% 50% 0 0",
-            }} />
-          </div>
+              {/* Secure badge */}
+              <div className="inline-flex items-center gap-2 mb-6"
+                style={{ padding:"5px 13px", borderRadius:20, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.11)" }}>
+                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0"
+                  style={{ background:"#4DD9AC", boxShadow:"0 0 6px 2px rgba(77,217,172,0.6)", animation:"pulse 2s ease infinite" }} />
+                <span style={{ fontSize:9.5, color:"#4DD9AC", letterSpacing:"1.8px", textTransform:"uppercase", fontWeight:600, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Secure mode active</span>
+              </div>
 
-          {/* Radar ping dots — blips */}
-          {[
-            { top: "35%", left: "60%", delay: "0s" },
-            { top: "58%", left: "38%", delay: "1.3s" },
-            { top: "44%", left: "52%", delay: "2.6s" },
-          ].map((pos, i) => (
-            <div key={i} style={{ position: "absolute", ...pos, zIndex: 4 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#6EE7B7",
-                boxShadow: "0 0 10px 3px rgba(110,231,183,0.6)",
-                animation: `radarPing 4s ${pos.delay} ease-out infinite` }} />
-            </div>
-          ))}
+              <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:42, fontWeight:300, color:"#fff", lineHeight:1.16, letterSpacing:"-0.5px", marginBottom:20 }}>
+                We'll find<br />
+                <em style={{ fontStyle:"italic", color:"#4DD9AC" }}>your account,</em><br />
+                <span style={{ color:"rgba(255,255,255,0.28)" }}>safely & fast</span>
+              </h1>
 
-          {/* Orbiting dots */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 0, height: 0, zIndex: 3 }}>
-            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#6EE7B7",
-              boxShadow: "0 0 12px 4px rgba(110,231,183,0.6)",
-              animation: "orbitDot 9s linear infinite" }} />
-          </div>
-          <div style={{ position: "absolute", top: "50%", left: "50%", width: 0, height: 0, zIndex: 3 }}>
-            <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#818CF8",
-              boxShadow: "0 0 8px 3px rgba(129,140,248,0.5)",
-              animation: "orbitDot2 16s linear infinite" }} />
-          </div>
+              {/* M logo */}
+              <div className="mb-5 flex items-center gap-3">
+                <div style={{ width:44, height:44, borderRadius:"50%", border:"1.5px solid rgba(77,217,172,0.4)",
+                  background:"rgba(77,217,172,0.06)", display:"flex", alignItems:"center", justifyContent:"center",
+                  fontFamily:"'Fraunces',serif", fontSize:22, fontWeight:700, color:"#4DD9AC" }}>M</div>
+              </div>
 
-          {/* Center glow + logo */}
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", zIndex: 4 }}>
-            <div style={{ width: 100, height: 100, borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(110,231,183,0.2) 0%, rgba(99,102,241,0.08) 55%, transparent 75%)" }} />
-          </div>
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-            width: 52, height: 52, borderRadius: "50%", zIndex: 5,
-            background: "rgba(110,231,183,0.08)", border: "1px solid rgba(110,231,183,0.35)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'Fraunces', serif", fontSize: 24, fontWeight: 700, color: "#6EE7B7" }}>
-            M
-          </div>
+              <p style={{ fontSize:12.5, color:"rgba(255,255,255,0.32)", fontWeight:300, lineHeight:1.8, marginBottom:24, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                Military-grade recovery with<br />zero-knowledge architecture.
+              </p>
 
-          {/* Corner brackets */}
-          {[
-            { top: 20, left: 20, borderTop: "2px solid rgba(110,231,183,0.35)", borderLeft: "2px solid rgba(110,231,183,0.35)" },
-            { top: 20, right: 20, borderTop: "2px solid rgba(110,231,183,0.35)", borderRight: "2px solid rgba(110,231,183,0.35)" },
-            { bottom: 20, left: 20, borderBottom: "2px solid rgba(110,231,183,0.35)", borderLeft: "2px solid rgba(110,231,183,0.35)" },
-            { bottom: 20, right: 20, borderBottom: "2px solid rgba(110,231,183,0.35)", borderRight: "2px solid rgba(110,231,183,0.35)" },
-          ].map((s, i) => (
-            <div key={i} style={{ position: "absolute", width: 28, height: 28, ...s }} />
-          ))}
-
-          {/* Floating cards */}
-          <FloatCard icon="🔐" title="Secure recovery" sub="End-to-end encrypted" delay="0s" className="top-[14%] left-[8%]" />
-          <FloatCard icon="⚡" title="OTP delivered" sub="Check your inbox" delay="-3s" className="top-[65%] right-[6%]" />
-          <FloatCard icon="✅" title="Account secured" sub="2-step verification" delay="-5s" className="bottom-[10%] left-[10%]" />
-
-          {/* Brand text */}
-          <div style={{ position: "relative", zIndex: 5, textAlign: "center", padding: "0 52px", marginTop: -20 }}>
-            <div style={{ marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "4px 13px", borderRadius: 20,
-              background: "rgba(110,231,183,0.06)", border: "1px solid rgba(110,231,183,0.14)" }}>
-              <span style={{ width: 5.5, height: 5.5, borderRadius: "50%", background: "#6EE7B7",
-                display: "inline-block", animation: "pulse 2s ease infinite" }} />
-              <span style={{ fontSize: 9.5, color: "#6EE7B7", letterSpacing: "1.6px", textTransform: "uppercase", fontWeight: 500, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Secure mode active</span>
+              {/* Stats */}
+              <div style={{ display:"flex", borderRadius:12, overflow:"hidden", border:"1px solid rgba(255,255,255,0.07)", background:"rgba(255,255,255,0.03)", backdropFilter:"blur(8px)" }}>
+                {[["30s","OTP Speed"],["256-bit","Encryption"],["99.9%","Uptime"]].map(([n,l],i) => (
+                  <div key={l} style={{ flex:1, textAlign:"center", padding:"11px 6px", borderRight: i<2 ? "1px solid rgba(255,255,255,0.07)" : "none" }}>
+                    <div style={{ fontFamily:"'Fraunces',serif", fontSize:18, fontWeight:700, color:"#4DD9AC" }}>{n}</div>
+                    <div style={{ fontSize:8.5, color:"rgba(255,255,255,0.28)", marginTop:2, letterSpacing:"1px", textTransform:"uppercase", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{l}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 48, fontWeight: 300, color: "#fff",
-              lineHeight: 1.13, letterSpacing: "-1px", marginBottom: 14 }}>
-              We'll find<br />
-              <em style={{ fontStyle: "italic", color: "#6EE7B7" }}>your account,</em><br />
-              <span style={{ color: "rgba(255,255,255,0.32)" }}>safely & fast</span>
-            </h1>
-
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.32)", fontWeight: 300, lineHeight: 1.85, marginBottom: 30, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              Military-grade recovery with<br />zero-knowledge architecture.
-            </p>
-
-            <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(110,231,183,0.09)" }}>
-              {[["30s", "OTP Speed"], ["256-bit", "Encryption"], ["99.9%", "Uptime"]].map(([n, l], i) => (
-                <div key={l} style={{ flex: 1, textAlign: "center", padding: "13px 10px",
-                  background: "rgba(255,255,255,0.02)",
-                  borderRight: i < 2 ? "1px solid rgba(110,231,183,0.07)" : "none" }}>
-                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 18, fontWeight: 700, color: "#6EE7B7" }}>{n}</div>
-                  <div style={{ fontSize: 9, color: "rgba(255,255,255,0.28)", marginTop: 3, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{l}</div>
-                </div>
-              ))}
+            {/* Circle illustration */}
+            <div className="flex-shrink-0 relative" style={{
+              width:200, height:200, borderRadius:"50%", overflow:"hidden",
+              border:"1.5px solid rgba(77,217,172,0.22)",
+              boxShadow:"0 0 48px 8px rgba(13,148,136,0.18), inset 0 0 30px rgba(0,0,0,0.35)",
+            }}>
+              <img
+                src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600&q=80"
+                alt="secure"
+                style={{ width:"100%", height:"100%", objectFit:"cover", filter:"saturate(0.7) brightness(0.8)" }}
+              />
             </div>
+          </div>
+
+          {/* BOTTOM cards */}
+          <div className="relative z-10 pb-5 px-5 flex items-end justify-between gap-3">
+            <FloatCard title="⚡ OTP delivered" sub="Check your inbox" delay="-4s" />
+            <FloatCard title="✅ Account secured" sub="2-step verification" delay="-2s" />
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
-        <div className="right-panel" style={{ background: "#F4F2FF", display: "flex", alignItems: "center", justifyContent: "center", padding: "48px 52px", position: "relative", overflow: "hidden" }}>
+        {/* ══ RIGHT — clean white form ══ */}
+        <div
+          className="right-panel flex items-center justify-center"
+          style={{ background:"#ffffff", padding:"48px 52px", position:"relative", overflow:"hidden" }}
+        >
+          {/* Subtle glows */}
+          <div className="absolute pointer-events-none"
+            style={{ top:-140, right:-140, width:380, height:380, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(13,148,136,0.05) 0%, transparent 70%)" }} />
+          <div className="absolute pointer-events-none"
+            style={{ bottom:-100, left:-100, width:300, height:300, borderRadius:"50%",
+              background:"radial-gradient(circle, rgba(13,148,136,0.04) 0%, transparent 70%)" }} />
 
-          {/* BG glows */}
-          <div style={{ position: "absolute", top: -130, right: -130, width: 400, height: 400, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(110,231,183,0.09) 0%, transparent 70%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -100, left: -100, width: 300, height: 300, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)", pointerEvents: "none" }} />
+          <div className="right-form w-full" style={{ maxWidth:400, position:"relative", zIndex:2 }}>
 
-          <div className="right-form" style={{ width: "100%", maxWidth: 420, position: "relative", zIndex: 2 }}>
-
-            {/* Mobile brand */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 10, background: "#04050F",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "'Fraunces', serif", fontSize: 20, color: "#6EE7B7", fontWeight: 700 }}>M</div>
-              <span style={{ fontWeight: 600, color: "#0D0A26", fontSize: 15, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Momentia</span>
-              <div style={{ marginLeft: "auto", padding: "4px 10px", borderRadius: 20, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
-                <span style={{ fontSize: 10.5, color: "#059669", fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>🔒 Secure Recovery</span>
+            {/* Mobile brand + secure badge */}
+            <div className="flex items-center gap-3 mb-7">
+              <div style={{ width:38, height:38, borderRadius:10, background:"#0b2d2a",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontFamily:"'Fraunces',serif", fontSize:20, color:"#4DD9AC", fontWeight:700 }}>M</div>
+              <span style={{ fontWeight:700, color:"#111827", fontSize:15, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Momentia</span>
+              <div className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                style={{ background:"rgba(13,148,136,0.07)", border:"1px solid rgba(13,148,136,0.18)" }}>
+                <span style={{ fontSize:10, color:"#0D9488", fontWeight:600, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>🔒 Secure Recovery</span>
               </div>
             </div>
 
@@ -396,78 +341,104 @@ const ForgotPassword = () => {
 
             {/* ── SUCCESS STATE ── */}
             {step === 4 ? (
-              <div style={{ textAlign: "center", padding: "40px 0" }}>
-                <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg, #059669, #10B981)",
-                  display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px",
-                  animation: "successPop 0.6s cubic-bezier(.22,1,.36,1) both",
-                  boxShadow: "0 16px 40px -8px rgba(16,185,129,0.5)" }}>
+              <div className="text-center py-10">
+                <div style={{ width:80, height:80, borderRadius:"50%",
+                  background:"linear-gradient(135deg,#0D9488,#14B8A6)",
+                  display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 24px",
+                  animation:"successPop 0.6s cubic-bezier(.22,1,.36,1) both",
+                  boxShadow:"0 16px 40px -8px rgba(13,148,136,0.5)" }}>
                   <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                     <path d="M8 18L15 25L28 11" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-                      strokeDasharray="60" strokeDashoffset="0" style={{ animation: "checkDraw 0.5s 0.3s ease both" }} />
+                      strokeDasharray="60" strokeDashoffset="0"
+                      style={{ animation:"checkDraw 0.5s 0.3s ease both" }} />
                   </svg>
                 </div>
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 36, fontWeight: 400, color: "#0D0A26", marginBottom: 12 }}>
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:40, fontWeight:400, color:"#111827", marginBottom:12, letterSpacing:"-1px" }}>
                   All done! 🎉
                 </h2>
-                <p style={{ fontSize: 14, color: "#8896B3", marginBottom: 32, lineHeight: 1.7, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <p style={{ fontSize:14, color:"#9CA3AF", marginBottom:32, lineHeight:1.7, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   Your password has been reset successfully.<br />Redirecting you to login...
                 </p>
-                <div style={{ width: "100%", height: 4, borderRadius: 2, background: "#E2DCFF", overflow: "hidden" }}>
-                  <div style={{ height: "100%", background: "linear-gradient(90deg, #059669, #10B981)",
-                    animation: "slideIn 2.5s linear both", width: "100%", borderRadius: 2 }} />
+                <div style={{ width:"100%", height:4, borderRadius:2, background:"#F3F4F6", overflow:"hidden" }}>
+                  <div style={{ height:"100%", background:"linear-gradient(90deg,#0D9488,#14B8A6,#2DD4BF)",
+                    animation:"progressBar 2.5s linear both", borderRadius:2 }} />
                 </div>
               </div>
 
             ) : step === 1 ? (
               /* ── STEP 1: Email ── */
               <div className="step-content">
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 40, fontWeight: 400, color: "#0D0A26",
-                  letterSpacing: "-1px", lineHeight: 1.1, marginBottom: 6 }}>Forgot<br /><em style={{ color: "#10B981", fontStyle: "italic" }}>password?</em></h2>
-                <p style={{ fontSize: 13, color: "#8896B3", marginBottom: 28, fontWeight: 300, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <div className="inline-flex items-center gap-2 mb-6"
+                  style={{ borderRadius:20, padding:"5px 14px", fontSize:11.5, fontWeight:500,
+                    background:"rgba(13,148,136,0.07)", border:"1px solid rgba(13,148,136,0.18)",
+                    color:"#0D9488", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                  <span className="w-[5px] h-[5px] rounded-full" style={{ background:"#0D9488", animation:"pulse 2s ease infinite" }} />
+                  Password recovery
+                </div>
+
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:44, fontWeight:400, color:"#111827",
+                  letterSpacing:"-1px", lineHeight:1.08, marginBottom:6 }}>
+                  Forgot<br /><em style={{ fontStyle:"italic", color:"#0D9488" }}>password?</em>
+                </h2>
+                <p style={{ fontSize:13.5, color:"#9CA3AF", marginBottom:28, fontWeight:400, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   No worries. Enter your email and we'll send a 6-digit code.
                 </p>
 
-                {error && <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#DC2626", marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{error}</div>}
+                {error && <ErrorBox>{error}</ErrorBox>}
 
-                <Field label="Email address" type="email" name="email" placeholder="teddy@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Field label="Email address" type="email" name="email"
+                  placeholder="teddy@gmail.com" value={email}
+                  onChange={(e) => setEmail(e.target.value)} />
 
-                <button onClick={handleSendOtp} disabled={loading || !email} className="submit-btn"
-                  style={{ width: "100%", padding: "15px", borderRadius: 14, border: "none",
-                    background: "linear-gradient(135deg, #059669 0%, #10B981 55%, #34D399 100%)",
-                    color: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: 14, fontWeight: 600, cursor: loading || !email ? "not-allowed" : "pointer",
-                    opacity: loading || !email ? 0.65 : 1, marginBottom: 28, marginTop: 8,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                    transition: "all 0.2s", boxShadow: "0 8px 28px -6px rgba(16,185,129,0.4)" }}>
+                <button onClick={handleSendOtp} disabled={loading || !email} className="submit-btn w-full flex items-center justify-center gap-2.5"
+                  style={{ padding:"15px", borderRadius:14, border:"none",
+                    background:"linear-gradient(135deg,#0D9488 0%,#14B8A6 55%,#2DD4BF 100%)",
+                    color:"#fff", fontFamily:"'Plus Jakarta Sans',sans-serif",
+                    fontSize:14.5, fontWeight:700,
+                    cursor: loading || !email ? "not-allowed" : "pointer",
+                    opacity: loading || !email ? 0.65 : 1, marginBottom:24, marginTop:8,
+                    boxShadow:"0 6px 24px -4px rgba(13,148,136,0.38)" }}>
                   {loading ? (
-                    <><span style={{ width: 15, height: 15, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} /> Sending OTP...</>
+                    <><Spinner /> Sending OTP...</>
                   ) : "Send OTP →"}
                 </button>
 
-                <p style={{ textAlign: "center", fontSize: 13, color: "#8896B3", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <p style={{ textAlign:"center", fontSize:13.5, color:"#9CA3AF", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   Remember it?{" "}
-                  <span onClick={() => navigate("/login")} style={{ color: "#059669", fontWeight: 600, cursor: "pointer" }}>Back to login</span>
+                  <span onClick={() => navigate("/login")}
+                    style={{ color:"#0D9488", fontWeight:700, cursor:"pointer" }}>Back to login</span>
                 </p>
               </div>
 
             ) : step === 2 ? (
               /* ── STEP 2: OTP ── */
               <div className="step-content">
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 40, fontWeight: 400, color: "#0D0A26",
-                  letterSpacing: "-1px", lineHeight: 1.1, marginBottom: 6 }}>Check your<br /><em style={{ color: "#10B981", fontStyle: "italic" }}>inbox</em></h2>
-                <p style={{ fontSize: 13, color: "#8896B3", marginBottom: 6, fontWeight: 300, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <div className="inline-flex items-center gap-2 mb-6"
+                  style={{ borderRadius:20, padding:"5px 14px", fontSize:11.5, fontWeight:500,
+                    background:"rgba(13,148,136,0.07)", border:"1px solid rgba(13,148,136,0.18)",
+                    color:"#0D9488", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                  <span className="w-[5px] h-[5px] rounded-full" style={{ background:"#0D9488", animation:"pulse 2s ease infinite" }} />
+                  Code verification
+                </div>
+
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:44, fontWeight:400, color:"#111827",
+                  letterSpacing:"-1px", lineHeight:1.08, marginBottom:6 }}>
+                  Check your<br /><em style={{ fontStyle:"italic", color:"#0D9488" }}>inbox</em>
+                </h2>
+                <p style={{ fontSize:13.5, color:"#9CA3AF", marginBottom:4, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   We sent a 6-digit code to
                 </p>
-                <p style={{ fontSize: 14, fontWeight: 600, color: "#0D0A26", marginBottom: 28, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <p className="mb-6" style={{ fontSize:14, fontWeight:600, color:"#111827", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   {email}
-                  <span onClick={() => setStep(1)} style={{ marginLeft: 10, fontSize: 12, color: "#059669", fontWeight: 500, cursor: "pointer" }}>Change ↩</span>
+                  <span onClick={() => setStep(1)}
+                    style={{ marginLeft:10, fontSize:12, color:"#0D9488", fontWeight:500, cursor:"pointer" }}>Change ↩</span>
                 </p>
 
-                {error && <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#DC2626", marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{error}</div>}
-                {message && <div style={{ background: "rgba(16,185,129,0.07)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#059669", marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{message}</div>}
+                {error   && <ErrorBox>{error}</ErrorBox>}
+                {message && <SuccessBox>{message}</SuccessBox>}
 
                 {/* OTP boxes */}
-                <div style={{ display: "flex", gap: 10, marginBottom: 28, justifyContent: "space-between" }} onPaste={handleOtpPaste}>
+                <div className="flex justify-between gap-2 mb-6" onPaste={handleOtpPaste}>
                   {otp.map((digit, index) => (
                     <OtpBox key={index} id={`otp-${index}`} value={digit}
                       onChange={(e) => handleOtpChange(e.target.value, index)}
@@ -475,35 +446,36 @@ const ForgotPassword = () => {
                   ))}
                 </div>
 
-                <button onClick={handleVerifyOtp} disabled={otp.join("").length < 6} className="submit-btn"
-                  style={{ width: "100%", padding: "15px", borderRadius: 14, border: "none",
-                    background: "linear-gradient(135deg, #059669 0%, #10B981 55%, #34D399 100%)",
-                    color: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: 14, fontWeight: 600, cursor: otp.join("").length < 6 ? "not-allowed" : "pointer",
-                    opacity: otp.join("").length < 6 ? 0.65 : 1, marginBottom: 20,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    transition: "all 0.2s", boxShadow: "0 8px 28px -6px rgba(16,185,129,0.4)" }}>
+                <button onClick={handleVerifyOtp} disabled={otp.join("").length < 6}
+                  className="submit-btn w-full flex items-center justify-center"
+                  style={{ padding:"15px", borderRadius:14, border:"none",
+                    background:"linear-gradient(135deg,#0D9488 0%,#14B8A6 55%,#2DD4BF 100%)",
+                    color:"#fff", fontFamily:"'Plus Jakarta Sans',sans-serif",
+                    fontSize:14.5, fontWeight:700,
+                    cursor: otp.join("").length < 6 ? "not-allowed" : "pointer",
+                    opacity: otp.join("").length < 6 ? 0.65 : 1, marginBottom:20,
+                    boxShadow:"0 6px 24px -4px rgba(13,148,136,0.38)" }}>
                   Verify Code →
                 </button>
 
-                {/* Timer + Resend */}
-                <div style={{ textAlign: "center" }}>
+                {/* Timer / Resend */}
+                <div className="text-center">
                   {timer > 0 ? (
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "8px 16px", borderRadius: 20,
-                      background: "#F8F7FF", border: "1px solid #E2DCFF" }}>
-                      {/* Progress arc */}
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full"
+                      style={{ background:"#F9FAFB", border:"1px solid #E5E7EB" }}>
                       <svg width="20" height="20" viewBox="0 0 20 20">
-                        <circle cx="10" cy="10" r="8" fill="none" stroke="#E2DCFF" strokeWidth="2" />
-                        <circle cx="10" cy="10" r="8" fill="none" stroke="#10B981" strokeWidth="2"
-                          strokeDasharray={`${(timer / 30) * 50.3} 50.3`}
-                          strokeLinecap="round" transform="rotate(-90 10 10)" style={{ transition: "stroke-dasharray 1s linear" }} />
+                        <circle cx="10" cy="10" r="8" fill="none" stroke="#E5E7EB" strokeWidth="2" />
+                        <circle cx="10" cy="10" r="8" fill="none" stroke="#0D9488" strokeWidth="2"
+                          strokeDasharray={`${(timer / 30) * 50.3} 50.3`} strokeLinecap="round"
+                          transform="rotate(-90 10 10)" style={{ transition:"stroke-dasharray 1s linear" }} />
                       </svg>
-                      <span style={{ fontSize: 12, color: "#8896B3", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                        Resend in <strong style={{ color: "#0D0A26" }}>{timer}s</strong>
+                      <span style={{ fontSize:12, color:"#9CA3AF", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                        Resend in <strong style={{ color:"#111827" }}>{timer}s</strong>
                       </span>
                     </div>
                   ) : (
-                    <span onClick={handleSendOtp} style={{ fontSize: 13, color: "#059669", fontWeight: 600, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                    <span onClick={handleSendOtp}
+                      style={{ fontSize:13.5, color:"#0D9488", fontWeight:700, cursor:"pointer", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                       Resend OTP ↺
                     </span>
                   )}
@@ -513,61 +485,70 @@ const ForgotPassword = () => {
             ) : step === 3 ? (
               /* ── STEP 3: New Password ── */
               <div className="step-content">
-                <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: 40, fontWeight: 400, color: "#0D0A26",
-                  letterSpacing: "-1px", lineHeight: 1.1, marginBottom: 6 }}>New<br /><em style={{ color: "#10B981", fontStyle: "italic" }}>password</em></h2>
-                <p style={{ fontSize: 13, color: "#8896B3", marginBottom: 28, fontWeight: 300, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <div className="inline-flex items-center gap-2 mb-6"
+                  style={{ borderRadius:20, padding:"5px 14px", fontSize:11.5, fontWeight:500,
+                    background:"rgba(13,148,136,0.07)", border:"1px solid rgba(13,148,136,0.18)",
+                    color:"#0D9488", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                  <span className="w-[5px] h-[5px] rounded-full" style={{ background:"#0D9488", animation:"pulse 2s ease infinite" }} />
+                  Create new password
+                </div>
+
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:44, fontWeight:400, color:"#111827",
+                  letterSpacing:"-1px", lineHeight:1.08, marginBottom:6 }}>
+                  New<br /><em style={{ fontStyle:"italic", color:"#0D9488" }}>password</em>
+                </h2>
+                <p style={{ fontSize:13.5, color:"#9CA3AF", marginBottom:24, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   Create a strong password for your account.
                 </p>
 
-                {error && <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#DC2626", marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{error}</div>}
+                {error && <ErrorBox>{error}</ErrorBox>}
 
-                {/* Password strength */}
-                {password && (() => {
-                  const score = [password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length;
-                  const label = ["", "Weak", "Fair", "Good", "Strong"][score];
-                  const color = ["", "#EF4444", "#F59E0B", "#3B82F6", "#10B981"][score];
-                  return (
-                    <div style={{ marginBottom: 20 }}>
-                      <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-                        {[1,2,3,4].map(i => (
-                          <div key={i} style={{ flex: 1, height: 3, borderRadius: 3, background: i <= score ? color : "#E2DCFF", transition: "all 0.3s" }} />
-                        ))}
-                      </div>
-                      <span style={{ fontSize: 11, color, fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                        {label} password
-                      </span>
+                {/* Strength bar */}
+                {password && (
+                  <div className="mb-4">
+                    <div className="flex gap-1 mb-1.5">
+                      {[1,2,3,4].map(i => (
+                        <div key={i} style={{ flex:1, height:3, borderRadius:3,
+                          background: i <= strengthScore ? strengthColor : "#E5E7EB",
+                          transition:"all 0.3s" }} />
+                      ))}
                     </div>
-                  );
-                })()}
+                    <span style={{ fontSize:11, color:strengthColor, fontWeight:700, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
+                      {strengthLabel} password
+                    </span>
+                  </div>
+                )}
 
-                <div style={{ position: "relative", marginBottom: 20 }}>
-                  <Field label="New Password" type={showPass ? "text" : "password"} name="password" placeholder="At least 8 characters" value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <span onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: 14, top: 38, cursor: "pointer", fontSize: 16, opacity: 0.5 }}>
-                    {showPass ? "🙈" : "👁️"}
-                  </span>
-                </div>
+                <Field label="New password"
+                  type={showPass ? "text" : "password"} name="password"
+                  placeholder="At least 8 characters" value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  extra={<EyeIcon show={showPass} onToggle={() => setShowPass(!showPass)} />} />
 
-                <Field label="Confirm Password" type="password" name="confirm" placeholder="Repeat your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                <Field label="Confirm password"
+                  type={showConfirm ? "text" : "password"} name="confirm"
+                  placeholder="Repeat your password" value={confirmPassword}
+                  onChange={(e) => setConfirmPass(e.target.value)}
+                  extra={<EyeIcon show={showConfirm} onToggle={() => setShowConfirm(!showConfirm)} />} />
 
                 {/* Match indicator */}
                 {confirmPassword && (
-                  <div style={{ marginBottom: 16, fontSize: 12, fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    color: password === confirmPassword ? "#059669" : "#EF4444" }}>
+                  <div className="mb-4 -mt-2" style={{ fontSize:12, fontFamily:"'Plus Jakarta Sans',sans-serif",
+                    color: password === confirmPassword ? "#0D9488" : "#EF4444", fontWeight:600 }}>
                     {password === confirmPassword ? "✓ Passwords match" : "✗ Passwords don't match"}
                   </div>
                 )}
 
-                <button onClick={handleResetPassword} disabled={loading || !password || !confirmPassword} className="submit-btn"
-                  style={{ width: "100%", padding: "15px", borderRadius: 14, border: "none",
-                    background: "linear-gradient(135deg, #059669 0%, #10B981 55%, #34D399 100%)",
-                    color: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: 14, fontWeight: 600, cursor: loading || !password || !confirmPassword ? "not-allowed" : "pointer",
-                    opacity: loading || !password || !confirmPassword ? 0.65 : 1, marginBottom: 20,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                    transition: "all 0.2s", boxShadow: "0 8px 28px -6px rgba(16,185,129,0.4)" }}>
-                  {loading ? (
-                    <><span style={{ width: 15, height: 15, border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "spin 0.7s linear infinite", display: "inline-block" }} /> Resetting...</>
-                  ) : "Reset Password →"}
+                <button onClick={handleResetPassword} disabled={loading || !password || !confirmPassword}
+                  className="submit-btn w-full flex items-center justify-center gap-2.5"
+                  style={{ padding:"15px", borderRadius:14, border:"none",
+                    background:"linear-gradient(135deg,#0D9488 0%,#14B8A6 55%,#2DD4BF 100%)",
+                    color:"#fff", fontFamily:"'Plus Jakarta Sans',sans-serif",
+                    fontSize:14.5, fontWeight:700,
+                    cursor: loading || !password || !confirmPassword ? "not-allowed" : "pointer",
+                    opacity: loading || !password || !confirmPassword ? 0.65 : 1,
+                    marginBottom:20, boxShadow:"0 6px 24px -4px rgba(13,148,136,0.38)" }}>
+                  {loading ? (<><Spinner /> Resetting...</>) : "Reset Password →"}
                 </button>
               </div>
             ) : null}
@@ -578,5 +559,23 @@ const ForgotPassword = () => {
     </>
   );
 };
+
+/* ─── Tiny helpers ───────────────────────────────────────────── */
+const Spinner = () => (
+  <span style={{ width:15, height:15, border:"2px solid rgba(255,255,255,0.3)", borderTop:"2px solid #fff",
+    borderRadius:"50%", animation:"spin .7s linear infinite", display:"inline-block" }} />
+);
+
+const ErrorBox = ({ children }) => (
+  <div style={{ background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)",
+    borderRadius:12, padding:"10px 14px", fontSize:13, color:"#DC2626", marginBottom:20,
+    fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{children}</div>
+);
+
+const SuccessBox = ({ children }) => (
+  <div style={{ background:"rgba(13,148,136,0.06)", border:"1px solid rgba(13,148,136,0.18)",
+    borderRadius:12, padding:"10px 14px", fontSize:13, color:"#0D9488", marginBottom:20,
+    fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{children}</div>
+);
 
 export default ForgotPassword;
