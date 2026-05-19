@@ -1,19 +1,27 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import {Heart,
         MessageCircleMore,
         Send,
-        Bookmark
+        Bookmark,
+        EllipsisVertical
 } from "lucide-react";
 import CommentsModal from "./Comment";
 
 
 const PostCard = ({ post }) => {
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const [liked, setLiked] = useState(post.isLiked || false);
   const [saved, setSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(post.totalLikes || 0);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.totalComments || 0);
+  const [isFollowing, setIsFollowing] = useState(post.isFollowing || false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   useEffect(() => {
     const onCommentCountChanged = (e) => {
@@ -38,14 +46,51 @@ const PostCard = ({ post }) => {
     }
   };
 
+  const handleFollow = async () => {
+    setFollowLoading(true);
+    try {
+      await api.post(`/follow/follow-user`, { targetId: post.authorDetails?._id });
+      setIsFollowing(true);
+    } catch (err) {
+      console.error("Error following user", err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleUnfollow = async () => {
+    setFollowLoading(true);
+    try {
+      await api.delete(`/follow/unfollow-user/${post.authorDetails?._id}`);
+      setIsFollowing(false);
+      setShowOptionsMenu(false);
+    } catch (err) {
+      console.error("Error unfollowing user", err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const toggleOptionsMenu = () => {
+    setShowOptionsMenu((prev) => !prev);
+  };
+
+  const goToPost = () => {
+    navigate(`/post/${post._id}`);
+    setShowOptionsMenu(false);
+  };
+
   return (
-    <div className="mx-auto w-full max-w-153.5 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
+    <div className="max-w-153.5 mx-auto w-full overflow-visible rounded-2xl border border-gray-200 bg-white shadow-md">
 
       {/* 🔝 HEADER */}
       <div className="flex items-center justify-between p-4">
     
         {/* USER INFO */}
-        <div className="flex items-center gap-3">
+        <div
+          className="flex cursor-pointer items-center gap-3"
+          onClick={() => navigate(`/profile/${post.authorDetails?._id}`)}
+        >
 
           {/* PROFILE IMAGE */}
           <img
@@ -69,10 +114,46 @@ const PostCard = ({ post }) => {
           </div>
         </div>
 
-        {/* MORE OPTIONS */}
-        <button className="text-xl text-gray-500">
-          ⋮
-        </button>
+        <div className="flex items-center gap-2">
+          {user?.id !== post.authorDetails?._id && !isFollowing && (
+            <button
+              onClick={handleFollow}
+              disabled={followLoading}
+              className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            >
+              {followLoading ? "Following..." : "Follow"}
+            </button>
+          )}
+
+          <div className="relative inline-block">
+            <button
+              onClick={toggleOptionsMenu}
+              className="text-xl text-gray-500"
+            >
+              <EllipsisVertical size={24} />
+            </button>
+
+            {showOptionsMenu && (
+              <div className="absolute right-0 top-1/2 z-10 w-44 -translate-y-1/2 translate-x-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
+                <button
+                  onClick={goToPost}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-800 transition hover:bg-gray-50"
+                >
+                  Go to post
+                </button>
+                {isFollowing && (
+                  <button
+                    onClick={handleUnfollow}
+                    disabled={followLoading}
+                    className="w-full px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-red-300"
+                  >
+                    {followLoading ? "Unfollowing..." : "Unfollow"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 🖼️ IMAGE POST */}
@@ -80,7 +161,8 @@ const PostCard = ({ post }) => {
         <img
           src={post.images[0].url}
           alt="post"
-          className="h-auto max-h-190 w-full object-cover"
+          onClick={() => navigate(`/post/${post._id}`)}
+          className="max-h-190 h-auto w-full object-cover cursor-pointer hover:opacity-95 transition"
         />
       )}
 
@@ -89,7 +171,8 @@ const PostCard = ({ post }) => {
         <video
           src={post.video.url}
           controls
-          className="h-auto max-h-190 w-full object-cover"
+          onClick={() => navigate(`/post/${post._id}`)}
+          className="max-h-190 h-auto w-full object-cover cursor-pointer hover:opacity-95 transition"
         />
       )}
 

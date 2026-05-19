@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserMinus, UserPlus } from "lucide-react";
 import api from "../services/api.js";
 
 const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollowing = false }) => {
@@ -53,12 +54,24 @@ const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollow
         {loading ? (
           <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
         ) : (
-          isFollowing ? "Following" : "Follow"
+          <>
+            {isFollowing ? (
+              <>
+                <UserMinus size={16} />
+                Unfollow
+              </>
+            ) : (
+              <>
+                <UserPlus size={16} />
+                Follow
+              </>
+            )}
+          </>
         )}
       </button>
 
       {error && (
-        <p className="text-[10px] text-red-500 whitespace-nowrap absolute mt-8">
+        <p className="rounded bg-red-50 px-2 py-1 text-xs text-red-600">
           {error}
         </p>
       )}
