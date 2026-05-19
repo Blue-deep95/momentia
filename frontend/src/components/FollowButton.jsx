@@ -63,7 +63,7 @@ const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollow
             {isFollowing ? (
               <>
                 <UserMinus size={16} />
-                Following
+                Unfollow
               </>
             ) : (
               <>
@@ -76,7 +76,7 @@ const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollow
       </button>
 
       {error && (
-        <p className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">
+        <p className="rounded bg-red-50 px-2 py-1 text-xs text-red-600">
           {error}
         </p>
       )}
