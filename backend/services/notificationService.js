@@ -62,7 +62,7 @@ notificationBus.on("post-liked", async (data) => {
           isRead: false,
         })
           .populate("actors", "_id username profilePicture")
-          .populate({ path: "targetEntityId", model: "post" }, "_id caption");
+          .populate({ path: "targetEntityId", model: "post" }, "_id caption thumbImage");
         io.to(targetSocketId).emit("notification-post-liked", notificationData);
       }
       // do not set the isRead = true here just sending over websocket does not mean the user read
