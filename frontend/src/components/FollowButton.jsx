@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { UserPlus, UserMinus } from "lucide-react";
+import { UserMinus, UserPlus } from "lucide-react";
 import api from "../services/api.js";
 
 const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollowing = false }) => {
@@ -7,25 +7,25 @@ const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollow
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleFollowToggle = async () => {
+  const handleFollowToggle = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setLoading(true);
     setError(null);
 
     try {
       let response;
       if (isFollowing) {
-        // Unfollow
         response = await api.delete(`/follow/unfollow-user/${userId}`);
       } else {
-        // Follow
         response = await api.post(`/follow/follow-user`, { targetId: userId });
       }
 
-      // Only update state if backend confirms success
       if (response.status === 200 || response.status === 201) {
         setIsFollowing(!isFollowing);
-
-        // Notify parent component
         if (onFollowStatusChange) {
           onFollowStatusChange(isFollowing ? "unfollowed" : "followed");
         }
@@ -34,8 +34,6 @@ const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollow
       console.error("Error toggling follow:", err);
       const errorMsg = err.response?.data?.message || "Failed to update follow status";
       setError(errorMsg);
-
-      // Clear error after 3 seconds
       setTimeout(() => setError(null), 3000);
     } finally {
       setLoading(false);
@@ -43,27 +41,24 @@ const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollow
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col items-end gap-1" onClick={(e) => e.stopPropagation()}>
       <button
         onClick={handleFollowToggle}
         disabled={loading}
-        className={`flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-semibold transition ${
+        className={`flex items-center justify-center rounded-lg px-5 py-1.5 text-xs font-semibold transition-all duration-200 ${
           isFollowing
-            ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            : "bg-blue-600 text-white hover:bg-blue-700"
-        } disabled:opacity-50 disabled:cursor-not-allowed`}
+            ? "bg-zinc-800 text-white hover:bg-zinc-700 border border-zinc-700"
+            : "bg-sky-500 text-white hover:bg-sky-600"
+        } disabled:opacity-50 disabled:cursor-not-allowed min-w-[85px] h-[32px]`}
       >
         {loading ? (
-          <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-            {isFollowing ? "Unfollowing..." : "Following..."}
-          </>
+          <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
         ) : (
           <>
             {isFollowing ? (
               <>
                 <UserMinus size={16} />
-                Following
+                Unfollow
               </>
             ) : (
               <>
@@ -76,7 +71,7 @@ const FollowButton = ({ userId, onFollowStatusChange, isFollowing: initialFollow
       </button>
 
       {error && (
-        <p className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">
+        <p className="rounded bg-red-50 px-2 py-1 text-xs text-red-600">
           {error}
         </p>
       )}

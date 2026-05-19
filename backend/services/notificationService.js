@@ -41,6 +41,7 @@ notificationBus.on("post-liked", async (data) => {
       { upsert: true, returnDocument: "before" },
     );
 
+
     // now try to send the notification to the user
     const targetSocketId = onlineUsers.get(data.postAuthor.toString());
     if (targetSocketId) {

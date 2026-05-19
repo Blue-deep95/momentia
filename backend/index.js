@@ -65,8 +65,8 @@ app.use("/api/notifications",protect,notificationRoutes)
 app.use("/api/message",protect,messageRoutes)
 
 // event listeners
-require('./services/notificationService.js')
-require('./services/messageService.js')
+require('./services/notificationService.js') // for sending notifications
+require('./services/messageService.js') // for sending chat messages to the frontend
 
 
 // newer listen that handles both http and web socket connections

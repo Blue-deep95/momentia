@@ -22,8 +22,19 @@ const messageSchema = new mongoose.Schema({
     content:{
         type:String,
         required:true,
+    },
+    // This is mainly for soft-deleting messages and still preserve the messageNumber
+    isDeleted:{
+        type:Boolean,
+        default:false
+    },
+    isEdited:{
+        type:Boolean,
+        default:false
     }
 
 },{timestamps:true})
+
+messageSchema.index({ roomId: 1, messageNumber: -1 });
 
 module.exports = mongoose.model('message',messageSchema)

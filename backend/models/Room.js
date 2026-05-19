@@ -38,6 +38,7 @@ const roomSchema = new mongoose.Schema(
     // a last message field that helps us to show the latest message in the
     // chat witout joins
     lastMessage: {
+      messageId: { type: mongoose.Schema.Types.ObjectId, ref: "message" },
       content: String,
       sender: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
     },
