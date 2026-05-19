@@ -5,7 +5,7 @@ import api from "../services/api.js";
 /* ─── Floating Activity Card (matches Login exactly) ───────── */
 const FloatCard = ({ avatar, title, sub, delay, className = "" }) => (
   <div
-    className={`flex items-center gap-3 rounded-2xl px-4 py-3 min-w-[180px] ${className}`}
+    className={`flex items-center gap-3 rounded-2xl px-4 py-3 min-w-45 ${className}`}
     style={{
       background: "rgba(255,255,255,0.07)",
       border: "1px solid rgba(255,255,255,0.12)",
@@ -17,11 +17,11 @@ const FloatCard = ({ avatar, title, sub, delay, className = "" }) => (
     {avatar ? (
       <img
         src={avatar} alt=""
-        className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+        className="h-9 w-9 shrink-0 rounded-full object-cover"
         style={{ outline: "2px solid rgba(77,217,172,0.35)", outlineOffset: 1 }}
       />
     ) : (
-      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+      <span className="h-2.5 w-2.5 shrink-0 rounded-full"
         style={{ background: "#4DD9AC", boxShadow: "0 0 8px 3px rgba(77,217,172,0.55)" }} />
     )}
     <div>
@@ -40,7 +40,7 @@ const Field = ({ label, type = "text", name, placeholder, value, onChange, disab
   const [focused, setFocused] = useState(false);
   return (
     <div className="mb-5">
-      <label className="block mb-2"
+      <label className="mb-2 block"
         style={{ fontSize: 10.5, fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.9px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
         {label}
       </label>
@@ -49,7 +49,7 @@ const Field = ({ label, type = "text", name, placeholder, value, onChange, disab
           type={type} name={name} placeholder={placeholder} value={value}
           onChange={onChange} required disabled={disabled}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          className="w-full rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           style={{
             paddingRight: extra ? 44 : 16,
             background: disabled ? "#F3F4F6" : "#fff",
@@ -73,7 +73,7 @@ const SocialBtn = ({ label }) => {
   return (
     <button type="button"
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-semibold transition-all duration-200"
+      className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-[13px] font-semibold transition-all duration-200"
       style={{
         border: hov ? "1.5px solid #0D9488" : "1.5px solid #E5E7EB",
         background: hov ? "#F0FDFB" : "#fff",
@@ -101,7 +101,7 @@ const SocialBtn = ({ label }) => {
 
 /* ─── Eye Toggle Icon ────────────────────────────────────────── */
 const EyeIcon = ({ show, onToggle }) => (
-  <button type="button" onClick={onToggle} className="text-gray-400 hover:text-gray-600 transition-colors">
+  <button type="button" onClick={onToggle} className="text-gray-400 transition-colors hover:text-gray-600">
     {show ? (
       <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -198,24 +198,24 @@ const Register = () => {
 
         {/* ══ LEFT — dark teal (identical to Login) ══ */}
         <div
-          className="left-panel relative overflow-hidden flex flex-col"
+          className="left-panel relative flex flex-col overflow-hidden"
           style={{ background: "linear-gradient(150deg,#071c1a 0%,#0b2e2b 45%,#0d3532 75%,#082622 100%)", minHeight: "100vh" }}
         >
           {/* Diagonal texture */}
-          <div className="absolute inset-0 pointer-events-none z-0" style={{
+          <div className="pointer-events-none absolute inset-0 z-0" style={{
             backgroundImage: "repeating-linear-gradient(155deg, transparent, transparent 40px, rgba(255,255,255,0.022) 40px, rgba(255,255,255,0.022) 41px)",
           }} />
 
           {/* Ambient glows */}
-          <div className="absolute pointer-events-none z-0"
+          <div className="pointer-events-none absolute z-0"
             style={{ right:-80, top:"40%", width:440, height:440, borderRadius:"50%",
               background:"radial-gradient(circle, rgba(45,180,150,0.1) 0%, transparent 65%)" }} />
-          <div className="absolute pointer-events-none z-0"
+          <div className="pointer-events-none absolute z-0"
             style={{ left:-80, top:-80, width:320, height:320, borderRadius:"50%",
               background:"radial-gradient(circle, rgba(20,120,100,0.09) 0%, transparent 65%)" }} />
 
           {/* TOP card */}
-          <div className="relative z-10 pt-5 px-5">
+          <div className="relative z-10 px-5 pt-5">
             <FloatCard
               avatar="https://picsum.photos/seed/rc1/80/80"
               title="@Blue_deep just joined"
@@ -225,14 +225,14 @@ const Register = () => {
           </div>
 
           {/* CENTRE */}
-          <div className="relative z-10 flex-1 flex items-center px-8 py-4 gap-4">
+          <div className="relative z-10 flex flex-1 items-center gap-4 px-8 py-4">
 
             {/* Text block */}
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               {/* Join badge */}
-              <div className="inline-flex items-center gap-2 mb-6"
+              <div className="mb-6 inline-flex items-center gap-2"
                 style={{ padding:"5px 13px", borderRadius:20, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.11)" }}>
-                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0"
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full"
                   style={{ background:"#4DD9AC", boxShadow:"0 0 6px 2px rgba(77,217,172,0.6)", animation:"pulse 2s ease infinite" }} />
                 <span style={{ fontSize:9.5, color:"#4DD9AC", letterSpacing:"1.8px", textTransform:"uppercase", fontWeight:600, fontFamily:"'Plus Jakarta Sans',sans-serif" }}>Join today</span>
               </div>
@@ -266,7 +266,7 @@ const Register = () => {
             </div>
 
             {/* Circle photo */}
-            <div className="flex-shrink-0 relative" style={{
+            <div className="relative shrink-0" style={{
               width:200, height:200, borderRadius:"50%", overflow:"hidden",
               border:"1.5px solid rgba(77,217,172,0.22)",
               boxShadow:"0 0 48px 8px rgba(13,148,136,0.18), inset 0 0 30px rgba(0,0,0,0.35)",
@@ -280,7 +280,7 @@ const Register = () => {
           </div>
 
           {/* BOTTOM cards */}
-          <div className="relative z-10 pb-5 px-5 flex items-end justify-between gap-3">
+          <div className="relative z-10 flex items-end justify-between gap-3 px-5 pb-5">
             <FloatCard
               avatar="https://picsum.photos/seed/rc3/80/80"
               title="@indeti shared a moment"
@@ -302,17 +302,17 @@ const Register = () => {
           style={{ background:"#ffffff", padding:"48px 52px", position:"relative", overflow:"hidden" }}
         >
           {/* Subtle glows */}
-          <div className="absolute pointer-events-none"
+          <div className="pointer-events-none absolute"
             style={{ top:-140, right:-140, width:380, height:380, borderRadius:"50%",
               background:"radial-gradient(circle, rgba(13,148,136,0.05) 0%, transparent 70%)" }} />
-          <div className="absolute pointer-events-none"
+          <div className="pointer-events-none absolute"
             style={{ bottom:-100, left:-100, width:300, height:300, borderRadius:"50%",
               background:"radial-gradient(circle, rgba(13,148,136,0.04) 0%, transparent 70%)" }} />
 
           <form onSubmit={handleRegister} className="right-form w-full" style={{ maxWidth:400, position:"relative", zIndex:2 }}>
 
             {/* Mobile brand */}
-            <div className="flex items-center gap-3 mb-8 lg:hidden">
+            <div className="mb-8 flex items-center gap-3 lg:hidden">
               <div style={{ width:38, height:38, borderRadius:10, background:"#0b2d2a",
                 display:"flex", alignItems:"center", justifyContent:"center",
                 fontFamily:"'Fraunces',serif", fontSize:20, color:"#4DD9AC", fontWeight:700 }}>M</div>
@@ -320,11 +320,11 @@ const Register = () => {
             </div>
 
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 mb-6"
+            <div className="mb-6 inline-flex items-center gap-2"
               style={{ borderRadius:20, padding:"5px 14px", fontSize:11.5, fontWeight:500,
                 background:"rgba(13,148,136,0.07)", border:"1px solid rgba(13,148,136,0.18)",
                 color:"#0D9488", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
-              <span className="w-[5px] h-[5px] rounded-full" style={{ background:"#0D9488", animation:"pulse 2s ease infinite" }} />
+              <span className="h-1.25 w-1.25 rounded-full" style={{ background:"#0D9488", animation:"pulse 2s ease infinite" }} />
               Create your free account
             </div>
 
@@ -347,7 +347,7 @@ const Register = () => {
 
             {/* Email + Send OTP */}
             <div className="mb-5">
-              <label className="block mb-2"
+              <label className="mb-2 block"
                 style={{ fontSize:10.5, fontWeight:700, color:"#9CA3AF", letterSpacing:"0.9px", textTransform:"uppercase", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                 Email address
               </label>
@@ -356,7 +356,7 @@ const Register = () => {
                   type="email" name="email" placeholder="teddy@gmail.com"
                   value={formData.email} onChange={handleChange} required
                   disabled={otpStatus === "verified"}
-                  className="flex-1 rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded-xl px-4 py-3.5 text-sm outline-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     background: otpStatus === "verified" ? "#F3F4F6" : "#fff",
                     border: "1.5px solid #E5E7EB",
@@ -369,7 +369,7 @@ const Register = () => {
                   type="button"
                   onClick={handleSendOtp}
                   disabled={otpStatus === "sending" || otpStatus === "verifying" || otpStatus === "verified"}
-                  className="send-otp-btn flex-shrink-0 rounded-xl px-4 text-xs font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="send-otp-btn shrink-0 rounded-xl px-4 text-xs font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     background: otpStatus === "verified" ? "rgba(13,148,136,0.07)" : "transparent",
                     border: otpStatus === "verified" ? "1.5px solid #0D9488" : "1.5px solid #E5E7EB",
@@ -393,7 +393,7 @@ const Register = () => {
             {/* OTP verify row */}
             {(otpStatus === "sent" || otpStatus === "verifying") && (
               <div className="otp-appear mb-5">
-                <label className="block mb-2"
+                <label className="mb-2 block"
                   style={{ fontSize:10.5, fontWeight:700, color:"#9CA3AF", letterSpacing:"0.9px", textTransform:"uppercase", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>
                   Verification code
                 </label>
@@ -417,7 +417,7 @@ const Register = () => {
                     type="button"
                     onClick={handleVerifyOtp}
                     disabled={otpStatus === "verifying" || otp.length < 4}
-                    className="verify-btn flex-shrink-0 rounded-xl px-5 py-3 text-xs font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="verify-btn shrink-0 rounded-xl px-5 py-3 text-xs font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
                     style={{
                       background: "linear-gradient(135deg, #0D9488 0%, #14B8A6 55%, #2DD4BF 100%)",
                       color: "#fff", border: "none",
@@ -466,7 +466,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={otpStatus !== "verified" || loading}
-              className="submit-btn w-full flex items-center justify-center gap-2.5"
+              className="submit-btn flex w-full items-center justify-center gap-2.5"
               style={{
                 padding:"15px", borderRadius:14, border:"none",
                 background:"linear-gradient(135deg, #0D9488 0%, #14B8A6 55%, #2DD4BF 100%)",
@@ -487,14 +487,14 @@ const Register = () => {
             </button>
 
             {/* Divider */}
-            <div className="flex items-center gap-3 mb-5">
+            <div className="mb-5 flex items-center gap-3">
               <div style={{ flex:1, height:1, background:"#F3F4F6" }} />
               <span style={{ fontSize:11.5, color:"#C4C4CF", whiteSpace:"nowrap", fontFamily:"'Plus Jakarta Sans',sans-serif" }}>or continue with</span>
               <div style={{ flex:1, height:1, background:"#F3F4F6" }} />
             </div>
 
             {/* Social */}
-            <div className="flex gap-3 mb-7">
+            <div className="mb-7 flex gap-3">
               <SocialBtn label="Google" />
               <SocialBtn label="Facebook" />
             </div>
