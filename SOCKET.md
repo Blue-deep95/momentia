@@ -75,6 +75,24 @@ Sent when someone follows the authenticated user. Rate-limited to 1 minute.
   }
   ```
 
+### `new-message`
+Sent when a new message is received in a room the user is a member of.
+- **Payload (Message Object):**
+  ```json
+  {
+    "_id": "ObjectId",
+    "roomId": "ObjectId",
+    "messageNumber": "number",
+    "sender": "UserId",
+    "content": "string",
+    "isDeleted": false,
+    "isEdited": false,
+    "createdAt": "ISO Date",
+    "updatedAt": "ISO Date"
+  }
+  ```
+- **Note:** The `members` array is stripped from this payload for privacy and efficiency.
+
 ---
 
 ## 3. Client -> Server (Events Listened to by Backend)

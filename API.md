@@ -2,6 +2,19 @@
 
 This document provides a comprehensive overview of the Momentia API endpoints, including authentication requirements, request parameters, and response structures.
 
+## 📌 Table of Contents
+*   [🔐 User & Authentication](#-user--authentication-user)
+*   [👤 Profile](#-profile-profile)
+*   [🏠 Feed](#-feed-feed)
+*   [🔍 Search](#-search-search)
+*   [📝 Posts](#-posts-post)
+*   [💬 Comments](#-comments-comment)
+*   [🤝 Follow](#-follow-follow)
+*   [🔔 Notifications](#-notifications-notifications)
+*   [💬 Messages](#-messages-message)
+
+---
+
 ## Base URL
 `http://localhost:2000/api`
 
@@ -725,4 +738,81 @@ Sends a message to a room. Synchronizes unread counts and triggers real-time upd
 *   **Success Response (201):**
     ```json
     { "message": { ... }, "success": true }
+    ```
+
+### 4. Get Messages
+Retrieves paginated messages for a specific room using cursor-based pagination.
+*   **URL:** `/message/get-messages/:roomId`
+*   **Method:** `GET`
+*   **Query Parameters:**
+    *   `cursor` (Number, optional): The `messageNumber` of the last message received.
+    *   `limit` (Number, optional, default: 25): Number of messages to fetch.
+*   **Success Response (200):**
+    ```json
+    {
+      "messageArray": [
+        {
+          "_id": "...",
+          "roomId": "...",
+          "messageNumber": 10,
+          "sender": { "username": "...", "profilePicture": "..." },
+          "content": "...",
+          "isDeleted": false,
+          "isEdited": false,
+          "createdAt": "..."
+        }
+      ],
+      "nextCursor": 9,
+      "hasMore": true,
+      "message": "Messages fetched successfully"
+    }
+    ```
+
+### 5. Mark Message Read
+Updates the authenticated user's `lastSeenMessage` count for a specific room.
+*   **URL:** `/message/mark-message-read`
+*   **Method:** `PUT`
+*   **Body:**
+    ```json
+    { 
+      "roomId": "...", 
+      "latestMessageNumber": 15 (Optional, defaults to current room message count)
+    }
+    ```
+*   **Success Response (200):**
+    ```json
+    { 
+      "message": "Marked read-messages successfully",
+      "lastSeenMessage": 15 
+    }
+    ```
+
+### 6. Delete Message
+Soft-deletes a message by replacing its content and setting a flag. Only the sender can delete their message.
+*   **URL:** `/message/delete-message/:messageId`
+*   **Method:** `DELETE`
+*   **Success Response (200):**
+    ```json
+    { 
+      "success": true, 
+      "message": "Message deleted successfully",
+      "deletedMessage": { ... } 
+    }
+    ```
+
+### 7. Edit Message
+Updates the content of a message and sets an `isEdited` flag. Only the sender can edit their message.
+*   **URL:** `/message/edit-message/:messageId`
+*   **Method:** `PUT`
+*   **Body:**
+    ```json
+    { "content": "New updated message content" }
+    ```
+*   **Success Response (200):**
+    ```json
+    {
+      "success": true,
+      "message": "Message edited successfully",
+      "updatedMessage": { ... }
+    }
     ```
