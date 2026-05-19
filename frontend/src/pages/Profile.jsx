@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
   Play,
   Share2,
+  Trash2,
 } from "lucide-react";
 
 const TABS = [
@@ -135,6 +136,23 @@ const Profile = () => {
     }
   };
 
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      await api.delete(`/post/delete-post/${postId}`);
+      setPosts(posts.filter((p) => p._id !== postId));
+      if (profile) {
+        setProfile((prev) => ({
+          ...prev,
+          totalPosts: (prev.totalPosts || 1) - 1,
+        }));
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Failed to delete post");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F5F6FB]">
@@ -206,7 +224,7 @@ const Profile = () => {
                     </div>
 
                     {isOwnProfile && (
-                      <label className="absolute bottom-4 right-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white shadow-xl transition-all duration-300 hover:scale-110">
+                      <label className="absolute right-4 top-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white shadow-xl transition-all duration-300 hover:scale-110">
 
                         {uploading ? (
                           <Loader2
@@ -441,6 +459,8 @@ const Profile = () => {
                       key={i}
                       post={post}
                       onClick={() => setSelectedPost(post)}
+                      showDelete={isOwnProfile}
+                      onDelete={handleDeletePost}
                     />
                   ))}
 
@@ -461,6 +481,8 @@ const Profile = () => {
                   key={i}
                   post={post}
                   onClick={() => setSelectedPost(post)}
+                  showDelete={isOwnProfile}
+                  onDelete={handleDeletePost}
                 />
               ))}
 
@@ -477,6 +499,8 @@ const Profile = () => {
                   key={i}
                   post={post}
                   onClick={() => setSelectedPost(post)}
+                  showDelete={isOwnProfile}
+                  onDelete={handleDeletePost}
                 />
               ))}
 
@@ -493,6 +517,7 @@ const Profile = () => {
                   key={i}
                   post={post}
                   onClick={() => setSelectedPost(post)}
+                  showDelete={false}
                 />
               ))}
 
@@ -546,7 +571,8 @@ const Profile = () => {
 
 /* POST CARD */
 
-const PostCard = ({ post, onClick }) => {
+const PostCard = ({ post, onClick, showDelete, onDelete }) => {
+  const [showMenu, setShowMenu] = useState(false);
   const image =
     post.thumbImage ||
     post.imageUrl ||
@@ -557,6 +583,37 @@ const PostCard = ({ post, onClick }) => {
       onClick={onClick}
       className="group relative cursor-pointer overflow-hidden rounded-[28px] border border-[#E5E7EB] bg-white shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
     >
+      {showDelete && (
+        <div className="absolute right-4 top-4 z-20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition hover:bg-black/40"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+
+            {showMenu && (
+              <div className="animate-in fade-in zoom-in absolute right-0 mt-2 w-36 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl duration-200">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(post._id);
+                    setShowMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="aspect-square overflow-hidden">
 
@@ -592,7 +649,8 @@ const PostCard = ({ post, onClick }) => {
 
 /* REEL CARD */
 
-const ReelCard = ({ post, onClick }) => {
+const ReelCard = ({ post, onClick, showDelete, onDelete }) => {
+  const [showMenu, setShowMenu] = useState(false);
   const image =
     post.thumbImage ||
     post.imageUrl ||
@@ -603,6 +661,37 @@ const ReelCard = ({ post, onClick }) => {
       onClick={onClick}
       className="aspect-9/16 group relative cursor-pointer overflow-hidden rounded-[28px] bg-white shadow-xl"
     >
+      {showDelete && (
+        <div className="absolute right-4 top-4 z-20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition hover:bg-black/40"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+
+            {showMenu && (
+              <div className="animate-in fade-in zoom-in absolute right-0 mt-2 w-36 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl duration-200">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(post._id);
+                    setShowMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <img
         src={image}
@@ -639,7 +728,8 @@ const ReelCard = ({ post, onClick }) => {
 
 /* PHOTO CARD */
 
-const PhotoCard = ({ post, onClick }) => {
+const PhotoCard = ({ post, onClick, showDelete, onDelete }) => {
+  const [showMenu, setShowMenu] = useState(false);
   const image =
     post.thumbImage ||
     post.imageUrl ||
@@ -648,8 +738,39 @@ const PhotoCard = ({ post, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group mb-5 cursor-pointer break-inside-avoid overflow-hidden rounded-[28px] bg-white shadow-lg"
+      className="group relative mb-5 cursor-pointer break-inside-avoid overflow-hidden rounded-[28px] bg-white shadow-lg"
     >
+      {showDelete && (
+        <div className="absolute right-4 top-4 z-20 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition hover:bg-black/40"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+
+            {showMenu && (
+              <div className="animate-in fade-in zoom-in absolute right-0 mt-2 w-36 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl duration-200">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(post._id);
+                    setShowMenu(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <img
         src={image}
