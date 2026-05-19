@@ -3,6 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const Notification = require("../models/Notification");
+const mongoose = require("mongoose");
 
 // this route gets all notifications from the server both read and unread,
 // joins the data page for extra safety and send 20 notifications per each request
@@ -16,7 +17,7 @@ router.get("/get-notifications/:page", async (req, res) => {
 
     // complex joining required here
     const notifications = await Notification.aggregate([
-      { $match: { recipient: user._id } },
+      { $match: { recipient: new mongoose.Types.ObjectId(user._id) } },
       // Sort by unread first, then by the most recent updates
       { $sort: { isRead: 1, updatedAt: -1 } },
       { $skip: skip },
