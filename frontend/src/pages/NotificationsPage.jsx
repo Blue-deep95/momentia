@@ -295,9 +295,10 @@ export default function NotificationsPage() {
       }, 8000);
     };
 
-    socket.on("new-notification", handler);
+    const eventNames = ["notification-post-liked", "user-followed"];
+    eventNames.forEach((eventName) => socket.on(eventName, handler));
 
-    return () => socket.off("new-notification", handler);
+    return () => eventNames.forEach((eventName) => socket.off(eventName, handler));
   }, []);
 
   /* MARK ALL */

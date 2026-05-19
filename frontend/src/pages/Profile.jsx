@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar.jsx";
 import FollowersModal from "../components/FollowersModal.jsx";
@@ -43,6 +43,7 @@ const Profile = () => {
 
   const profileUserId = userId || user?.id;
   const isOwnProfile = !userId || userId === user?.id;
+  const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -224,7 +225,7 @@ const Profile = () => {
                     </div>
 
                     {isOwnProfile && (
-                      <label className="absolute right-4 top-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white shadow-xl transition-all duration-300 hover:scale-110">
+                      <label className="absolute left-4 bottom-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-white shadow-xl transition-all duration-300 hover:scale-110 dark:border-slate-900 dark:bg-slate-950">
 
                         {uploading ? (
                           <Loader2
@@ -294,12 +295,10 @@ const Profile = () => {
                             Edit Profile
                           </button>
 
-                          <button className="bg-linear-to-r flex items-center gap-2 rounded-2xl from-[#2F3EDB] to-[#5160F5] px-6 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105">
-                            <Plus size={18} />
-                            Create Post
-                          </button>
-
-                          <button className="flex items-center gap-2 rounded-2xl bg-[#FF7A3D] px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105">
+                          <button
+                            onClick={() => navigate("/messages")}
+                            className="flex items-center gap-2 rounded-2xl bg-[#FF7A3D] px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                          >
                             <Share2 size={18} />
                             Share
                           </button>
@@ -307,13 +306,6 @@ const Profile = () => {
                       ) : (
                         <FollowButton userId={profileUserId} />
                       )}
-
-                      <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white shadow-md transition-all hover:shadow-xl">
-                        <MoreHorizontal
-                          size={20}
-                          className="text-[#111827]"
-                        />
-                      </button>
 
                     </div>
 

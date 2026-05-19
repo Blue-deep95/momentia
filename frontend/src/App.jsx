@@ -10,6 +10,7 @@ import SearchPage from "./pages/SearchPage.jsx"
 import Reels from "./pages/Reels.jsx"
 import CreatePost from "./pages/CreatePost.jsx"
 import Notifications from "./pages/NotificationsPage.jsx"
+import NotificationToaster from "./components/NotificationToaster.jsx"
 import { initSocket, disconnectSocket } from "./socket.js"
 import SinglePost from "./pages/SinglePost.jsx"
 
@@ -28,6 +29,9 @@ export default function App() {
     const socket = initSocket(token);
     if (!socket) return;
 
+    window.__socket = socket;
+    window.dispatchEvent(new Event("socket-ready"));
+
     socket.on("connect", () => {
       console.log("Global socket connected:", socket.id);
     });
@@ -42,12 +46,14 @@ export default function App() {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("connect_error");
+      window.__socket = null;
     };
   }, [token]);
 
   return (
     <div>
       <BrowserRouter>
+      <NotificationToaster />
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
@@ -60,8 +66,11 @@ export default function App() {
             
             <Route path="/search" element={<SearchPage />} />
             <Route path="/reels" element={<Reels />} />
+            <Route path="/post/:postId" element={<SinglePost />} />
             <Route path="/" element={<Feed />} />
             <Route path="/create-post" element={<CreatePost />} />
+            
+            <Route path="/notifications" element={<Notifications />} />
 
           </Route>
 
