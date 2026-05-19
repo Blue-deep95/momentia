@@ -11,6 +11,8 @@ import Reels from "./pages/Reels.jsx"
 import CreatePost from "./pages/CreatePost.jsx"
 import Notifications from "./pages/NotificationsPage.jsx"
 import { initSocket, disconnectSocket } from "./socket.js"
+import SinglePost from "./pages/SinglePost.jsx"
+
 
 import ProtectedRoutes from './components/ProtectedRoutes.jsx'
 
@@ -60,7 +62,6 @@ export default function App() {
             <Route path="/reels" element={<Reels />} />
             <Route path="/" element={<Feed />} />
             <Route path="/create-post" element={<CreatePost />} />
-           <Route path="/notifications" element={<Notifications/>} />
 
           </Route>
 

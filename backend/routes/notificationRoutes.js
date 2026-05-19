@@ -154,4 +154,9 @@ router.put("/mark-as-read", async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
+
+
+
+
+
 module.exports = router;

@@ -137,9 +137,9 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F6FB] flex items-center justify-center">
-        <div className="bg-white px-6 py-4 rounded-2xl shadow-lg">
-          <p className="text-[#2F3EDB] font-semibold animate-pulse">
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F6FB]">
+        <div className="rounded-2xl bg-white px-6 py-4 shadow-lg">
+          <p className="animate-pulse font-semibold text-[#2F3EDB]">
             Loading profile...
           </p>
         </div>
@@ -148,7 +148,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F6FB] flex text-[#111827]">
+    <div className="flex min-h-screen bg-[#F5F6FB] text-[#111827]">
 
       {/* SIDEBAR */}
 
@@ -160,43 +160,43 @@ const Profile = () => {
 
       <div className="flex-1 overflow-y-auto">
 
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+        <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
 
           {/* PROFILE HEADER */}
 
-          <div className="relative overflow-hidden rounded-[35px] bg-gradient-to-r from-[#2F3EDB] via-[#5160F5] to-[#FF7A3D] p-[1px] shadow-2xl">
+          <div className="bg-linear-to-r relative overflow-hidden rounded-[35px] from-[#2F3EDB] via-[#5160F5] to-[#FF7A3D] p-px shadow-2xl">
 
-            <div className="bg-[#F8FAFF]/95 backdrop-blur-xl rounded-[35px] p-6 md:p-10">
+            <div className="rounded-[35px] bg-[#F8FAFF]/95 p-6 backdrop-blur-xl md:p-10">
 
-              <div className="absolute top-0 right-0 w-80 h-80 bg-[#FF7A3D]/20 blur-3xl rounded-full" />
-              <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#2F3EDB]/20 blur-3xl rounded-full" />
+              <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#FF7A3D]/20 blur-3xl" />
+              <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#2F3EDB]/20 blur-3xl" />
 
-              <div className="relative flex flex-col xl:flex-row gap-10">
+              <div className="relative flex flex-col gap-10 xl:flex-row">
 
                 {/* PROFILE IMAGE */}
 
                 <div className="flex justify-center">
 
-                  <div className="relative group">
+                  <div className="group relative">
 
-                    <div className="p-1 rounded-full bg-gradient-to-br from-[#2F3EDB] to-[#FF7A3D] shadow-2xl">
+                    <div className="bg-linear-to-br rounded-full from-[#2F3EDB] to-[#FF7A3D] p-1 shadow-2xl">
 
-                      <div className="w-40 h-40 md:w-52 md:h-52 rounded-full overflow-hidden bg-white border-[6px] border-white">
+                      <div className="h-40 w-40 overflow-hidden rounded-full border-[6px] border-white bg-white md:h-52 md:w-52">
 
                         {previewImage ? (
                           <img
                             src={previewImage}
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                           />
                         ) : profile?.profilePicture?.profileView ? (
                           <img
                             src={profile.profilePicture.profileView}
                             alt=""
-                            className="w-full h-full object-cover"
+                            className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#2F3EDB] to-[#FF7A3D] text-white text-6xl font-bold">
+                          <div className="bg-linear-to-br flex h-full w-full items-center justify-center from-[#2F3EDB] to-[#FF7A3D] text-6xl font-bold text-white">
                             {profile?.name?.[0]}
                           </div>
                         )}
@@ -206,7 +206,7 @@ const Profile = () => {
                     </div>
 
                     {isOwnProfile && (
-                      <label className="absolute bottom-4 right-4 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center cursor-pointer hover:scale-110 transition-all duration-300">
+                      <label className="absolute bottom-4 right-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white shadow-xl transition-all duration-300 hover:scale-110">
 
                         {uploading ? (
                           <Loader2
@@ -240,13 +240,13 @@ const Profile = () => {
 
                   {/* USERNAME */}
 
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                  <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
 
                     <div>
 
-                      <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex flex-wrap items-center gap-3">
 
-                        <h1 className="text-3xl md:text-5xl font-bold text-[#111827]">
+                        <h1 className="text-3xl font-bold text-[#111827] md:text-5xl">
                           {profile?.username}
                         </h1>
 
@@ -257,7 +257,7 @@ const Profile = () => {
 
                       </div>
 
-                      <p className="text-[#6B7280] mt-2 text-lg">
+                      <p className="mt-2 text-lg text-[#6B7280]">
                         @{profile?.username}
                       </p>
 
@@ -271,17 +271,17 @@ const Profile = () => {
                         <>
                           <button
                             onClick={() => setShowEdit(true)}
-                            className="px-6 py-3 rounded-2xl bg-white border border-[#E5E7EB] text-[#111827] font-semibold shadow-md hover:shadow-xl hover:-translate-y-1 transition-all"
+                            className="rounded-2xl border border-[#E5E7EB] bg-white px-6 py-3 font-semibold text-[#111827] shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
                           >
                             Edit Profile
                           </button>
 
-                          <button className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#2F3EDB] to-[#5160F5] text-white font-semibold shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+                          <button className="bg-linear-to-r flex items-center gap-2 rounded-2xl from-[#2F3EDB] to-[#5160F5] px-6 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105">
                             <Plus size={18} />
                             Create Post
                           </button>
 
-                          <button className="px-5 py-3 rounded-2xl bg-[#FF7A3D] text-white font-semibold shadow-xl hover:scale-105 transition-all flex items-center gap-2">
+                          <button className="flex items-center gap-2 rounded-2xl bg-[#FF7A3D] px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105">
                             <Share2 size={18} />
                             Share
                           </button>
@@ -290,7 +290,7 @@ const Profile = () => {
                         <FollowButton userId={profileUserId} />
                       )}
 
-                      <button className="w-12 h-12 rounded-2xl bg-white border border-[#E5E7EB] flex items-center justify-center shadow-md hover:shadow-xl transition-all">
+                      <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E5E7EB] bg-white shadow-md transition-all hover:shadow-xl">
                         <MoreHorizontal
                           size={20}
                           className="text-[#111827]"
@@ -303,15 +303,15 @@ const Profile = () => {
 
                   {/* STATS */}
 
-                  <div className="grid grid-cols-3 gap-4 mt-8">
+                  <div className="mt-8 grid grid-cols-3 gap-4">
 
-                    <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white shadow-lg hover:-translate-y-1 transition-all">
+                    <div className="rounded-3xl border border-white bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
 
                       <h3 className="text-3xl font-bold text-[#2F3EDB]">
                         {profile?.totalPosts || 0}
                       </h3>
 
-                      <p className="text-[#6B7280] mt-1">
+                      <p className="mt-1 text-[#6B7280]">
                         Posts
                       </p>
 
@@ -319,14 +319,14 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowers(true)}
-                      className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white shadow-lg hover:-translate-y-1 transition-all text-left"
+                      className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-[#FF7A3D]">
                         {profile?.followers || 0}
                       </h3>
 
-                      <p className="text-[#6B7280] mt-1">
+                      <p className="mt-1 text-[#6B7280]">
                         Followers
                       </p>
 
@@ -334,14 +334,14 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowing(true)}
-                      className="bg-white/70 backdrop-blur-xl rounded-3xl p-5 border border-white shadow-lg hover:-translate-y-1 transition-all text-left"
+                      className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-[#2F3EDB]">
                         {profile?.following || 0}
                       </h3>
 
-                      <p className="text-[#6B7280] mt-1">
+                      <p className="mt-1 text-[#6B7280]">
                         Following
                       </p>
 
@@ -351,19 +351,19 @@ const Profile = () => {
 
                   {/* BIO */}
 
-                  <div className="mt-8 bg-white/60 backdrop-blur-xl rounded-3xl p-6 shadow-lg border border-white">
+                  <div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
 
                     <h2 className="text-2xl font-bold text-[#111827]">
                       {profile?.name}
                     </h2>
 
                     {profile?.bio && (
-                      <p className="text-[#4B5563] mt-4 leading-8 text-[15px]">
+                      <p className="mt-4 text-[15px] leading-8 text-[#4B5563]">
                         {profile.bio}
                       </p>
                     )}
 
-                    <div className="flex flex-wrap gap-5 mt-5">
+                    <div className="mt-5 flex flex-wrap gap-5">
 
                       {profile?.location && (
                         <div className="flex items-center gap-2 text-[#6B7280]">
@@ -377,7 +377,7 @@ const Profile = () => {
                           href={profile.website}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center gap-2 text-[#2F3EDB] font-medium"
+                          className="flex items-center gap-2 font-medium text-[#2F3EDB]"
                         >
                           <Link2 size={16} />
                           Website
@@ -403,7 +403,7 @@ const Profile = () => {
 
           {/* TABS */}
 
-          <div className="sticky top-0 z-30 mt-8 backdrop-blur-xl bg-white/70 border border-white rounded-3xl shadow-lg px-2">
+          <div className="sticky top-0 z-30 mt-8 rounded-3xl border border-white bg-white/70 px-2 shadow-lg backdrop-blur-xl">
 
             <div className="flex items-center justify-center overflow-x-auto">
 
@@ -413,7 +413,7 @@ const Profile = () => {
                   onClick={() => setActiveTab(key)}
                   className={`flex items-center gap-2 px-6 py-5 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
                     activeTab === key
-                      ? "bg-gradient-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
+                      ? "bg-linear-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
@@ -434,7 +434,7 @@ const Profile = () => {
           {activeTab === "posts" && (
             <>
               {posts.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mt-8">
+                <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
 
                   {posts.map((post, i) => (
                     <PostCard
@@ -454,7 +454,7 @@ const Profile = () => {
           {/* REELS */}
 
           {activeTab === "reels" && (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-5 mt-8">
+            <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
 
               {posts.map((post, i) => (
                 <ReelCard
@@ -470,7 +470,7 @@ const Profile = () => {
           {/* PHOTOS */}
 
           {activeTab === "photos" && (
-            <div className="columns-2 md:columns-3 xl:columns-4 gap-5 mt-8 space-y-5">
+            <div className="mt-8 columns-2 gap-5 space-y-5 md:columns-3 xl:columns-4">
 
               {posts.map((post, i) => (
                 <PhotoCard
@@ -486,7 +486,7 @@ const Profile = () => {
           {/* SAVED */}
 
           {activeTab === "saved" && (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mt-8">
+            <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
 
               {posts.map((post, i) => (
                 <PostCard
@@ -555,7 +555,7 @@ const PostCard = ({ post, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group relative overflow-hidden rounded-[28px] bg-white border border-[#E5E7EB] shadow-lg cursor-pointer hover:-translate-y-2 hover:shadow-2xl transition-all duration-500"
+      className="group relative cursor-pointer overflow-hidden rounded-[28px] border border-[#E5E7EB] bg-white shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
     >
 
       <div className="aspect-square overflow-hidden">
@@ -563,12 +563,12 @@ const PostCard = ({ post, onClick }) => {
         <img
           src={image}
           alt=""
-          className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+          className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
         />
 
       </div>
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition duration-500 flex items-end justify-center pb-8">
+      <div className="bg-linear-to-t absolute inset-0 flex items-end justify-center from-black/70 to-transparent pb-8 opacity-0 transition duration-500 group-hover:opacity-100">
 
         <div className="flex items-center gap-8 text-white">
 
@@ -601,24 +601,24 @@ const ReelCard = ({ post, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group relative aspect-[9/16] overflow-hidden rounded-[28px] bg-white shadow-xl cursor-pointer"
+      className="aspect-9/16 group relative cursor-pointer overflow-hidden rounded-[28px] bg-white shadow-xl"
     >
 
       <img
         src={image}
         alt=""
-        className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+        className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
       />
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+      <div className="bg-linear-to-t absolute inset-0 from-black/70 to-transparent" />
 
       <div className="absolute inset-0 flex items-center justify-center">
 
-        <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-xl flex items-center justify-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/20 backdrop-blur-xl">
 
           <Play
             fill="white"
-            className="text-white ml-1"
+            className="ml-1 text-white"
           />
 
         </div>
@@ -648,13 +648,13 @@ const PhotoCard = ({ post, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="group overflow-hidden rounded-[28px] bg-white shadow-lg cursor-pointer mb-5 break-inside-avoid"
+      className="group mb-5 cursor-pointer break-inside-avoid overflow-hidden rounded-[28px] bg-white shadow-lg"
     >
 
       <img
         src={image}
         alt=""
-        className="w-full object-cover group-hover:scale-105 transition duration-700"
+        className="w-full object-cover transition duration-700 group-hover:scale-105"
       />
 
     </div>
@@ -672,43 +672,43 @@ const PostModal = ({ post, onClose }) => {
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
+      className="z-999 inz-999lex fixed items-center justify-center bg-black/60 p-4 backdrop-blur-md"
     >
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full max-w-6xl h-[95vh] rounded-[35px] overflow-hidden flex flex-col lg:flex-row shadow-2xl animate-in fade-in zoom-in"
+        className="animate-in fade-in zoom-in flex h-[95vh] w-full max-w-6xl flex-col overflow-hidden rounded-[35px] bg-white shadow-2xl lg:flex-row"
       >
 
         {/* IMAGE */}
 
-        <div className="flex-1 bg-[#EEF2FF] flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center bg-[#EEF2FF]">
 
           <img
             src={image}
             alt=""
-            className="w-full h-full object-contain"
+            className="h-full w-full object-contain"
           />
 
         </div>
 
         {/* RIGHT */}
 
-        <div className="w-full lg:w-[430px] flex flex-col bg-white">
+        <div className="lg:w-107.5 flex w-full flex-col bg-white">
 
           {/* HEADER */}
 
-          <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
+          <div className="flex items-center justify-between border-b border-[#E5E7EB] p-5">
 
             <div className="flex items-center gap-3">
 
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#EEF2FF]">
+              <div className="h-12 w-12 overflow-hidden rounded-full bg-[#EEF2FF]">
 
                 {post.user?.profilePicture?.profileView && (
                   <img
                     src={post.user.profilePicture.profileView}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
                 )}
 
@@ -716,11 +716,11 @@ const PostModal = ({ post, onClose }) => {
 
               <div>
 
-                <h3 className="text-[#111827] font-semibold">
+                <h3 className="font-semibold text-[#111827]">
                   {post.user?.username}
                 </h3>
 
-                <p className="text-[#6B7280] text-sm">
+                <p className="text-sm text-[#6B7280]">
                   {post.user?.name}
                 </p>
 
@@ -730,7 +730,7 @@ const PostModal = ({ post, onClose }) => {
 
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-full hover:bg-[#F3F4F6] flex items-center justify-center"
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F3F4F6]"
             >
               <X className="text-[#111827]" />
             </button>
@@ -739,22 +739,22 @@ const PostModal = ({ post, onClose }) => {
 
           {/* CONTENT */}
 
-          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          <div className="flex-1 space-y-6 overflow-y-auto p-5">
 
-            <p className="text-[#374151] leading-7">
+            <p className="leading-7 text-[#374151]">
               {post.caption}
             </p>
 
             {post.comments?.map((comment, i) => (
               <div key={i} className="flex gap-3">
 
-                <div className="w-10 h-10 rounded-full bg-[#E5E7EB]" />
+                <div className="h-10 w-10 rounded-full bg-[#E5E7EB]" />
 
-                <div className="bg-[#F9FAFB] rounded-2xl px-4 py-3">
+                <div className="rounded-2xl bg-[#F9FAFB] px-4 py-3">
 
                   <p className="text-sm text-[#111827]">
 
-                    <span className="font-semibold mr-2">
+                    <span className="mr-2 font-semibold">
                       {comment.user?.username || "user"}
                     </span>
 
@@ -777,7 +777,7 @@ const PostModal = ({ post, onClose }) => {
 
               <div className="flex items-center gap-5">
 
-                <Heart className="cursor-pointer hover:text-red-500 transition" />
+                <Heart className="cursor-pointer transition hover:text-red-500" />
 
                 <MessageCircle className="cursor-pointer" />
 
@@ -789,7 +789,7 @@ const PostModal = ({ post, onClose }) => {
 
             </div>
 
-            <p className="font-semibold mt-4 text-[#111827]">
+            <p className="mt-4 font-semibold text-[#111827]">
               {post.totalLikes || 0} likes
             </p>
 
@@ -840,15 +840,15 @@ const EditProfileModal = ({
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-md flex items-center justify-center p-4"
+      className="z-999 fixed inset-0 flex items-center justify-center bg-black/40 p-4 backdrop-blur-md"
     >
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl bg-white rounded-[35px] p-8 shadow-2xl"
+        className="w-full max-w-xl rounded-[35px] bg-white p-8 shadow-2xl"
       >
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
 
           <h2 className="text-3xl font-bold text-[#111827]">
             Edit Profile
@@ -856,7 +856,7 @@ const EditProfileModal = ({
 
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full hover:bg-[#F3F4F6] flex items-center justify-center"
+            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F3F4F6]"
           >
             <X className="text-[#111827]" />
           </button>
@@ -889,7 +889,7 @@ const EditProfileModal = ({
 
           <div>
 
-            <label className="text-[#6B7280] text-sm font-medium">
+            <label className="text-sm font-medium text-[#6B7280]">
               Bio
             </label>
 
@@ -902,7 +902,7 @@ const EditProfileModal = ({
                   bio: e.target.value,
                 })
               }
-              className="w-full mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl px-5 py-4 text-[#111827] outline-none focus:border-[#2F3EDB] resize-none"
+              className="mt-2 w-full resize-none rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-5 py-4 text-[#111827] outline-none focus:border-[#2F3EDB]"
             />
 
           </div>
@@ -932,7 +932,7 @@ const EditProfileModal = ({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#2F3EDB] to-[#FF7A3D] hover:scale-[1.02] transition text-white font-semibold flex items-center justify-center gap-2 shadow-xl"
+            className="bg-linear-to-r flex w-full items-center justify-center gap-2 rounded-2xl from-[#2F3EDB] to-[#FF7A3D] py-4 font-semibold text-white shadow-xl transition hover:scale-[1.02]"
           >
 
             {saving && (
@@ -961,14 +961,14 @@ const InputField = ({
 }) => (
   <div>
 
-    <label className="text-[#6B7280] text-sm font-medium">
+    <label className="text-sm font-medium text-[#6B7280]">
       {label}
     </label>
 
     <input
       value={value}
       onChange={onChange}
-      className="w-full mt-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl px-5 py-4 text-[#111827] outline-none focus:border-[#2F3EDB]"
+      className="mt-2 w-full rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-5 py-4 text-[#111827] outline-none focus:border-[#2F3EDB]"
     />
 
   </div>
@@ -977,19 +977,19 @@ const InputField = ({
 /* EMPTY */
 
 const EmptyState = () => (
-  <div className="py-24 flex flex-col items-center justify-center text-center">
+  <div className="flex flex-col items-center justify-center py-24 text-center">
 
-    <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#2F3EDB] to-[#FF7A3D] flex items-center justify-center shadow-xl">
+    <div className="bg-linear-to-r flex h-24 w-24 items-center justify-center rounded-full from-[#2F3EDB] to-[#FF7A3D] shadow-xl">
 
       <LayoutGrid size={34} className="text-white" />
 
     </div>
 
-    <h2 className="text-[#111827] text-3xl font-bold mt-6">
+    <h2 className="mt-6 text-3xl font-bold text-[#111827]">
       No Posts Yet
     </h2>
 
-    <p className="text-[#6B7280] text-base mt-3">
+    <p className="mt-3 text-base text-[#6B7280]">
       Shared posts will appear here.
     </p>
 
