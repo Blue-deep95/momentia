@@ -9,6 +9,7 @@ import SearchPage from "./pages/SearchPage.jsx"
 import Reels from "./pages/Reels.jsx"
 import CreatePost from "./pages/CreatePost.jsx"
 import SinglePost from "./pages/SinglePost.jsx"
+import MessagePage from "./pages/MessagePage.jsx"
 
 
 import ProtectedRoutes from './components/ProtectedRoutes.jsx'
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/reels" element={<Reels />} />
             <Route path="/" element={<Feed />} />
+            <Route path="/messages" element={<MessagePage />} />
             <Route path="/create-post" element={<CreatePost />} />
             <Route path="/post/:postId" element={<SinglePost />} />
 
