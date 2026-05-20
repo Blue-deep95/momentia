@@ -9,6 +9,9 @@ import Profile from "./pages/Profile.jsx"
 import SearchPage from "./pages/SearchPage.jsx"
 import Reels from "./pages/Reels.jsx"
 import CreatePost from "./pages/CreatePost.jsx"
+import SinglePost from "./pages/SinglePost.jsx"
+import MessagePage from "./pages/MessagePage.jsx"
+
 import Notifications from "./pages/NotificationsPage.jsx"
 import { initSocket, disconnectSocket } from "./socket.js"
 
@@ -61,6 +64,7 @@ export default function App() {
             <Route path="/reels" element={<Reels />} />
             <Route path="/post/:postId" element={<SinglePost />} />
             <Route path="/" element={<Feed />} />
+            <Route path="/messages" element={<MessagePage />} />
             <Route path="/create-post" element={<CreatePost />} />
            <Route path="/notifications" element={<Notifications/>} />
             <Route path="/post/:postId" element={<SinglePost />} />
