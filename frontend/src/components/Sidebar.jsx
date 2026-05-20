@@ -45,7 +45,7 @@ export default function Sidebar({ profile }) {
     (effectiveProfile?.email ? effectiveProfile.email.split("@")[0] : "username");
   const displayImage =
     effectiveProfile?.profilePicture?.profileView ||
-    "https://via.placeholder.com/150";
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`;
 
   const handleLogout = () => {
     dispatch(logout());

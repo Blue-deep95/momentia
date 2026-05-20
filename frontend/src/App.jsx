@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { useSelector } from "react-redux"
 import Register from "./pages/Register.jsx"
 import Login from "./pages/Login.jsx"
 import Feed from "./pages/Feed.jsx"
@@ -11,13 +12,44 @@ import CreatePost from "./pages/CreatePost.jsx"
 import SinglePost from "./pages/SinglePost.jsx"
 import MessagePage from "./pages/MessagePage.jsx"
 
+import Notifications from "./pages/NotificationsPage.jsx"
+import { initSocket, disconnectSocket } from "./socket.js"
 
 import ProtectedRoutes from './components/ProtectedRoutes.jsx'
 
 export default function App() {
+  const token = useSelector((state) => state.auth.token);
+
+  useEffect(() => {
+    if (!token) {
+      disconnectSocket();
+      return;
+    }
+
+    const socket = initSocket(token);
+    if (!socket) return;
+
+    socket.on("connect", () => {
+      console.log("Global socket connected:", socket.id);
+    });
+    socket.on("disconnect", (reason) => {
+      console.log("Global socket disconnected:", reason);
+    });
+    socket.on("connect_error", (err) => {
+      console.error("Global socket connect error:", err.message || err);
+    });
+
+    return () => {
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("connect_error");
+    };
+  }, [token]);
+
   return (
     <div>
       <BrowserRouter>
+      <NotificationToaster />
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
@@ -30,9 +62,11 @@ export default function App() {
             
             <Route path="/search" element={<SearchPage />} />
             <Route path="/reels" element={<Reels />} />
+            <Route path="/post/:postId" element={<SinglePost />} />
             <Route path="/" element={<Feed />} />
             <Route path="/messages" element={<MessagePage />} />
             <Route path="/create-post" element={<CreatePost />} />
+           <Route path="/notifications" element={<Notifications/>} />
             <Route path="/post/:postId" element={<SinglePost />} />
 
           </Route>
