@@ -88,10 +88,26 @@ Sent when a new message is received in a room the user is a member of.
     "isDeleted": false,
     "isEdited": false,
     "createdAt": "ISO Date",
-    "updatedAt": "ISO Date"
+    "updatedAt": "ISO Date",
+    "senderDetails": {
+      "_id": "UserId",
+      "username": "string",
+      "profilePicture": { 
+        "original": {
+          "url": "string",
+          "public_id": "string"
+        },
+        "profileView": "string",
+        "commentView": "string"
+      }
+    },
+    "roomDetails": {
+      "roomName": "string",
+      "currentMessageCount": "number"
+    }
   }
   ```
-- **Note:** The `members` array is stripped from this payload for privacy and efficiency.
+- **Note:** The `members` array is stripped from this payload for privacy and efficiency. Message data is enriched with sender and room context to facilitate immediate UI updates.
 
 ---
 

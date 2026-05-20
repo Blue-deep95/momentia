@@ -2,8 +2,8 @@
 // marking them seen if they have already benn read by users
 const express = require("express");
 const router = express.Router();
-const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
+const Notification = require("../models/Notification");
 
 // this route gets all notifications from the server both read and unread,
 // joins the data page for extra safety and send 20 notifications per each request
