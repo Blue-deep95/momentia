@@ -8,7 +8,7 @@ const { onlineUsers } = require("../socket/socketStore");
 // to prevent notifications from firing every second or so,
 // limit sending notifications by this time
 // we use this with updated at field from mongodb
-const GLOBAL_NOTIFICATION_LIMIT = 1000 * 60; // 1 miniute limit
+const GLOBAL_NOTIFICATION_LIMIT = 1000 ; // 1 miniute limit
 
 // start listening to events
 notificationBus.on("post-liked", async (data) => {
@@ -62,7 +62,11 @@ notificationBus.on("post-liked", async (data) => {
           isRead: false,
         })
           .populate("actors", "_id username profilePicture")
-          .populate({ path: "targetEntityId", model: "post" }, "_id caption thumbImage");
+          .populate({ 
+            path: "targetEntityId", 
+            model: "post", 
+            select: "_id caption thumbImage" 
+          });
         io.to(targetSocketId).emit("notification-post-liked", notificationData);
       }
       // do not set the isRead = true here just sending over websocket does not mean the user read

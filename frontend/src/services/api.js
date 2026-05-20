@@ -1,5 +1,7 @@
 // This page is mainly for axios instance that is used for 
 import axios from 'axios'
+import { store } from '../store/store.js'
+import { login, logout } from '../slices/authSlice.js'
 
 // create axios instance 
 const api = axios.create({
@@ -48,6 +50,11 @@ api.interceptors.response.use(
     async (error)=>{
         const originalRequest = error.config
 
+        // Don't intercept if it's the regenerate-access-token endpoint
+        if (originalRequest.url?.includes("/user/regenerate-access-token")) {
+            return Promise.reject(error)
+        }
+
         // check if the error is 401 or not and we have not retried this specific request again
         if (error.response?.status === 401 && !originalRequest._retry){
             
@@ -78,7 +85,10 @@ api.interceptors.response.use(
                 )
                 const newAccessToken = res.data.accessToken
                 console.log('Got new access token 👌')
-                localStorage.setItem("token",newAccessToken)
+
+                // Sync Redux store (which also updates localStorage)
+                const currentUser = store.getState().auth.user;
+                store.dispatch(login({ user: currentUser, accessToken: newAccessToken }));
 
                 // tell the waiting queue and give them the new access token
                 processQueue(null,newAccessToken)
@@ -93,10 +103,9 @@ api.interceptors.response.use(
                 // if an error happens at this point the refreshtoken is invalid or expired
                 processQueue(err,null)
                 console.log('invalid token 😒')
-                // delete items from localstorage and try to log the user out
-                // uncomment later
-                localStorage.removeItem("token")
-                localStorage.removeItem("user")
+                
+                // logout the user to clean up Redux store and localStorage
+                store.dispatch(logout())
 
                 return Promise.reject(err)
             }
