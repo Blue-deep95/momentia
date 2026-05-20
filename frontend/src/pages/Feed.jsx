@@ -11,22 +11,44 @@ import SuggestedProfiles from "../components/SuggestedProfiles.jsx";
 const Feed = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Fetch posts
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const res = await api.get("/feed/get-posts/1");
-        setPosts(res.data.posts || []);
-      } catch (err) {
-        console.error("Error fetching posts", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchPosts = async (cursor = null) => {
+    const isInitial = !cursor;
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
 
+    try {
+      const url = cursor ? `/feed/get-posts?cursor=${encodeURIComponent(cursor)}` : "/feed/get-posts";
+      const res = await api.get(url);
+      const newPosts = res.data.posts || [];
+      
+      setPosts((prev) => (isInitial ? newPosts : [...prev, ...newPosts]));
+      setNextCursor(res.data.nextCursor);
+      setHasMore(res.data.hasNextPage);
+    } catch (err) {
+      console.error("Error fetching posts", err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPosts();
   }, []);
+
+  const loadMore = () => {
+    if (hasMore && !loading && !loadingMore && nextCursor) {
+      fetchPosts(nextCursor);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 lg:pl-20">
@@ -52,12 +74,19 @@ const Feed = () => {
             ) : (
               <Virtuoso
                 useWindowScroll
-                data={posts.slice(0, 20)}
+                data={posts}
+                endReached={loadMore}
                 itemContent={(index, post) => (
                   <div className="w-full">
                     <PostCard key={post._id} post={post} />
                   </div>
                 )}
+                components={{
+                  Footer: () =>
+                    loadingMore ? (
+                      <p className="text-center text-gray-500 py-4">Loading more posts...</p>
+                    ) : null,
+                }}
               />
             )}
           </div>

@@ -9,6 +9,9 @@ const Post = require('../models/Post');
 const Comment = require('../models/Comment');
 const Like = require('../models/Like');
 
+const { notificationBus } = require('../events/event');
+
+
 
 // need to implement get-comments route here 
 // this is only for top-level comments 
@@ -257,7 +260,18 @@ router.post("/create-comment",
             }
 
             // Update post's comment count
-            await Post.findByIdAndUpdate(postid, { $inc: { totalComments: 1 } });
+            const updatedPost = await Post.findByIdAndUpdate(postid, { $inc: { totalComments: 1 } });
+
+            // Emit notification event
+            if (updatedPost && updatedPost.author.toString() !== user._id.toString()) {
+                notificationBus.emit('comment-posted', {
+                    author: user._id,
+                    postAuthor: updatedPost.author,
+                    postTarget: postid,
+                    commentId: comment._id,
+                    isReply: !!parent
+                });
+            }
 
             return res.status(200).json({ message: "Comment added successfully", comment });
         }

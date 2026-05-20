@@ -39,7 +39,8 @@ const NOTIFICATION_TYPES = {
   },
 };
 
-const formatActorName = (actors = []) => {
+const formatActorName = (notification) => {
+  const actors = notification.actorDetails || notification.actors || [];
   if (!actors.length) return "Someone";
   if (actors.length === 1) return actors[0].username;
   if (actors.length === 2)
@@ -48,9 +49,10 @@ const formatActorName = (actors = []) => {
 };
 
 const getAvatar = (notification) => {
-  const actor = notification.actorDetails?.[0];
+  const actors = notification.actorDetails || notification.actors || [];
+  const actor = actors[0];
   const username = actor?.username || "User";
-  const picture = actor?.profilePicture || actor?.profilePicture?.profileView;
+  const picture = actor?.profilePicture?.profileView || actor?.profilePicture;
   return (
     picture ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2F3EDB&color=fff&size=128`
@@ -58,12 +60,14 @@ const getAvatar = (notification) => {
 };
 
 const getNotificationUrl = (notification) => {
+  const actors = notification.actorDetails || notification.actors || [];
   if (notification.notificationType === "follow") {
-    return `/profile/${notification.actorDetails?.[0]?._id || ""}`;
+    return `/profile/${actors[0]?._id || ""}`;
   }
 
-  if (notification.targetEntityId) {
-    return `/post/${notification.targetEntityId}`;
+  const targetId = notification.targetEntityId?._id || notification.targetEntityId;
+  if (targetId) {
+    return `/post/${targetId}`;
   }
 
   return "/notifications";
@@ -101,7 +105,8 @@ const playNotificationSound = () => {
 
 const NotificationToastCard = ({ notification, isNew, onClick }) => {
   const typeMeta = NOTIFICATION_TYPES[notification.notificationType] || NOTIFICATION_TYPES.post;
-  const ActorName = formatActorName(notification.actorDetails);
+  const actors = notification.actorDetails || notification.actors || [];
+  const ActorName = formatActorName(notification) || "Someone";
   const Icon = typeMeta.icon;
   const avatar = getAvatar(notification);
 
@@ -141,7 +146,7 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
           <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
             {notification.notificationType === "comment"
               ? notification.commentDetails?.content || "Commented on your post"
-              : `@${notification.actorDetails?.[0]?.username || "someone"} ${typeMeta.label}`}
+              : `@${actors[0]?.username || "someone"} ${typeMeta.label}`}
           </p>
         </div>
       </div>

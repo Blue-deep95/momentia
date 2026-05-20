@@ -275,30 +275,50 @@ export default function NotificationsPage() {
 
   /* SOCKET */
   useEffect(() => {
-    const socket = window.__socket;
+    let socketHandler;
+    const eventNames = ["notification-post-liked", "user-followed"];
 
-    if (!socket) return;
+    const attachSocket = () => {
+      const socket = window.__socket;
+      if (!socket) return;
 
-    const handler = (newNotif) => {
-      setNotifs((prev) => [newNotif, ...prev]);
+      socketHandler = (newNotif) => {
+        setNotifs((prev) => [newNotif, ...prev]);
+        setNewIds((prev) => new Set([...prev, newNotif._id]));
 
-      setNewIds((prev) => new Set([...prev, newNotif._id]));
+        setTimeout(() => {
+          setNewIds((prev) => {
+            const s = new Set(prev);
+            s.delete(newNotif._id);
+            return s;
+          });
+        }, 8000);
+      };
 
-      setTimeout(() => {
-        setNewIds((prev) => {
-          const s = new Set(prev);
-
-          s.delete(newNotif._id);
-
-          return s;
-        });
-      }, 8000);
+      eventNames.forEach((eventName) => socket.on(eventName, socketHandler));
     };
 
-    const eventNames = ["notification-post-liked", "user-followed"];
-    eventNames.forEach((eventName) => socket.on(eventName, handler));
+    attachSocket();
 
-    return () => eventNames.forEach((eventName) => socket.off(eventName, handler));
+    const onSocketReady = () => {
+      if (socketHandler) {
+        eventNames.forEach((eventName) =>
+          window.__socket?.off(eventName, socketHandler)
+        );
+      }
+      attachSocket();
+    };
+
+    window.addEventListener("socket-ready", onSocketReady);
+
+    return () => {
+      window.removeEventListener("socket-ready", onSocketReady);
+      if (window.__socket && socketHandler) {
+        eventNames.forEach((eventName) =>
+          window.__socket.off(eventName, socketHandler)
+        );
+      }
+    };
   }, []);
 
   /* MARK ALL */
