@@ -93,8 +93,12 @@ Sent when a new message is received in a room the user is a member of.
       "_id": "UserId",
       "username": "string",
       "profilePicture": { 
-        "profileView": "url",
-        "commentView": "url" 
+        "original": {
+          "url": "string",
+          "public_id": "string"
+        },
+        "profileView": "string",
+        "commentView": "string"
       }
     },
     "roomDetails": {

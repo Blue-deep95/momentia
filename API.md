@@ -303,9 +303,11 @@ Retrieves the list of users a specific user is following with pagination.
 *All routes in this section require a valid Bearer Token.*
 
 ### 1. Get Feed Posts
-Retrieves paginated posts for the main feed with interaction metadata.
-*   **URL:** `/feed/get-posts/:page`
+Retrieves posts for the main feed using **cursor-based pagination** with a split-timeline (social graph priority) algorithm and interaction metadata.
+*   **URL:** `/feed/get-posts`
 *   **Method:** `GET`
+*   **Query Parameters:**
+    *   `cursor` (optional, string): The base64-encoded cursor token from the previous page's response.
 *   **Success Response (200):**
     ```json
     {
@@ -323,17 +325,22 @@ Retrieves paginated posts for the main feed with interaction metadata.
           "isSaved": true/false,
           "isFollowing": true/false,
           "totalLikes": 0,
-          "totalComments": 0
+          "totalComments": 0,
+          "feedGroup": 1
         }
       ],
-      "message": "posts retreived succesfully"
+      "nextCursor": "eyJmZWVkR3JvdXAiOjEsImNyZWF0ZWRBdCI6IjIwMjYtMDUt...",
+      "hasNextPage": true,
+      "message": "posts retreived successfully"
     }
     ```
 
 ### 2. Get Reels
-Retrieves paginated reels (video posts) for the reels feed.
-*   **URL:** `/feed/get-reels/:page`
+Retrieves reels (video posts) using **cursor-based pagination**.
+*   **URL:** `/feed/get-reels`
 *   **Method:** `GET`
+*   **Query Parameters:**
+    *   `cursor` (optional, string): The base64-encoded cursor token from the previous page's response.
 *   **Success Response (200):**
     ```json
     {
@@ -350,6 +357,8 @@ Retrieves paginated reels (video posts) for the reels feed.
           "isFollowing": true/false
         }
       ],
+      "nextCursor": "eyJjcmVhdGVkQXQiOiIyMDI2LTA1LTIwVDEyOjU0OjQyKzA4OjAw...",
+      "hasNextPage": true,
       "message": "reels retrieved successfully"
     }
     ```
