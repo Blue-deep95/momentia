@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
+import { Virtuoso } from "react-virtuoso";
 
 // Components
 import PostCard from "../components/Postcard.jsx";
@@ -7,25 +8,43 @@ import PostCard from "../components/Postcard.jsx";
 const Reels = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchReels = async (cursor = null) => {
+    const isInitial = !cursor;
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const url = cursor ? `/feed/get-reels?cursor=${encodeURIComponent(cursor)}` : "/feed/get-reels";
+      const res = await api.get(url);
+      const newReels = res.data.reels || [];
+
+      setPosts((prev) => (isInitial ? newReels : [...prev, ...newReels]));
+      setNextCursor(res.data.nextCursor);
+      setHasMore(res.data.hasNextPage);
+    } catch (err) {
+      console.error("Error fetching reels posts", err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const res = await api.get("/feed/get-posts/1");
-        const allPosts = res.data.posts || [];
-        const videoPosts = allPosts.filter(
-          (post) => post.mediaType === "video" || (post.video && post.video.url)
-        );
-        setPosts(videoPosts);
-      } catch (err) {
-        console.error("Error fetching reels posts", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
+    fetchReels();
   }, []);
+
+  const loadMore = () => {
+    if (hasMore && !loading && !loadingMore && nextCursor) {
+      fetchReels(nextCursor);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 lg:pl-20">
@@ -42,7 +61,22 @@ const Reels = () => {
             ) : posts.length === 0 ? (
               <p className="text-center text-gray-500">No reels available yet.</p>
             ) : (
-              posts.map((post) => <PostCard key={post._id} post={post} />)
+              <Virtuoso
+                useWindowScroll
+                data={posts}
+                endReached={loadMore}
+                itemContent={(index, post) => (
+                  <div className="w-full">
+                    <PostCard key={post._id} post={post} />
+                  </div>
+                )}
+                components={{
+                  Footer: () =>
+                    loadingMore ? (
+                      <p className="text-center text-gray-500 py-4">Loading more reels...</p>
+                    ) : null,
+                }}
+              />
             )}
           </div>
         </div>
