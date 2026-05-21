@@ -19,7 +19,6 @@ import api from "./services/api.js"
 
 import ProtectedRoutes from './components/ProtectedRoutes.jsx'
 import NotificationToaster from './components/NotificationToaster.jsx'
-import SinglePost from './pages/SinglePost.jsx'
 
 export default function App() {
   const token = useSelector((state) => state.auth.token);
@@ -76,24 +75,24 @@ export default function App() {
   return (
     <div>
       <BrowserRouter>
-      <NotificationToaster />
+        <NotificationToaster />
         <Routes>
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          
+
           <Route path="/" element={<ProtectedRoutes />}>
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:userId" element={<Profile />} />
-            
+
             <Route path="/search" element={<SearchPage />} />
             <Route path="/reels" element={<Reels />} />
             <Route path="/post/:postId" element={<SinglePost />} />
             <Route path="/" element={<Feed />} />
             <Route path="/messages" element={<MessagePage />} />
             <Route path="/create-post" element={<CreatePost />} />
-            <Route path="/notifications" element={<Notifications/>} />
+            <Route path="/notifications" element={<Notifications />} />
 
           </Route>
 
