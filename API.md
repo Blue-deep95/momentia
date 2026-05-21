@@ -122,15 +122,24 @@ Uses the refresh token cookie to issue a new access token.
     ```json
     { "accessToken": "..." }
     ```
+*   **Error Response (401):**
+    ```json
+    { "message": "Refresh token not found" }
+    ```
+    OR
+    ```json
+    { "message": "Invalid or expired refresh token" }
+    ```
 
 ### 8. Logout
-Invalidates the refresh token and clears the cookie.
+Invalidates the refresh token (if valid and active in database) and clears the cookie.
 *   **URL:** `/user/logout`
 *   **Method:** `POST`
 *   **Success Response (200):**
     ```json
     { "message": "Logout successful" }
     ```
+
 
 ---
 
@@ -235,7 +244,24 @@ Uploads and processes a profile picture via Cloudinary.
     { "message": "Profile picture updated succesfully" }
     ```
 
-### 6. Edit Profile
+### 6. Remove Avatar
+Deletes the user's active profile picture/avatar from Cloudinary and clears it from their database record.
+*   **URL:** `/profile/remove-avatar`
+*   **Method:** `DELETE`
+*   **Success Response (200):**
+    ```json
+    { "message": "Removal of avatar succesfull" }
+    ```
+*   **Error Response (400):**
+    ```json
+    { "message": "User profile picture does not exist" }
+    ```
+*   **Error Response (404):**
+    ```json
+    { "message": "User not found" }
+    ```
+
+### 7. Edit Profile
 Updates the authenticated user's profile details.
 *   **URL:** `/profile/edit-profile`
 *   **Method:** `POST`
@@ -253,7 +279,7 @@ Updates the authenticated user's profile details.
     { "message": "Profile update succesful" }
     ```
 
-### 7. Get Followers
+### 8. Get Followers
 Retrieves the list of followers for a specific user with pagination.
 *   **URL:** `/profile/get-followers/:id`
 *   **Method:** `GET`
@@ -275,7 +301,7 @@ Retrieves the list of followers for a specific user with pagination.
     }
     ```
 
-### 8. Get Following
+### 9. Get Following
 Retrieves the list of users a specific user is following with pagination.
 *   **URL:** `/profile/get-following/:id`
 *   **Method:** `GET`

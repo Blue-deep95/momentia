@@ -16,52 +16,69 @@ export default function MessagePage() {
 	const [followingLoading, setFollowingLoading] = useState(false);
 	const [loadingMessages, setLoadingMessages] = useState(false);
 	const bottomRef = useRef(null);
-	const socketRef = useRef(null);
+	const activeRoomRef = useRef(null);
+
+	// keep activeRoomRef in sync
+	useEffect(() => {
+		activeRoomRef.current = activeRoom;
+	}, [activeRoom]);
 
 	useEffect(() => {
 		if (!user?.id) return;
 		fetchFollowing();
 		fetchRooms();
-		// try initialize socket client (optional)
-		(async () => {
-			try {
-				const mod = await import("socket.io-client");
-				const { io } = mod;
-				const token = localStorage.getItem("token");
-				if (!token) return;
-				const sock = io("http://localhost:2000", { auth: { token } });
-				socketRef.current = sock;
-				sock.on("connect", () => {
-					// console.log('socket connected', sock.id)
+
+		let socketHandler = null;
+
+		const attachSocket = () => {
+			const socket = window.__socket;
+			if (!socket) return;
+
+			socketHandler = (payload) => {
+				if (!payload || !payload.roomId) return;
+				const currentActiveRoom = activeRoomRef.current;
+				// If active room matches, append
+				if (currentActiveRoom && payload.roomId.toString() === currentActiveRoom._id.toString()) {
+					setMessages((p) => [...p, payload]);
+					// mark read for active room
+					markRead(currentActiveRoom._id, payload.messageNumber);
+				}
+				// update rooms preview and ordering
+				setRooms((prev) => {
+					const idx = prev.findIndex((r) => r._id === payload.roomId.toString());
+					if (idx === -1) return prev;
+					const copy = [...prev];
+					copy[idx] = { 
+						...copy[idx], 
+						lastMessage: { content: payload.content, sender: payload.sender }, 
+						lastMessageAt: Date.now(), 
+						currentMessageCount: (copy[idx].currentMessageCount || 0) + 1 
+					};
+					// move to top
+					const moved = copy.splice(idx, 1)[0];
+					return [moved, ...copy];
 				});
-				sock.on("new-message", (payload) => {
-					// payload should contain roomId and message info
-					if (!payload || !payload.roomId) return;
-					// If active room matches, append
-					if (activeRoom && payload.roomId.toString() === activeRoom._id.toString()) {
-						setMessages((p) => [...p, payload]);
-						// mark read for active room
-						markRead(activeRoom._id, payload.messageNumber);
-					}
-					// update rooms preview and ordering
-					setRooms((prev) => {
-						const idx = prev.findIndex((r) => r._id === payload.roomId.toString());
-						if (idx === -1) return prev;
-						const copy = [...prev];
-						copy[idx] = { ...copy[idx], lastMessage: { content: payload.content, sender: payload.sender }, lastMessageAt: Date.now(), currentMessageCount: (copy[idx].currentMessageCount || 0) + 1 };
-						// move to top
-						const moved = copy.splice(idx, 1)[0];
-						return [moved, ...copy];
-					});
-				});
-			} catch (err) {
-				// socket client not available â€” skip realtime
-				// console.log('socket not initialized', err)
+			};
+
+			socket.on("new-message", socketHandler);
+		};
+
+		attachSocket();
+
+		const onSocketReady = () => {
+			if (socketHandler) {
+				window.__socket?.off("new-message", socketHandler);
 			}
-		})();
+			attachSocket();
+		};
+
+		window.addEventListener("socket-ready", onSocketReady);
 
 		return () => {
-			if (socketRef.current) socketRef.current.disconnect();
+			window.removeEventListener("socket-ready", onSocketReady);
+			if (window.__socket && socketHandler) {
+				window.__socket.off("new-message", socketHandler);
+			}
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user]);
