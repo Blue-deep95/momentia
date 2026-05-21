@@ -80,7 +80,7 @@ api.interceptors.response.use(
             try{
                 // get new access token from refresh token
                 const url = import.meta.env.VITE_API_URL
-                const res = await axios.post(`${url}/api/user/regenerate-access-token`,
+                const res = await axios.post(`${url}/user/regenerate-access-token`,
                     {},
                     {withCredentials:true}
                 )
