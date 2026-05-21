@@ -10,10 +10,15 @@ const app = express();
 
 const server = createServer(app);
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, "") : null,
+  "http://localhost:5173"
+].filter(Boolean);
+
 const io = new Server(server, {
-  // for now set origin as accepting everythiing but later change it
   cors: {
-    origin: "*",
+    origin: allowedOrigins,
+    credentials: true,
   },
 });
 
