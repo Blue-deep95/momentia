@@ -2,6 +2,16 @@ import { io } from "socket.io-client";
 
 let socket = null;
 
+const getSocketUrl = (apiUrl) => {
+  if (!apiUrl) return "http://localhost:2000";
+  try {
+    const url = new URL(apiUrl);
+    return url.origin;
+  } catch (e) {
+    return apiUrl;
+  }
+};
+
 export const initSocket = (token) => {
   if (!token) return null;
 
@@ -12,7 +22,9 @@ export const initSocket = (token) => {
     socket.disconnect();
   }
 
-  socket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:2000", {
+  const socketUrl = getSocketUrl(import.meta.env.VITE_API_URL);
+
+  socket = io(socketUrl, {
     withCredentials: true,
     transports: ["websocket"],
     auth: { token },

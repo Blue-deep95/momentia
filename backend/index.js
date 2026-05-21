@@ -24,7 +24,7 @@ const messageRoutes = require('./routes/messageRoutes.js')
 const connectDB = require('./db/db.js')
 
 
-const PORT = 2000
+const PORT = process.env.PORT || 2000
 
 
 // change this for production 
@@ -36,11 +36,10 @@ const PORT = 2000
 // ))
 
 
-// to simplyfy testing just use cors with origin set to true
-// WARNING !!!!NEVER PUSH THIS INTO PRODUCTION !!!!!
-// UNCOMMENT THE ABOVE CODE FOR PRODUCTION USE!!!
+
+
 app.use(cors({
-    origin: true,
+    origin: process.env.NODE_ENV === 'development' ? true : process.env.FRONTEND_URL,
     credentials: true
 }))
 
@@ -52,7 +51,7 @@ app.use(cookieParser())
 
 // trying to connect db
 connectDB(app)
-
+console.log('request reached server')
 // routes
 app.use("/api/user", userRoutes)
 app.use("/api/profile", protect, profileRoutes) // call the middleware right here
