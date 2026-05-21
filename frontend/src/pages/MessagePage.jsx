@@ -4,6 +4,7 @@ import api from "../services/api";
 
 export default function MessagePage() {
 	const user = useSelector((state) => state.auth.user);
+	const userId = user?._id ? String(user._id) : user?.id ? String(user.id) : null;
 	const [rooms, setRooms] = useState([]);
 	const [followingProfiles, setFollowingProfiles] = useState([]);
 	const [activeRoom, setActiveRoom] = useState(null);
@@ -19,7 +20,7 @@ export default function MessagePage() {
 	const socketRef = useRef(null);
 
 	useEffect(() => {
-		if (!user?.id) return;
+		if (!userId) return;
 		fetchFollowing();
 		fetchRooms();
 		// try initialize socket client (optional)
@@ -74,10 +75,10 @@ export default function MessagePage() {
 	}, [messages]);
 
 	async function fetchFollowing() {
-		if (!user?.id) return;
+		if (!userId) return;
 		try {
 			setFollowingLoading(true);
-			const res = await api.get(`/profile/get-following/${user.id}`);
+			const res = await api.get(`/profile/get-following/${userId}`);
 			setFollowingProfiles(res.data.following || []);
 		} catch (err) {
 			console.error(err);
@@ -235,7 +236,7 @@ export default function MessagePage() {
 	};
 
 	return (
-		<div className="flex h-screen min-h-screen overflow-hidden bg-slate-100 text-slate-900 lg:pl-[72px]">
+		<div className="lg:pl-18 flex h-screen min-h-screen overflow-hidden bg-slate-100 text-slate-900">
 			<div className="hidden min-h-0 flex-col border-r border-slate-200 bg-white xl:flex xl:w-[320px]">
 				<div className="border-b p-4">
 					<div className="flex items-center justify-between gap-3">
@@ -295,12 +296,16 @@ export default function MessagePage() {
 							{loadingMessages && <div className="text-sm text-slate-500">Loading messages...</div>}
 							{hasMore && <button onClick={loadMore} className="text-sm text-blue-600 hover:underline">Load earlier messages</button>}
 							<div className="space-y-3">
-								{messages.map((m) => (
-									<div key={m._id} className={`max-w-[72%] rounded-3xl p-4 shadow-sm ${m.sender === user?._id ? 'ml-auto bg-blue-600 text-white' : 'bg-white text-slate-900'}`}>
-										<div className="text-sm leading-relaxed">{m.content}</div>
-										<div className="mt-2 text-right text-xs text-slate-400">{m.isEdited ? 'edited Â· ' : ''}{new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-									</div>
-								))}
+								{messages.map((m) => {
+									const senderId = m.sender?._id ? String(m.sender._id) : m.sender ? String(m.sender) : null;
+									const isOwn = userId && senderId && senderId === userId;
+									return (
+										<div key={m._id} className={`max-w-[72%] rounded-3xl p-4 shadow-sm ${isOwn ? 'ml-auto bg-blue-600 text-white' : 'bg-white text-slate-900'}`}>
+											<div className="text-sm leading-relaxed">{m.content}</div>
+											<div className="mt-2 text-right text-xs text-slate-400">{m.isEdited ? 'edited Â· ' : ''}{new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+										</div>
+									);
+								})}
 								<div ref={bottomRef} />
 							</div>
 						</div>
@@ -318,7 +323,7 @@ export default function MessagePage() {
 					<button type="submit" disabled={!activeRoom || !text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
 				</form>
 			</div>
-			<div className="hidden flex-col border-l border-slate-200 bg-white xl:flex xl:w-[300px]">
+			<div className="xl:w-75 hidden flex-col border-l border-slate-200 bg-white xl:flex">
 				<div className="border-b p-6 text-center">
 					<div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full bg-slate-200">
 						{(() => {
