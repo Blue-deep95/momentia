@@ -269,6 +269,43 @@ router.post("/upload-avatar",
     }
 )
 
+// per frontend teams request write a new remove-profile-picture route
+router.delete("/remove-avatar",async(req,res) => {
+    try{
+        
+        // first get the user details 
+        const user = await User.findById(req.user._id)
+
+        if (!user) {
+            return res.status(404).json({message:"User not found"})
+        }
+
+        // prevent the operation if the profile picture does not exist already
+        if (!user.profilePicture?.original?.public_id){
+            return res.status(400).json({message:"User profile picture does not exist"})
+        }
+
+        // first we have to delete the profile picture from cloudinary 
+        const deleteProfilePicture = await deleteFromCloudinary(user.profilePicture.original.public_id,'image')
+
+        // after the deletion null the fields of profile picture
+        user.profilePicture.original.public_id = null
+        user.profilePicture.original.url = null
+        user.profilePicture.commentView = null
+        user.profilePicture.profileView = null
+
+        await user.save()
+
+        return res.status(200).json({message:"Removal of avatar succesfull"})
+
+
+    }
+    catch(err){
+        console.log("Error in remove-avatar route",err)
+        return res.status(500).json({message:"Internal server error"})
+    }
+})
+
 // this route is only for changing bio and name and gender
 router.post("/edit-profile",
     async (req, res) => {
