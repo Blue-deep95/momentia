@@ -5,7 +5,7 @@ import { login, logout } from '../slices/authSlice.js'
 
 // create axios instance 
 const api = axios.create({
-    baseURL:"http://localhost:2000/api", // could be production url using .env files
+    baseURL: import.meta.env.VITE_API_URL, // could be production url using .env files
     withCredentials:true,
     //timeout: 5000 // Add a 5-second timeout
 })
@@ -79,7 +79,8 @@ api.interceptors.response.use(
             isRefreshing = true
             try{
                 // get new access token from refresh token
-                const res = await axios.post("http://localhost:2000/api/user/regenerate-access-token",
+                const url = import.meta.env.VITE_API_URL
+                const res = await axios.post(`${url}/api/user/regenerate-access-token`,
                     {},
                     {withCredentials:true}
                 )
