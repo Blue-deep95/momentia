@@ -1,8 +1,6 @@
-# Insta-clone project 
+# Momentia
 
-Backend prepared with express,mongoose
-
-Frontend prepared with tailwind,react-router
+A Highly engineered social media platform that takes inspiration from Instagram. 
 
 ## API documentation for refrence
 

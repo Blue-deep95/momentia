@@ -6,12 +6,32 @@ This document details the real-time communication events used in the Momentia ap
 
 The socket server runs on the same port as the backend API (Default: `2000`).
 
-- **Connection URL:** `http://localhost:2000`
+- **Connection URL:** The base server origin (e.g., `http://localhost:2000`).
+  > [!IMPORTANT]
+  > Do **NOT** pass a URL containing a path suffix (such as `http://localhost:2000/api`) to the `io()` function. The Socket.io client treats any path suffix as a custom Socket.io namespace (e.g. `/api`), resulting in connection failures like `Invalid namespace` if the namespace is not configured on the server. Always extract only the protocol and host (`url.origin`) for connection.
+
 - **Authentication:** Momentia uses handshake authentication. The client MUST provide a valid JWT access token.
 
 ### Client Connection Example (Socket.io-client)
 ```javascript
-const socket = io("http://localhost:2000", {
+import { io } from "socket.io-client";
+
+// Normalize the API URL to get only the origin (protocol + host)
+const getSocketUrl = (apiUrl) => {
+  if (!apiUrl) return "http://localhost:2000";
+  try {
+    const url = new URL(apiUrl);
+    return url.origin;
+  } catch (e) {
+    return apiUrl;
+  }
+};
+
+const socketUrl = getSocketUrl(import.meta.env.VITE_API_URL);
+
+const socket = io(socketUrl, {
+  withCredentials: true,
+  transports: ["websocket"],
   auth: {
     token: "YOUR_JWT_ACCESS_TOKEN"
   }
@@ -19,6 +39,7 @@ const socket = io("http://localhost:2000", {
 ```
 
 ---
+
 
 ## 2. Server -> Client (Events Emitted by Backend)
 
@@ -128,4 +149,13 @@ Automatically triggered when the client closes the connection.
 
 - **User Mapping:** The server maintains a Map (`onlineUsers`) that maps `userId` to `socketId`. This is used to route notifications to the correct recipient.
 - **Middleware:** `authSocketMiddleware.js` validates the JWT before allowing the connection. If the token is missing or invalid, a `connect_error` is emitted to the client.
+- **Client Connection Error Handling:** The client should listen to `connect_error` to handle expired/invalid tokens and trigger access token regeneration.
+  ```javascript
+  socket.on("connect_error", (err) => {
+    console.error("Socket connection error:", err.message);
+    // e.g. Trigger token refresh and reconnect
+  });
+  ```
+- **CORS Allowed Origins:** The socket server dynamically allows cross-origin requests from the client. Configured via the `FRONTEND_URL` environment variable (trailing slashes are automatically stripped to prevent origin matching mismatches) and falls back to `http://localhost:5173` in development.
 - **Rate Limiting:** Notifications are grouped if unread and only emitted via socket if the time since the last update exceeds `GLOBAL_NOTIFICATION_LIMIT` (1 minute).
+

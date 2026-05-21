@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import toast from "react-hot-toast";
 import {Heart,
         MessageCircleMore,
         Send,
@@ -15,7 +16,8 @@ const PostCard = ({ post }) => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [liked, setLiked] = useState(post.isLiked || false);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(post.isSaved || false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [likesCount, setLikesCount] = useState(post.totalLikes || 0);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.totalComments || 0);
@@ -70,6 +72,33 @@ const PostCard = ({ post }) => {
       setFollowLoading(false);
     }
   };
+
+  const handleToggleSave = async () => {
+    if (saveLoading) return;
+    setSaveLoading(true);
+
+    try {
+      const res = await api.post(`/post/toggle-savedposts/${post._id}`);
+      const isSaved = res.data.isSaved;
+      setSaved(isSaved);
+
+      if (isSaved) {
+        toast.success("Post saved");
+      } else {
+        toast.success("Post removed from saved");
+      }
+    } catch (err) {
+      console.error("Error toggling save", err);
+      toast.error("Could not update saved posts");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  // Keep `saved` state in sync when the `post` prop changes
+  useEffect(() => {
+    setSaved(Boolean(post.isSaved));
+  }, [post.isSaved]);
 
   const toggleOptionsMenu = () => {
     setShowOptionsMenu((prev) => !prev);
@@ -214,8 +243,10 @@ const PostCard = ({ post }) => {
 
           {/* SAVE */}
           <button
-            onClick={() => setSaved(!saved)}
-            className="transition hover:scale-110"
+            type="button"
+            onClick={handleToggleSave}
+            disabled={saveLoading}
+            className="transition hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Bookmark
               size={24}

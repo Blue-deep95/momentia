@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import api from "../services/api";
 
 export default function MessagePage() {
 	const user = useSelector((state) => state.auth.user);
+	const userId = user?._id ? String(user._id) : user?.id ? String(user.id) : null;
 	const [rooms, setRooms] = useState([]);
 	const [followingProfiles, setFollowingProfiles] = useState([]);
 	const [activeRoom, setActiveRoom] = useState(null);
@@ -16,52 +17,69 @@ export default function MessagePage() {
 	const [followingLoading, setFollowingLoading] = useState(false);
 	const [loadingMessages, setLoadingMessages] = useState(false);
 	const bottomRef = useRef(null);
-	const socketRef = useRef(null);
+	const activeRoomRef = useRef(null);
+
+	// keep activeRoomRef in sync
+	useEffect(() => {
+		activeRoomRef.current = activeRoom;
+	}, [activeRoom]);
 
 	useEffect(() => {
-		if (!user?.id) return;
+		if (!userId) return;
 		fetchFollowing();
 		fetchRooms();
-		// try initialize socket client (optional)
-		(async () => {
-			try {
-				const mod = await import("socket.io-client");
-				const { io } = mod;
-				const token = localStorage.getItem("token");
-				if (!token) return;
-				const sock = io("http://localhost:2000", { auth: { token } });
-				socketRef.current = sock;
-				sock.on("connect", () => {
-					// console.log('socket connected', sock.id)
+
+		let socketHandler = null;
+
+		const attachSocket = () => {
+			const socket = window.__socket;
+			if (!socket) return;
+
+			socketHandler = (payload) => {
+				if (!payload || !payload.roomId) return;
+				const currentActiveRoom = activeRoomRef.current;
+				// If active room matches, append
+				if (currentActiveRoom && payload.roomId.toString() === currentActiveRoom._id.toString()) {
+					setMessages((p) => [...p, payload]);
+					// mark read for active room
+					markRead(currentActiveRoom._id, payload.messageNumber);
+				}
+				// update rooms preview and ordering
+				setRooms((prev) => {
+					const idx = prev.findIndex((r) => r._id === payload.roomId.toString());
+					if (idx === -1) return prev;
+					const copy = [...prev];
+					copy[idx] = { 
+						...copy[idx], 
+						lastMessage: { content: payload.content, sender: payload.sender }, 
+						lastMessageAt: Date.now(), 
+						currentMessageCount: (copy[idx].currentMessageCount || 0) + 1 
+					};
+					// move to top
+					const moved = copy.splice(idx, 1)[0];
+					return [moved, ...copy];
 				});
-				sock.on("new-message", (payload) => {
-					// payload should contain roomId and message info
-					if (!payload || !payload.roomId) return;
-					// If active room matches, append
-					if (activeRoom && payload.roomId.toString() === activeRoom._id.toString()) {
-						setMessages((p) => [...p, payload]);
-						// mark read for active room
-						markRead(activeRoom._id, payload.messageNumber);
-					}
-					// update rooms preview and ordering
-					setRooms((prev) => {
-						const idx = prev.findIndex((r) => r._id === payload.roomId.toString());
-						if (idx === -1) return prev;
-						const copy = [...prev];
-						copy[idx] = { ...copy[idx], lastMessage: { content: payload.content, sender: payload.sender }, lastMessageAt: Date.now(), currentMessageCount: (copy[idx].currentMessageCount || 0) + 1 };
-						// move to top
-						const moved = copy.splice(idx, 1)[0];
-						return [moved, ...copy];
-					});
-				});
-			} catch (err) {
-				// socket client not available â€” skip realtime
-				// console.log('socket not initialized', err)
+			};
+
+			socket.on("new-message", socketHandler);
+		};
+
+		attachSocket();
+
+		const onSocketReady = () => {
+			if (socketHandler) {
+				window.__socket?.off("new-message", socketHandler);
 			}
-		})();
+			attachSocket();
+		};
+
+		window.addEventListener("socket-ready", onSocketReady);
 
 		return () => {
-			if (socketRef.current) socketRef.current.disconnect();
+			window.removeEventListener("socket-ready", onSocketReady);
+			if (window.__socket && socketHandler) {
+				window.__socket.off("new-message", socketHandler);
+			}
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [user]);
@@ -74,10 +92,10 @@ export default function MessagePage() {
 	}, [messages]);
 
 	async function fetchFollowing() {
-		if (!user?.id) return;
+		if (!userId) return;
 		try {
 			setFollowingLoading(true);
-			const res = await api.get(`/profile/get-following/${user.id}`);
+			const res = await api.get(`/profile/get-following/${userId}`);
 			setFollowingProfiles(res.data.following || []);
 		} catch (err) {
 			console.error(err);
@@ -235,7 +253,7 @@ export default function MessagePage() {
 	};
 
 	return (
-		<div className="flex h-screen min-h-screen overflow-hidden bg-slate-100 text-slate-900 lg:pl-[72px]">
+		<div className="lg:pl-18 flex h-screen min-h-screen overflow-hidden bg-slate-100 text-slate-900">
 			<div className="hidden min-h-0 flex-col border-r border-slate-200 bg-white xl:flex xl:w-[320px]">
 				<div className="border-b p-4">
 					<div className="flex items-center justify-between gap-3">
@@ -295,12 +313,16 @@ export default function MessagePage() {
 							{loadingMessages && <div className="text-sm text-slate-500">Loading messages...</div>}
 							{hasMore && <button onClick={loadMore} className="text-sm text-blue-600 hover:underline">Load earlier messages</button>}
 							<div className="space-y-3">
-								{messages.map((m) => (
-									<div key={m._id} className={`max-w-[72%] rounded-3xl p-4 shadow-sm ${m.sender === user?._id ? 'ml-auto bg-blue-600 text-white' : 'bg-white text-slate-900'}`}>
-										<div className="text-sm leading-relaxed">{m.content}</div>
-										<div className="mt-2 text-right text-xs text-slate-400">{m.isEdited ? 'edited Â· ' : ''}{new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-									</div>
-								))}
+								{messages.map((m) => {
+									const senderId = m.sender?._id ? String(m.sender._id) : m.sender ? String(m.sender) : null;
+									const isOwn = userId && senderId && senderId === userId;
+									return (
+										<div key={m._id} className={`max-w-[72%] rounded-3xl p-4 shadow-sm ${isOwn ? 'ml-auto bg-blue-600 text-white' : 'bg-white text-slate-900'}`}>
+											<div className="text-sm leading-relaxed">{m.content}</div>
+											<div className="mt-2 text-right text-xs text-slate-400">{m.isEdited ? 'edited Â· ' : ''}{new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+										</div>
+									);
+								})}
 								<div ref={bottomRef} />
 							</div>
 						</div>
@@ -318,7 +340,7 @@ export default function MessagePage() {
 					<button type="submit" disabled={!activeRoom || !text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
 				</form>
 			</div>
-			<div className="hidden flex-col border-l border-slate-200 bg-white xl:flex xl:w-[300px]">
+			<div className="xl:w-75 hidden flex-col border-l border-slate-200 bg-white xl:flex">
 				<div className="border-b p-6 text-center">
 					<div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full bg-slate-200">
 						{(() => {
