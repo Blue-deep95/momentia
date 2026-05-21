@@ -19,7 +19,7 @@ import api from "./services/api.js"
 
 import ProtectedRoutes from './components/ProtectedRoutes.jsx'
 import NotificationToaster from './components/NotificationToaster.jsx'
-import SinglePost from './pages/SinglePost.jsx'
+
 
 export default function App() {
   const token = useSelector((state) => state.auth.token);
