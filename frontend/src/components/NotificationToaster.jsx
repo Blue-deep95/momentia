@@ -293,7 +293,7 @@ const NotificationToaster = () => {
 
   useEffect(() => {
     let socketHandler;
-    const eventNames = ["notification-post-liked", "user-followed"];
+    const eventNames = ["notification-post-liked", "user-followed", "comment-reply"];
 
     const attachSocket = () => {
       const socket = window.__socket;

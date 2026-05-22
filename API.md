@@ -168,13 +168,35 @@ Retrieves public profile information for a user.
     }
     ```
 
-### 2. Get User Posts
+### 2. Get Profile by Username
+Retrieves public profile information for a user by their username.
+*   **URL:** `/profile/get-profilebyusername/:username`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "self": true/false,
+      "following": true/false,
+      "profile": {
+        "username": "...",
+        "name": "...",
+        "bio": "...",
+        "profilePicture": { ... },
+        "totalPosts": 0,
+        "followers": 0,
+        "following": 0
+      },
+      "message": "profile search succesful"
+    }
+    ```
+
+### 3. Get User Posts
 Retrieves posts belonging to a specific user (defaults to authenticated user if no ID is provided).
 *   **URL:** `/profile/get-userposts/:id?`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 12)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 12)
 *   **Success Response (200):**
     ```json
     {
@@ -191,13 +213,13 @@ Retrieves posts belonging to a specific user (defaults to authenticated user if 
     }
     ```
 
-### 3. Get Saved Posts
+### 4. Get Saved Posts
 Retrieves posts saved by a specific user (defaults to authenticated user if no ID is provided).
 *   **URL:** `/profile/get-savedposts/:id?`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 12)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 12)
 *   **Success Response (200):**
     ```json
     {
@@ -221,7 +243,7 @@ Retrieves posts saved by a specific user (defaults to authenticated user if no I
     }
     ```
 
-### 4. Get Suggested Users
+### 5. Get Suggested Users
 Retrieves a list of suggested users to follow.
 *   **URL:** `/profile/get-suggested-users`
 *   **Method:** `GET`
@@ -233,7 +255,7 @@ Retrieves a list of suggested users to follow.
     }
     ```
 
-### 5. Upload Avatar
+### 6. Upload Avatar
 Uploads and processes a profile picture via Cloudinary.
 *   **URL:** `/profile/upload-avatar`
 *   **Method:** `POST`
@@ -244,7 +266,7 @@ Uploads and processes a profile picture via Cloudinary.
     { "message": "Profile picture updated succesfully" }
     ```
 
-### 6. Remove Avatar
+### 7. Remove Avatar
 Deletes the user's active profile picture/avatar from Cloudinary and clears it from their database record.
 *   **URL:** `/profile/remove-avatar`
 *   **Method:** `DELETE`
@@ -261,7 +283,7 @@ Deletes the user's active profile picture/avatar from Cloudinary and clears it f
     { "message": "User not found" }
     ```
 
-### 7. Edit Profile
+### 8. Edit Profile
 Updates the authenticated user's profile details.
 *   **URL:** `/profile/edit-profile`
 *   **Method:** `POST`
@@ -279,13 +301,13 @@ Updates the authenticated user's profile details.
     { "message": "Profile update succesful" }
     ```
 
-### 8. Get Followers
+### 9. Get Followers
 Retrieves the list of followers for a specific user with pagination.
 *   **URL:** `/profile/get-followers/:id`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 50)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 50)
 *   **Success Response (200):**
     ```json
     {
@@ -301,13 +323,13 @@ Retrieves the list of followers for a specific user with pagination.
     }
     ```
 
-### 9. Get Following
+### 10. Get Following
 Retrieves the list of users a specific user is following with pagination.
 *   **URL:** `/profile/get-following/:id`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 50)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 50)
 *   **Success Response (200):**
     ```json
     {
@@ -592,8 +614,9 @@ Adds a new comment or a reply to an existing comment.
     {
       "content": "Comment text",
       "postid": "...",
-      "parent": "...", (Optional, ID of parent comment for replies)
-      "reference": "..." (Optional, ID of user being replied to)
+      "parent": "...", // (Optional, ID of parent comment for replies. Required if nested reply)
+      "reference": "...", // (Optional, ID of user being replied to. Required if parent is provided)
+      "referenceComment": "..." // (Optional, ID of direct comment being replied to. Required if parent is provided)
     }
     ```
 *   **Success Response (200):**

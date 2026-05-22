@@ -245,6 +245,7 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
       if (replyTo) {
         payload.parent = replyTo.parent || replyTo._id; 
         payload.reference = (replyTo.authorDetails?._id || replyTo.author?._id || replyTo.author);
+        payload.referenceComment = replyTo._id;
       }
 
       const res = await createComment(payload).unwrap();
