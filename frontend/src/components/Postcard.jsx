@@ -10,6 +10,7 @@ import {Heart,
         EllipsisVertical
 } from "lucide-react";
 import CommentsModal from "./Comment";
+import FollowButton from "./FollowButton.jsx";
 
 
 const PostCard = ({ post }) => {
@@ -21,8 +22,6 @@ const PostCard = ({ post }) => {
   const [likesCount, setLikesCount] = useState(post.totalLikes || 0);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.totalComments || 0);
-  const [isFollowing, setIsFollowing] = useState(post.isFollowing || false);
-  const [followLoading, setFollowLoading] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   useEffect(() => {
@@ -45,31 +44,6 @@ const PostCard = ({ post }) => {
       setLikesCount((prevLikes) => Math.max(0, prevLikes + (isLiked ? 1 : -1)));
     } catch (err) {
       console.error("Error toggling like", err);
-    }
-  };
-
-  const handleFollow = async () => {
-    setFollowLoading(true);
-    try {
-      await api.post(`/follow/follow-user`, { targetId: post.authorDetails?._id });
-      setIsFollowing(true);
-    } catch (err) {
-      console.error("Error following user", err);
-    } finally {
-      setFollowLoading(false);
-    }
-  };
-
-  const handleUnfollow = async () => {
-    setFollowLoading(true);
-    try {
-      await api.delete(`/follow/unfollow-user/${post.authorDetails?._id}`);
-      setIsFollowing(false);
-      setShowOptionsMenu(false);
-    } catch (err) {
-      console.error("Error unfollowing user", err);
-    } finally {
-      setFollowLoading(false);
     }
   };
 
@@ -144,14 +118,13 @@ const PostCard = ({ post }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          {user?.id !== post.authorDetails?._id && !isFollowing && (
-            <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {followLoading ? "Following..." : "Follow"}
-            </button>
+          {user?.id !== post.authorDetails?._id && (
+            <FollowButton
+              userId={post.authorDetails?._id}
+              initialFollowing={post.isFollowing ?? null}
+              size="sm"
+              variant="outline"
+            />
           )}
 
           <div className="relative inline-block">
@@ -170,15 +143,6 @@ const PostCard = ({ post }) => {
                 >
                   Go to post
                 </button>
-                {isFollowing && (
-                  <button
-                    onClick={handleUnfollow}
-                    disabled={followLoading}
-                    className="w-full px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-red-300"
-                  >
-                    {followLoading ? "Unfollowing..." : "Unfollow"}
-                  </button>
-                )}
               </div>
             )}
           </div>
