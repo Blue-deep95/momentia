@@ -286,3 +286,183 @@ notificationBus.on("comment-posted", async (data) => {
     );
   }
 });
+
+// Comment like notification
+notificationBus.on(
+  "comment-liked",
+  async (data) => {
+
+    try {
+
+      const oldNotification =
+        await Notification.findOneAndUpdate(
+
+          {
+            recipient: data.commentAuthor,
+
+            notificationType: "comment",
+
+            notificationSubType: "like",
+
+            targetEntityId: data.commentTarget,
+
+            isRead: false
+          },
+
+          {
+            $inc: { actorCount: 1 },
+
+            $push: {
+              actors: {
+                $each: [data.author],
+
+                $position: 0,
+
+                $slice: 3
+              }
+            }
+          },
+
+          {
+            upsert: true,
+
+            returnDocument: "before"
+          }
+        )
+
+
+
+      // CHECK IF USER ONLINE
+      const targetSocketId =
+        onlineUsers.get(
+          data.commentAuthor.toString()
+        )
+
+
+
+      if (targetSocketId) {
+
+        const shouldNotify =
+          !oldNotification ||
+
+          Date.now() -
+          oldNotification.updatedAt.getTime()
+          >
+          GLOBAL_NOTIFICATION_LIMIT
+
+
+
+        if (shouldNotify) {
+
+          const notificationData =
+            await Notification.findOne({
+
+              recipient: data.commentAuthor,
+
+              notificationType: "comment",
+
+              notificationSubType: "like",
+
+              targetEntityId: data.commentTarget,
+
+              isRead: false
+            })
+
+              .populate(
+                "actors",
+                "_id username profilePicture"
+              )
+
+              .populate({
+                path: "targetEntityId",
+
+                model: "comment",
+
+                select: "_id content"
+              })
+
+
+
+          io.to(targetSocketId).emit(
+            "notification-comment-liked",
+
+            notificationData.toObject()
+          )
+        }
+      }
+
+    }
+    catch (error) {
+
+      console.log(
+        "Error in comment-liked listener",
+        error
+      )
+    }
+  }
+)
+
+
+// Comment unlike
+notificationBus.on(
+  "comment-unliked",
+  async (data) => {
+
+    try {
+
+      const editNotification =
+        await Notification.findOneAndUpdate(
+
+          {
+            recipient: data.commentAuthor,
+
+            notificationType: "comment",
+
+            notificationSubType: "like",
+
+            targetEntityId: data.commentTarget,
+
+            isRead: false
+          },
+
+          {
+            // decrease actor count
+            $inc: {
+              actorCount: -1
+            },
+
+            // remove actor
+            $pull: {
+              actors: data.author
+            }
+          },
+
+          {
+            returnDocument: "after"
+          }
+        )
+
+
+
+      // Delete notification
+      // if no actors left
+      if (
+        editNotification &&
+        editNotification.actorCount < 1
+      ) {
+
+        await Notification.findOneAndDelete({
+          _id: editNotification._id
+        })
+      }
+
+    }
+    catch (error) {
+
+      console.log(
+        "Error in comment-unliked listener",
+        error
+      )
+    }
+  }
+)
