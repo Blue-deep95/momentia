@@ -96,6 +96,43 @@ Sent when someone follows the authenticated user. Rate-limited to 1 minute.
   }
   ```
 
+### `comment-reply`
+Sent when someone replies to a comment posted by the authenticated user. Rate-limited to 1 minute.
+- **Payload (Notification Object with Comment Details):**
+  ```json
+  {
+    "_id": "ObjectId",
+    "recipient": "UserId",
+    "notificationType": "comment",
+    "notificationSubType": "reply",
+    "targetEntityId": "CommentId",
+    "actors": [
+      {
+        "_id": "UserId",
+        "username": "string",
+        "profilePicture": { "profileView": "url", ... }
+      }
+    ],
+    "actorCount": "number",
+    "isRead": false,
+    "updatedAt": "ISO Date",
+    "actorDetails": [
+      {
+        "_id": "UserId",
+        "username": "string",
+        "profilePicture": { "profileView": "url", ... }
+      }
+    ],
+    "commentDetails": {
+      "_id": "CommentId",
+      "content": "string",
+      "postInfo": {
+        "thumbImage": "url"
+      }
+    }
+  }
+  ```
+
 ### `new-message`
 Sent when a new message is received in a room the user is a member of.
 - **Payload (Message Object):**

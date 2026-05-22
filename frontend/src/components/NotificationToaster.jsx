@@ -104,7 +104,10 @@ const playNotificationSound = () => {
 };
 
 const NotificationToastCard = ({ notification, isNew, onClick }) => {
-  const typeMeta = NOTIFICATION_TYPES[notification.notificationType] || NOTIFICATION_TYPES.post;
+  const typeMeta = { ...(NOTIFICATION_TYPES[notification.notificationType] || NOTIFICATION_TYPES.post) };
+  if (notification.notificationType === "comment" && notification.notificationSubType === "reply") {
+    typeMeta.label = "replied to your comment";
+  }
   const actors = notification.actorDetails || notification.actors || [];
   const ActorName = formatActorName(notification) || "Someone";
   const Icon = typeMeta.icon;
@@ -245,7 +248,7 @@ const NotificationToaster = () => {
 
   useEffect(() => {
     let socketHandler;
-    const eventNames = ["notification-post-liked", "user-followed"];
+    const eventNames = ["notification-post-liked", "user-followed", "comment-reply"];
 
     const attachSocket = () => {
       const socket = window.__socket;
