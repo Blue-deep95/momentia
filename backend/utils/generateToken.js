@@ -7,7 +7,8 @@ const generateAccessToken = (user)=>{
 
 
 const generateRefreshToken = (user) =>{
-    return jwt.sign({id:user._id},process.env.JWT_REFRESH_TOKEN,{expiresIn:'30d'})
+    // for production reduce expire time from 30d to 15d
+    return jwt.sign({id:user._id},process.env.JWT_REFRESH_TOKEN,{expiresIn:'15d'})
 }
 
 module.exports = {generateAccessToken,generateRefreshToken}

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import api from "../services/api";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Virtuoso } from "react-virtuoso";
 
 // Components
@@ -8,45 +8,19 @@ import PostCard from "../components/Postcard.jsx";
 import StoryBar from "../components/Storybar.jsx";
 import SuggestedProfiles from "../components/SuggestedProfiles.jsx";
 
+import { fetchPosts } from "../slices/feedSlice";
+
 const Feed = () => {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [nextCursor, setNextCursor] = useState(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-
-  // Fetch posts
-  const fetchPosts = async (cursor = null) => {
-    const isInitial = !cursor;
-    if (isInitial) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-
-    try {
-      const url = cursor ? `/feed/get-posts?cursor=${encodeURIComponent(cursor)}` : "/feed/get-posts";
-      const res = await api.get(url);
-      const newPosts = res.data.posts || [];
-      
-      setPosts((prev) => (isInitial ? newPosts : [...prev, ...newPosts]));
-      setNextCursor(res.data.nextCursor);
-      setHasMore(res.data.hasNextPage);
-    } catch (err) {
-      console.error("Error fetching posts", err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+  const dispatch = useDispatch();
+  const { posts, loading, loadingMore, nextCursor, hasMore } = useSelector((state) => state.feed);
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    dispatch(fetchPosts({ cursor: null }));
+  }, [dispatch]);
 
   const loadMore = () => {
     if (hasMore && !loading && !loadingMore && nextCursor) {
-      fetchPosts(nextCursor);
+      dispatch(fetchPosts({ cursor: nextCursor }));
     }
   };
 
@@ -84,7 +58,7 @@ const Feed = () => {
                 components={{
                   Footer: () =>
                     loadingMore ? (
-                      <p className="text-center text-gray-500 py-4">Loading more posts...</p>
+                      <p className="py-4 text-center text-gray-500">Loading more posts...</p>
                     ) : null,
                 }}
               />
