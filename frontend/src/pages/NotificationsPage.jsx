@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 
 /* ════════════════════════════════════════════════════════════════
@@ -245,6 +246,7 @@ export default function NotificationsPage() {
   const [markingAll, setMarkingAll] = useState(false);
 
   const markedRef = useRef(new Set());
+  const navigate = useNavigate();
 
   /* FETCH */
   const fetchPage = useCallback(async (pg, replace = false) => {
@@ -404,87 +406,78 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-[#f5f7ff]">
 
       {/* HEADER */}
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-gray-100">
-
+      <div className="sticky top-0 z-50">
         <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="bg-linear-to-r relative overflow-hidden rounded-[28px] from-[#2F3EDB] via-[#5160F5] to-[#FF7A3D] p-px shadow-2xl">
+            <div className="rounded-[28px] bg-white/95 p-4 backdrop-blur-xl">
+              <div className="flex items-center justify-between mb-4 sm:hidden">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
+                >
+                  ←
+                </button>
+                <div className="text-lg font-black text-slate-900">Notifications</div>
+                <div className="w-10" />
+              </div>
 
-          {/* TOP */}
-          <div className="flex items-center justify-between mb-4">
+              <div className="hidden sm:flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#2F3EDB] to-[#5160F5] flex items-center justify-center text-white text-xl shadow-lg">
+                      🔔
+                    </div>
+                    {unreadCt > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pulse">
+                        {unreadCt > 99 ? "99+" : unreadCt}
+                      </span>
+                    )}
+                  </div>
 
-            <div className="flex items-center gap-3">
-
-              <div className="relative">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 flex items-center justify-center text-white text-xl shadow-xl">
-                  🔔
+                  <div>
+                    <h1 className="text-2xl font-black text-[#111827]">Notifications</h1>
+                    <p className="text-xs text-[#6B7280]">{unreadCt > 0 ? `${unreadCt} new notifications` : "You're all caught up"}</p>
+                  </div>
                 </div>
 
                 {unreadCt > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pulse">
-                    {unreadCt > 99 ? "99+" : unreadCt}
-                  </span>
+                  <button
+                    onClick={handleMarkAll}
+                    disabled={markingAll}
+                    className="hidden sm:inline-flex px-4 py-2 rounded-2xl bg-white/60 text-[#2F3EDB] text-sm font-semibold shadow-md hover:scale-105 transition"
+                  >
+                    {markingAll ? "Loading..." : "Mark all"}
+                  </button>
                 )}
               </div>
 
-              <div>
-                <h1 className="text-2xl font-black text-gray-900">
-                  Notifications
-                </h1>
-
-                <p className="text-xs text-gray-400">
-                  {unreadCt > 0
-                    ? `${unreadCt} new notifications`
-                    : "You're all caught up"}
-                </p>
+              <div className="sticky top-4 z-30 mt-2 rounded-3xl border border-white bg-white/70 px-2 shadow-lg backdrop-blur-xl hidden sm:block">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {TABS.map(({ label, type }) => {
+                    const active = tab === label;
+                    const cnt = tabCount(type);
+                    return (
+                      <button
+                        key={label}
+                        onClick={() => setTab(label)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${
+                          active
+                            ? "bg-linear-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
+                            : "text-[#6B7280] hover:text-[#111827]"
+                        }`}
+                      >
+                        {label}
+                        {cnt > 0 && (
+                          <span className={`min-w-[18px] h-[18px] ml-1 px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${active ? "bg-white text-[#2F3EDB]" : "bg-rose-500 text-white"}`}>
+                            {cnt > 9 ? "9+" : cnt}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-
-            {unreadCt > 0 && (
-              <button
-                onClick={handleMarkAll}
-                disabled={markingAll}
-                className="px-4 py-2 rounded-xl bg-indigo-50 text-indigo-600 text-sm font-bold hover:bg-indigo-100 transition"
-              >
-                {markingAll ? "Loading..." : "Mark all"}
-              </button>
-            )}
-          </div>
-
-          {/* TABS */}
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-
-            {TABS.map(({ label, type }) => {
-              const active = tab === label;
-
-              const cnt = tabCount(type);
-
-              return (
-                <button
-                  key={label}
-                  onClick={() => setTab(label)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all
-                  ${
-                    active
-                      ? "bg-indigo-600 text-white shadow-lg"
-                      : "bg-white text-gray-500 border border-gray-200"
-                  }`}
-                >
-                  {label}
-
-                  {cnt > 0 && (
-                    <span
-                      className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center
-                      ${
-                        active
-                          ? "bg-white text-indigo-600"
-                          : "bg-rose-500 text-white"
-                      }`}
-                    >
-                      {cnt > 9 ? "9+" : cnt}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
           </div>
         </div>
       </div>

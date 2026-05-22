@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import toast from "react-hot-toast";
 import {Heart,
         MessageCircleMore,
         Send,
@@ -9,18 +10,18 @@ import {Heart,
         EllipsisVertical
 } from "lucide-react";
 import CommentsModal from "./Comment";
+import FollowButton from "./FollowButton.jsx";
 
 
 const PostCard = ({ post }) => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const [liked, setLiked] = useState(post.isLiked || false);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(post.isSaved || false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [likesCount, setLikesCount] = useState(post.totalLikes || 0);
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(post.totalComments || 0);
-  const [isFollowing, setIsFollowing] = useState(post.isFollowing || false);
-  const [followLoading, setFollowLoading] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   useEffect(() => {
@@ -46,30 +47,32 @@ const PostCard = ({ post }) => {
     }
   };
 
-  const handleFollow = async () => {
-    setFollowLoading(true);
+  const handleToggleSave = async () => {
+    if (saveLoading) return;
+    setSaveLoading(true);
+
     try {
-      await api.post(`/follow/follow-user`, { targetId: post.authorDetails?._id });
-      setIsFollowing(true);
+      const res = await api.post(`/post/toggle-savedposts/${post._id}`);
+      const isSaved = res.data.isSaved;
+      setSaved(isSaved);
+
+      if (isSaved) {
+        toast.success("Post saved");
+      } else {
+        toast.success("Post removed from saved");
+      }
     } catch (err) {
-      console.error("Error following user", err);
+      console.error("Error toggling save", err);
+      toast.error("Could not update saved posts");
     } finally {
-      setFollowLoading(false);
+      setSaveLoading(false);
     }
   };
 
-  const handleUnfollow = async () => {
-    setFollowLoading(true);
-    try {
-      await api.delete(`/follow/unfollow-user/${post.authorDetails?._id}`);
-      setIsFollowing(false);
-      setShowOptionsMenu(false);
-    } catch (err) {
-      console.error("Error unfollowing user", err);
-    } finally {
-      setFollowLoading(false);
-    }
-  };
+  // Keep `saved` state in sync when the `post` prop changes
+  useEffect(() => {
+    setSaved(Boolean(post.isSaved));
+  }, [post.isSaved]);
 
   const toggleOptionsMenu = () => {
     setShowOptionsMenu((prev) => !prev);
@@ -115,14 +118,13 @@ const PostCard = ({ post }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          {user?.id !== post.authorDetails?._id && !isFollowing && (
-            <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-            >
-              {followLoading ? "Following..." : "Follow"}
-            </button>
+          {user?.id !== post.authorDetails?._id && (
+            <FollowButton
+              userId={post.authorDetails?._id}
+              initialFollowing={post.isFollowing ?? null}
+              size="sm"
+              variant="outline"
+            />
           )}
 
           <div className="relative inline-block">
@@ -141,15 +143,6 @@ const PostCard = ({ post }) => {
                 >
                   Go to post
                 </button>
-                {isFollowing && (
-                  <button
-                    onClick={handleUnfollow}
-                    disabled={followLoading}
-                    className="w-full px-4 py-3 text-left text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-red-300"
-                  >
-                    {followLoading ? "Unfollowing..." : "Unfollow"}
-                  </button>
-                )}
               </div>
             )}
           </div>
@@ -214,8 +207,10 @@ const PostCard = ({ post }) => {
 
           {/* SAVE */}
           <button
-            onClick={() => setSaved(!saved)}
-            className="transition hover:scale-110"
+            type="button"
+            onClick={handleToggleSave}
+            disabled={saveLoading}
+            className="transition hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Bookmark
               size={24}

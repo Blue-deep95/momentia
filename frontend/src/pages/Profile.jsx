@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 import Sidebar from "../components/Sidebar.jsx";
 import FollowersModal from "../components/FollowersModal.jsx";
@@ -9,7 +11,6 @@ import FollowingModal from "../components/FollowingModal.jsx";
 import FollowButton from "../components/FollowButton.jsx";
 
 import {
-  Camera,
   Heart,
   MapPin,
   Link2,
@@ -44,10 +45,13 @@ const Profile = () => {
   const profileUserId = userId || user?.id;
   const isOwnProfile = !userId || userId === user?.id;
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [savedPosts, setSavedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savedLoading, setSavedLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState("posts");
 
@@ -60,6 +64,73 @@ const Profile = () => {
 
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+
+  const reelItems = posts.filter((post) => post.mediaType === "video");
+  const photoItems = posts.filter((post) => post.mediaType === "image");
+  const savedItems = savedPosts.filter(
+    (post) =>
+      !!post?._id &&
+      post.author !== user?.id &&
+      post.author?._id !== user?.id
+  );
+
+  const SavedPostsSkeleton = () => (
+    <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }, (_, index) => (
+        <div
+          key={index}
+          className="aspect-square animate-pulse rounded-[28px] bg-slate-200 dark:bg-slate-700"
+        />
+      ))}
+    </div>
+  );
+
+  const SavedEmptyState = () => (
+    <div className="flex flex-col items-center justify-center rounded-[32px] border border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2F3EDB]/10 text-[#2F3EDB] shadow-lg">
+        <Bookmark size={32} className="text-[#2F3EDB]" />
+      </div>
+      <h2 className="mt-6 text-3xl font-bold text-[#111827] dark:text-white">
+        Nothing saved yet
+      </h2>
+      <p className="mt-3 max-w-md text-center text-sm text-[#6B7280] dark:text-slate-400">
+        Save posts from your feed to see them here in your saved collection.
+      </p>
+    </div>
+  );
+
+  const SavedGridItem = ({ post, onClick }) => {
+    const image = post.thumbImage || post.imageUrl || post.images?.[0]?.url;
+
+    return (
+      <motion.button
+        type="button"
+        onClick={onClick}
+        whileHover={{ scale: 1.03 }}
+        className="group relative aspect-square overflow-hidden rounded-[28px] border border-gray-200 bg-slate-950 shadow-lg transition duration-300 hover:shadow-2xl dark:border-slate-700"
+      >
+        <img
+          src={image}
+          alt="Saved post"
+          className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+        />
+
+        <div className="absolute inset-0 bg-black/0 transition duration-300 group-hover:bg-black/30" />
+
+        <div className="absolute bottom-0 left-0 right-0 flex translate-y-full flex-col gap-2 bg-black/40 p-3 text-white transition duration-300 group-hover:translate-y-0">
+          <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-white/90">
+            <span className="flex items-center gap-2">
+              <Heart size={14} /> {post.totalLikes || 0}
+            </span>
+            <span className="flex items-center gap-2">
+              <MessageCircle size={14} /> {post.totalComments || 0}
+            </span>
+          </div>
+          <p className="truncate text-sm font-medium">Saved post</p>
+        </div>
+      </motion.button>
+    );
+  };
 
   const fetchProfile = async () => {
     try {
@@ -79,6 +150,25 @@ const Profile = () => {
     }
   };
 
+  const fetchSavedPosts = async () => {
+    try {
+      setSavedLoading(true);
+      const res = await api.get(`/profile/get-savedposts/${profileUserId}`);
+      setSavedPosts(res.data.savedPosts || []);
+    } catch (err) {
+      console.log("Error fetching saved posts", err);
+      setSavedPosts([]);
+    } finally {
+      setSavedLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
+
   useEffect(() => {
     if (!profileUserId) return;
 
@@ -94,6 +184,77 @@ const Profile = () => {
       }
     })();
   }, [profileUserId]);
+
+  // Listen for global follow status changes to update profile counts optimistically
+  useEffect(() => {
+    const handler = (e) => {
+      const { targetId, status } = e.detail || {};
+      if (!targetId || !profile) return;
+
+      setProfile((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev };
+        // If the profile page belongs to the target user, update their followers
+        if (prev._id === targetId) {
+          next.followers = (next.followers || 0) + (status === "followed" ? 1 : -1);
+          if (next.followers < 0) next.followers = 0;
+        }
+        // If the logged-in user's profile is open, update their following count
+        if (user?.id && prev._id === user.id) {
+          next.following = (next.following || 0) + (status === "followed" ? 1 : -1);
+          if (next.following < 0) next.following = 0;
+        }
+        return next;
+      });
+    };
+
+    window.addEventListener("momentia:follow-changed", handler);
+    return () => window.removeEventListener("momentia:follow-changed", handler);
+  }, [profile, user]);
+
+  // Socket listeners to update profile counts in real-time when server emits follow/unfollow
+  useEffect(() => {
+    const socket = window.__socket;
+    if (!socket) return;
+
+    const onUserFollowed = (notificationData) => {
+      try {
+        const recipient = notificationData?.recipient || notificationData?.recipient?._id;
+        if (!recipient || !profile) return;
+        if (profile._id === recipient) {
+          setProfile((prev) => ({ ...prev, followers: (prev.followers || 0) + 1 }));
+        }
+      } catch (err) {
+        console.warn("Error handling user-followed socket", err);
+      }
+    };
+
+    const onUnfollowUser = (data) => {
+      try {
+        const target = data?.target || data?.target?._id || data?.recipient;
+        if (!target || !profile) return;
+        if (profile._id === target) {
+          setProfile((prev) => ({ ...prev, followers: Math.max(0, (prev.followers || 1) - 1) }));
+        }
+      } catch (err) {
+        console.warn("Error handling unfollow-user socket", err);
+      }
+    };
+
+    socket.on("user-followed", onUserFollowed);
+    socket.on("unfollow-user", onUnfollowUser);
+
+    return () => {
+      socket.off("user-followed", onUserFollowed);
+      socket.off("unfollow-user", onUnfollowUser);
+    };
+  }, [profile]);
+
+  useEffect(() => {
+    if (activeTab === "saved" && profileUserId) {
+      fetchSavedPosts();
+    }
+  }, [activeTab, profileUserId]);
 
   const handleProfileUpload = async (e) => {
     try {
@@ -151,6 +312,26 @@ const Profile = () => {
     } catch (err) {
       console.log(err);
       alert("Failed to delete post");
+    }
+  };
+
+  const handleShareProfile = async () => {
+    if (!profile?.username) return;
+
+    const profileLink = `${window.location.origin}/profile/${profile.username}`;
+
+    try {
+      await navigator.clipboard.writeText(profileLink);
+      toast.success("Profile link copied");
+      navigate("/messages", {
+        state: {
+          shareProfile: profileLink,
+          sharedUsername: profile.username,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Unable to copy profile link");
     }
   };
 
@@ -224,31 +405,6 @@ const Profile = () => {
 
                     </div>
 
-                    {isOwnProfile && (
-                      <label className="absolute left-4 bottom-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-white shadow-xl transition-all duration-300 hover:scale-110 dark:border-slate-900 dark:bg-slate-950">
-
-                        {uploading ? (
-                          <Loader2
-                            size={20}
-                            className="animate-spin text-[#2F3EDB]"
-                          />
-                        ) : (
-                          <Camera
-                            size={20}
-                            className="text-[#2F3EDB]"
-                          />
-                        )}
-
-                        <input
-                          type="file"
-                          hidden
-                          accept=".jpg,.jpeg,.png,.webp"
-                          onChange={handleProfileUpload}
-                        />
-
-                      </label>
-                    )}
-
                   </div>
 
                 </div>
@@ -296,7 +452,7 @@ const Profile = () => {
                           </button>
 
                           <button
-                            onClick={() => navigate("/messages")}
+                            onClick={handleShareProfile}
                             className="flex items-center gap-2 rounded-2xl bg-[#FF7A3D] px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
                           >
                             <Share2 size={18} />
@@ -421,17 +577,14 @@ const Profile = () => {
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`flex items-center gap-2 px-6 py-5 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-4 py-4 md:px-6 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
                     activeTab === key
                       ? "bg-linear-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
-
                   <Icon size={18} />
-
-                  {label}
-
+                  <span className="hidden sm:inline">{label}</span>
                 </button>
               ))}
 
@@ -445,17 +598,15 @@ const Profile = () => {
             <>
               {posts.length > 0 ? (
                 <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
-
-                  {posts.map((post, i) => (
+                  {posts.map((post) => (
                     <PostCard
-                      key={i}
+                      key={post._id}
                       post={post}
-                      onClick={() => setSelectedPost(post)}
+                      onClick={() => navigate(`/post/${post._id}`)}
                       showDelete={isOwnProfile}
                       onDelete={handleDeletePost}
                     />
                   ))}
-
                 </div>
               ) : (
                 <EmptyState />
@@ -467,17 +618,19 @@ const Profile = () => {
 
           {activeTab === "reels" && (
             <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
-
-              {posts.map((post, i) => (
-                <ReelCard
-                  key={i}
-                  post={post}
-                  onClick={() => setSelectedPost(post)}
-                  showDelete={isOwnProfile}
-                  onDelete={handleDeletePost}
-                />
-              ))}
-
+              {reelItems.length > 0 ? (
+                reelItems.map((post) => (
+                  <ReelCard
+                    key={post._id}
+                    post={post}
+                    onClick={() => navigate(`/post/${post._id}`)}
+                    showDelete={isOwnProfile}
+                    onDelete={handleDeletePost}
+                  />
+                ))
+              ) : (
+                <SavedEmptyState />
+              )}
             </div>
           )}
 
@@ -485,35 +638,42 @@ const Profile = () => {
 
           {activeTab === "photos" && (
             <div className="mt-8 columns-2 gap-5 space-y-5 md:columns-3 xl:columns-4">
-
-              {posts.map((post, i) => (
-                <PhotoCard
-                  key={i}
-                  post={post}
-                  onClick={() => setSelectedPost(post)}
-                  showDelete={isOwnProfile}
-                  onDelete={handleDeletePost}
-                />
-              ))}
-
+              {photoItems.length > 0 ? (
+                photoItems.map((post) => (
+                  <PhotoCard
+                    key={post._id}
+                    post={post}
+                    onClick={() => navigate(`/post/${post._id}`)}
+                    showDelete={isOwnProfile}
+                    onDelete={handleDeletePost}
+                  />
+                ))
+              ) : (
+                <SavedEmptyState />
+              )}
             </div>
           )}
 
           {/* SAVED */}
 
           {activeTab === "saved" && (
-            <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
-
-              {posts.map((post, i) => (
-                <PostCard
-                  key={i}
-                  post={post}
-                  onClick={() => setSelectedPost(post)}
-                  showDelete={false}
-                />
-              ))}
-
-            </div>
+            <>
+              {savedLoading ? (
+                <SavedPostsSkeleton />
+              ) : savedItems.length > 0 ? (
+                <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                  {savedItems.map((post) => (
+                    <SavedGridItem
+                      key={post._id}
+                      post={post}
+                      onClick={() => navigate(`/post/${post._id}`)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <SavedEmptyState />
+              )}
+            </>
           )}
 
         </div>
@@ -536,6 +696,9 @@ const Profile = () => {
           profile={profile}
           onClose={() => setShowEdit(false)}
           refreshProfile={fetchProfile}
+          onUpload={handleProfileUpload}
+          uploading={uploading}
+          previewImage={previewImage}
         />
       )}
 
@@ -922,6 +1085,9 @@ const EditProfileModal = ({
   profile,
   onClose,
   refreshProfile,
+  onUpload,
+  uploading,
+  previewImage,
 }) => {
   const [formData, setFormData] = useState({
     name: profile?.name || "",
@@ -958,7 +1124,7 @@ const EditProfileModal = ({
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-[35px] bg-white p-8 shadow-2xl"
+        className="w-full max-w-xl rounded-[35px] bg-white p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto scroll-smooth"
       >
 
         <div className="mb-8 flex items-center justify-between">
@@ -1000,8 +1166,48 @@ const EditProfileModal = ({
             }
           />
 
-          <div>
+          <div className="rounded-3xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 shadow-sm">
+            <p className="mb-3 text-sm font-semibold text-[#111827]">
+              Profile Photo
+            </p>
 
+            <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white border border-[#E5E7EB]">
+                <img
+                  src={
+                    previewImage ||
+                    profile?.profilePicture?.profileView ||
+                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 24 24'%3E%3Cpath fill='%236B7280' d='M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.966 0-9 4.031-9 9h2c0-3.86 3.141-7 7-7s7 3.14 7 7h2c0-4.969-4.034-9-9-9Z'/%3E%3C/svg%3E"
+                  }
+                  alt="Profile preview"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              <label className="inline-flex cursor-pointer items-center rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm font-semibold text-[#111827] shadow-sm transition hover:bg-[#F3F4F6]">
+                {uploading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    Uploading...
+                  </span>
+                ) : (
+                  "Change photo"
+                )}
+                <input
+                  type="file"
+                  hidden
+                  accept=".jpg,.jpeg,.png,.webp"
+                  onChange={onUpload}
+                />
+              </label>
+            </div>
+
+            <p className="mt-2 text-sm text-[#6B7280]">
+              Supported formats: jpg, jpeg, png, webp.
+            </p>
+          </div>
+
+          <div>
             <label className="text-sm font-medium text-[#6B7280]">
               Bio
             </label>

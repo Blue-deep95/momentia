@@ -11,6 +11,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import api from "../services/api.js";
+import FollowButton from "./FollowButton.jsx";
 
 const NOTIFICATION_TYPES = {
   post: {
@@ -104,14 +105,51 @@ const playNotificationSound = () => {
 };
 
 const NotificationToastCard = ({ notification, isNew, onClick }) => {
+  const navigate = useNavigate();
   const typeMeta = NOTIFICATION_TYPES[notification.notificationType] || NOTIFICATION_TYPES.post;
   const actors = notification.actorDetails || notification.actors || [];
   const ActorName = formatActorName(notification) || "Someone";
   const Icon = typeMeta.icon;
   const avatar = getAvatar(notification);
 
+  const actorId = actors[0]?._id;
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchFollow = async () => {
+      if (!actorId) return;
+      try {
+        const res = await api.get(`/profile/get-profile/${actorId}`);
+        if (!mounted) return;
+        setIsFollowing(Boolean(res.data.following));
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchFollow();
+    return () => {
+      mounted = false;
+    };
+  }, [actorId]);
+
+  const handleActorClick = (e) => {
+    e.stopPropagation();
+    if (!actorId) return;
+    navigate(`/profile/${actorId}`);
+  };
+
+  const handleFollowStatusChange = (status) => {
+    // status === 'followed' or 'unfollowed'
+    setIsFollowing(status === "followed");
+    // emit a global event so other parts of app (Profile page) can update counts optimistically
+    window.dispatchEvent(new CustomEvent("momentia:follow-changed", {
+      detail: { targetId: actorId, status }
+    }));
+  };
+
   return (
-    <motion.button
+    <motion.div
       layout
       initial={{ opacity: 0, x: 120 }}
       animate={{ opacity: 1, x: 0 }}
@@ -126,7 +164,8 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
           <img
             src={avatar}
             alt={ActorName}
-            className="relative h-full w-full rounded-full object-cover"
+            className="relative h-full w-full rounded-full object-cover cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); handleActorClick(e); }}
             onError={(e) => {
               e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ActorName)}&background=2F3EDB&color=fff&size=128`;
             }}
@@ -135,7 +174,7 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="truncate text-sm font-semibold text-slate-950 dark:text-white">
+            <span onClick={(e) => { e.stopPropagation(); handleActorClick(e); }} role="button" tabIndex={0} className="truncate text-left cursor-pointer text-sm font-semibold text-slate-950 dark:text-white">
               {ActorName}
             </span>
             <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
@@ -148,6 +187,15 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
               ? notification.commentDetails?.content || "Commented on your post"
               : `@${actors[0]?.username || "someone"} ${typeMeta.label}`}
           </p>
+        </div>
+        <div className="ml-2 flex items-start">
+          {actorId && (
+            <FollowButton
+              userId={actorId}
+              initialFollowing={isFollowing ?? null}
+              onFollowStatusChange={handleFollowStatusChange}
+            />
+          )}
         </div>
       </div>
 
@@ -170,7 +218,7 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
           <ArrowUpRight size={14} className="text-slate-400 dark:text-slate-300" />
         </div>
       </div>
-    </motion.button>
+    </motion.div>
   );
 };
 
