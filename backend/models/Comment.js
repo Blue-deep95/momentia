@@ -33,6 +33,16 @@ const CommentSchema = new mongoose.Schema({
         index: true
     },
 
+    // another field added later to simplfy notification being sent this remembers the 
+    // comment being replied to along with the above, saves us a lot of trouble for sending 
+    // notifications to the recipient 
+    referenceComment:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'comment',
+        default:null,
+        index:true
+    },
+
     // content of the comment
     content:{
         type:String,

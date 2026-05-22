@@ -51,7 +51,7 @@ app.use(cookieParser())
 
 // trying to connect db
 connectDB(app)
-console.log('request reached server')
+//console.log('request reached server')
 // routes
 app.use("/api/user", userRoutes)
 app.use("/api/profile", protect, profileRoutes) // call the middleware right here

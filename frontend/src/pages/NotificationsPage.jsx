@@ -78,7 +78,9 @@ const buildAction = (n) => {
 
     case "comment":
       return {
-        sentence: `commented: "${snippet || "..."}"`,
+        sentence: n.notificationSubType === "reply"
+          ? `replied: "${snippet || "..."}"`
+          : `commented: "${snippet || "..."}"`,
         icon: "💬",
       };
 
@@ -278,7 +280,7 @@ export default function NotificationsPage() {
   /* SOCKET */
   useEffect(() => {
     let socketHandler;
-    const eventNames = ["notification-post-liked", "user-followed"];
+    const eventNames = ["notification-post-liked", "user-followed", "comment-reply"];
 
     const attachSocket = () => {
       const socket = window.__socket;
