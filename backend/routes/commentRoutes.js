@@ -121,7 +121,7 @@ router.get("/get-replies/:postid/:parentid/:page",
             const skip = (page - 1) * limit
 
             // aggregation start
-            
+
             const replies = await Comment.aggregate([
                 // first match the comments with the postid and parentid
                 {
@@ -400,6 +400,21 @@ router.post("/toggle-like/:commentid",
             if (existingLike) {
                 // If it exists, UNLIKE it
                 await Like.findByIdAndDelete(existingLike._id)
+
+                // Update notification when comment is unliked
+                if (comment.author.toString() !== user._id.toString()) {
+
+                    notificationBus.emit(
+                        "comment-unliked",
+                        {
+                            author: user._id,
+
+                            commentAuthor: comment.author,
+
+                            commentTarget: comment._id
+                        }
+                    )
+                }
                 await Comment.findByIdAndUpdate(commentid, { $inc: { totalLikes: -1 } })
                 return res.status(200).json({ message: "Comment unliked successfully", isLiked: false })
             } else {
@@ -412,6 +427,20 @@ router.post("/toggle-like/:commentid",
                     commentTarget: commentid
                 })
                 await newLike.save()
+                // Send comment like notification
+                if (comment.author.toString() !== user._id.toString()) {
+
+                    notificationBus.emit(
+                        "comment-liked",
+                        {
+                            author: user._id,
+
+                            commentAuthor: comment.author,
+
+                            commentTarget: comment._id
+                        }
+                    )
+                }
                 await Comment.findByIdAndUpdate(commentid, { $inc: { totalLikes: 1 } })
                 return res.status(200).json({ message: "Comment liked successfully", isLiked: true })
             }
