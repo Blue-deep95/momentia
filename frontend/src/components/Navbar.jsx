@@ -1,15 +1,25 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logout } from "../slices/authSlice";
 import {
   Home,
   Search,
   Plus,
   Send,
   UserCircle,
+  LogOut,
 } from "lucide-react";
 
 export default function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
 
   const navItems = [
     { path: "/", icon: <Home size={26} /> },
@@ -38,6 +48,14 @@ export default function Navbar() {
             </Link>
           );
         })}
+
+        {/* LOGOUT BUTTON */}
+        <button
+          onClick={handleLogout}
+          className="text-gray-400 transition hover:text-red-500"
+        >
+          <LogOut size={26} />
+        </button>
       </div>
     </div>
   );
