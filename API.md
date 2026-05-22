@@ -874,3 +874,24 @@ Updates the content of a message and sets an `isEdited` flag. Only the sender ca
       "updatedMessage": { ... }
     }
     ```
+
+### 8. Leave Room
+Removes the authenticated user from a group room. If the group has less than 2 members remaining after the user leaves, the room itself is deleted (conversations are preserved). Users cannot leave DMs.
+*   **URL:** `/message/leave-room`
+*   **Method:** `PUT`
+*   **Body:**
+    ```json
+    { "roomId": "..." }
+    ```
+*   **Success Response (200):**
+    ```json
+    { "message": "User removed successfully from the group" }
+    ```
+*   **Error Response (400):**
+    ```json
+    { "message": "No such group or user found!" }
+    ```
+    OR
+    ```json
+    { "message": "You can't leave a dm" }
+    ```
