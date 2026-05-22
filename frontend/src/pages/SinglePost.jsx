@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import api from "../services/api";
+import toast from "react-hot-toast";
 import {
   Heart,
   MessageCircleMore,
@@ -43,6 +44,7 @@ const SinglePost = () => {
           setLikesCount(res.data.post.totalLikes || 0);
           setCommentsCount(res.data.post.totalComments || 0);
           setIsFollowing(res.data.post.isFollowing || false);
+          setSaved(res.data.post.isSaved || false);
           
           // Fetch comments separately
           try {
@@ -116,6 +118,18 @@ const SinglePost = () => {
       console.error("Error unfollowing user", err);
     } finally {
       setFollowLoading(false);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    try {
+      const res = await api.post(`/post/toggle-savedposts/${post._id}`);
+      const isSaved = res.data.isSaved;
+      setSaved(isSaved);
+      toast.success(isSaved ? "Post saved" : "Post removed from saved");
+    } catch (err) {
+      console.error("Error toggling save", err);
+      toast.error("Could not update saved posts");
     }
   };
 
@@ -318,7 +332,7 @@ const SinglePost = () => {
                 </button>
               </div>
 
-              <button onClick={() => setSaved(!saved)} className="transition hover:scale-110">
+                <button onClick={handleToggleSave} className="transition hover:scale-110">
                 <Bookmark size={24} className={`transition ${saved ? "fill-gray-700 text-gray-700" : "text-gray-700"}`} />
               </button>
             </div>

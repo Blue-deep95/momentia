@@ -9,7 +9,7 @@ const { onlineUsers } = require("../socket/socketStore");
 // to prevent notifications from firing every second or so,
 // limit sending notifications by this time
 // we use this with updated at field from mongodb
-const GLOBAL_NOTIFICATION_LIMIT = 1000 ; // 1 miniute limit
+const GLOBAL_NOTIFICATION_LIMIT = 1000; // 1 miniute limit
 
 // start listening to events
 notificationBus.on("post-liked", async (data) => {
@@ -51,7 +51,7 @@ notificationBus.on("post-liked", async (data) => {
       const shouldNotify =
         !oldNotification ||
         Date.now() - oldNotification.updatedAt.getTime() >
-          GLOBAL_NOTIFICATION_LIMIT;
+        GLOBAL_NOTIFICATION_LIMIT;
       // only send the notifications after certain time limit to prevent notification spam
       if (shouldNotify) {
         // write aggregation pipeline like joining user data and post data here
@@ -63,10 +63,10 @@ notificationBus.on("post-liked", async (data) => {
           isRead: false,
         })
           .populate("actors", "_id username profilePicture")
-          .populate({ 
-            path: "targetEntityId", 
-            model: "post", 
-            select: "_id caption thumbImage" 
+          .populate({
+            path: "targetEntityId",
+            model: "post",
+            select: "_id caption thumbImage"
           });
         io.to(targetSocketId).emit("notification-post-liked", notificationData);
       }
@@ -139,7 +139,7 @@ notificationBus.on("follow-user", async (data) => {
       const shouldNotify =
         !oldNotification ||
         Date.now() - oldNotification.updatedAt.getTime() >
-          GLOBAL_NOTIFICATION_LIMIT;
+        GLOBAL_NOTIFICATION_LIMIT;
 
       if (shouldNotify) {
         const notificationData = await Notification.findOne({
@@ -250,3 +250,110 @@ notificationBus.on("comment-reply", async(data) =>{
     console.error('Error in comment-reply notification service',error)
   }
 })
+//for comments on post
+notificationBus.on("comment-posted", async (data) => {
+  try {
+
+    const oldNotification =
+      await Notification.findOneAndUpdate(
+        {
+          recipient: data.postAuthor,
+          notificationType: "post",
+
+          notificationSubType:
+            data.isReply ? "reply" : "comment",
+
+          targetEntityId: data.postTarget,
+
+          isRead: false,
+        },
+
+        {
+          $inc: { actorCount: 1 },
+
+          $push: {
+            actors: {
+              $each: [data.author],
+              $position: 0,
+              $slice: 3,
+            },
+          },
+
+          $set: {
+            commentId: data.commentId,
+          },
+        },
+
+        {
+          upsert: true,
+          returnDocument: "before",
+        }
+      );
+
+
+
+    // CHECK ONLINE USER
+    const targetSocketId =
+      onlineUsers.get(
+        data.postAuthor.toString()
+      );
+
+
+    if (targetSocketId) {
+
+      const shouldNotify =
+        !oldNotification ||
+        Date.now() -
+        oldNotification.updatedAt.getTime() >
+        GLOBAL_NOTIFICATION_LIMIT;
+
+      if (shouldNotify) {
+
+        const notificationData =
+          await Notification.findOne({
+            recipient: data.postAuthor,
+
+            targetEntityId:
+              data.postTarget,
+
+            notificationType: "post",
+
+            notificationSubType:
+              "comment",
+
+            isRead: false,
+          })
+
+            .populate(
+              "actors",
+              "_id username profilePicture"
+            )
+
+            .populate({
+              path: "targetEntityId",
+              model: "post",
+              select:
+                "_id caption thumbImage",
+            })
+
+            .populate({
+              path: "commentId",
+              model: "comment",
+              select: "_id content",
+            });
+
+
+
+        io.to(targetSocketId).emit(
+          "notification-comment-posted",
+          notificationData
+        );
+      }
+    }
+  } catch (error) {
+    console.log(
+      "Error in comment-posted listener",
+      error
+    );
+  }
+});
