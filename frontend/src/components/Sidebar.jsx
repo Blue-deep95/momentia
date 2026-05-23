@@ -20,6 +20,7 @@ export default function Sidebar({ profile }) {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const hideMobileNav = location.pathname.startsWith("/messages");
   const { user } = useSelector((state) => state.auth);
   const [sidebarProfile, setSidebarProfile] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -98,31 +99,33 @@ export default function Sidebar({ profile }) {
   return (
     <>
       {/* ================= MOBILE NAVBAR ================= */}
-      <div className=" fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white px-2 py-3 shadow-md md:hidden">
+      {!hideMobileNav && (
+        <div className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white px-2 py-3 shadow-md md:hidden">
 
-        {navItems.slice(0, 5).map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`flex flex-col items-center ${
-              location.pathname === item.path
-                ? "text-pink-500"
-                : "text-gray-500"
-            }`}
-          >
-            {item.icon}
+          {navItems.slice(0, 5).map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex flex-col items-center ${
+                location.pathname === item.path
+                  ? "text-pink-500"
+                  : "text-gray-500"
+              }`}
+            >
+              {item.icon}
 
-            <span className="mt-1 text-[11px] font-medium">
-              {item.label}
-            </span>
-          </Link>
-        ))}
-      </div>
+              <span className="mt-1 text-[11px] font-medium">
+                {item.label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* ================= DESKTOP / TABLET SIDEBAR ================= */}
       <div
         className={`z-50 fixed left-0 top-0 hidden h-screen flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-300 ease-in-out lg:flex ${
-          isExpanded ? 'w-[260px]' : 'w-[72px]'
+          isExpanded ? 'w-65' : 'w-18'
         }`}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
@@ -146,7 +149,7 @@ export default function Sidebar({ profile }) {
           <>
             {/* LOGO */}
             <div className="px-8 pb-6 pt-8">
-              <h1 className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 bg-clip-text text-3xl font-bold text-transparent">
+              <h1 className="bg-linear-to-r from-cyan-500 via-purple-500 to-pink-500 bg-clip-text text-3xl font-bold text-transparent">
                 Momentia
               </h1>
             </div>
@@ -216,7 +219,7 @@ export default function Sidebar({ profile }) {
             <div className="px-6 pb-4">
               <Link
                 to="/create-post"
-                className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
+                className="bg-linear-to-r flex items-center justify-center gap-2 rounded-full from-orange-400 via-pink-500 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
               >
                 <PlusSquare size={18} />
                 Create a post
@@ -226,7 +229,7 @@ export default function Sidebar({ profile }) {
         )}
 
         {/* NAVIGATION - Icons always visible, text only when expanded */}
-        <div className="mt-8 flex flex-1 min-h-0 flex-col gap-2 px-4 overflow-y-auto pb-4">
+        <div className="mt-8 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4">
 
           {navItems.map((item) => (
             <Link
