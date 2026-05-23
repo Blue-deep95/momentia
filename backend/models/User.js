@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 const UserSchema = new mongoose.Schema({
     username: {
         type: String,
-        unique: true
+        unique: true,
+        index:true
     },
 
     email: {
@@ -11,7 +12,9 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-
+    // a new userType for implementing carousel like system
+    // in main page
+    userType:String,
     name: String,
     
     bio: {

@@ -407,6 +407,7 @@ router.post("/toggle-like/:postid",
 
                 // again emit event to indicate the post has been unliked 
                 // convert to object for safety
+                
                 notificationBus.emit('post-unliked',{...existingLike.toObject(),postAuthor:post.author})
 
                 await Post.findByIdAndUpdate(postid, { $inc: { totalLikes: -1 } })
@@ -421,7 +422,10 @@ router.post("/toggle-like/:postid",
                 })
                 await newLike.save()
                 // after the new Like is saved send notification 
-                notificationBus.emit('post-liked',{...newLike.toObject(),postAuthor:post.author})
+                // do not send notification if post author is same as one who likes
+                if (post.author.toString() !== user._id.toString()){
+                    notificationBus.emit('post-liked',{...newLike.toObject(),postAuthor:post.author})
+                }
                 
                 await Post.findByIdAndUpdate(postid, { $inc: { totalLikes: 1 } })
                 return res.status(200).json({ message: "Post liked successfully", isLiked: true })

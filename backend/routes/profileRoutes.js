@@ -140,13 +140,46 @@ router.get("/get-profile/:id",
             if (isUserFollowingTarget) {
                 following = true
             }
-            // null the savedposts to prevent sending unnecessary information 
-
 
             return res.status(200).json({ self: false, following, profile: target, message: "profile search succesful" })
         }
         catch (err) {
             console.log('Error in get-profile route', err)
+            return res.status(500).json({ message: 'Internal server error' })
+        }
+    }
+)
+
+// this is another route get-profile by username
+router.get("/get-profilebyusername/:username",
+    async (req, res) => {
+        try {
+            // user here is stored in req.user
+            const user = req.user
+            const { username } = req.params
+            // try to find the user in db
+            const target = await User.findOne({ username })
+                .select('-password -email -otp -refreshToken -savedPosts -blockedUsers')
+            if (!target) {
+                return res.status(404).json({ message: "User not found" })
+            }
+            // case where the request is from the user 
+            if (target._id.toString() === user._id.toString()) {
+                return res.status(200).
+                    json({ self: true, following: false, profile: target, message: "Your profile fetched succesfully" })
+            }
+            // for fetching other's profile we must also check whether the user is following the target or not
+            const isUserFollowingTarget = await Follow.findOne({ host: user._id, target: target._id })
+
+            let following = false
+            if (isUserFollowingTarget) {
+                following = true
+            }
+
+            return res.status(200).json({ self: false, following, profile: target, message: "profile search succesful" })
+        }
+        catch (err) {
+            console.log('Error in get-profilebyusername route', err)
             return res.status(500).json({ message: 'Internal server error' })
         }
     }
