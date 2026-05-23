@@ -366,7 +366,16 @@ router.post("/edit-profile",
 
             await user.save()
 
-            return res.status(200).json({ message: 'Profile update succesful' })
+            return res.status(200).json({
+                message: 'Profile update succesful',
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    email: user.email,
+                    profilePicture: user.profilePicture,
+                },
+            })
         }
 
         catch (err) {

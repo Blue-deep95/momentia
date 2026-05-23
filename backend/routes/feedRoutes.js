@@ -88,6 +88,7 @@ router.get("/get-carousel",async(req,res) => {
                 authorDetails:{
                     _id: '$_id',
                     username: '$username',
+                    name: '$name',
                     profilePicture: '$profilePicture',
                     email: '$email'
                 }
