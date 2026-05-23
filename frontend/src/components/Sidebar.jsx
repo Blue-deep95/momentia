@@ -13,6 +13,7 @@ import {
   Heart,
   Settings,
   LogOut,
+  Trophy,
 } from "lucide-react";
 
 export default function Sidebar({ profile }) {
@@ -73,6 +74,11 @@ export default function Sidebar({ profile }) {
       label: "Reels",
       icon: <Film size={24} />,
     },
+    {
+        path: "/top-placed",
+        label: "Top Placed",
+        icon: <Trophy size={24} />,
+      },
     {
       path: "/messages",
       label: "Messages",
