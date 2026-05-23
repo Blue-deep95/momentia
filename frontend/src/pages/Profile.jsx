@@ -1103,7 +1103,7 @@ const EditProfileModal = ({
     try {
       setSaving(true);
 
-      await api.put("/profile/update-profile", formData);
+      await api.post("/profile/edit-profile", formData);
 
       await refreshProfile();
 
