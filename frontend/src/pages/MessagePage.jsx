@@ -303,6 +303,9 @@ export default function MessagePage() {
 			<div className={`${activeRoom ? 'hidden' : 'flex w-full'} min-h-0 flex-col border-r border-slate-200 bg-white xl:flex xl:w-[320px]`}>
 
 				<div className="px-4 py-4">
+					<div className="mb-4">
+						<h2 className="text-xl font-bold text-slate-900">{user?.username }</h2>
+					</div>
 					<div className="relative mb-3">
 						<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 						<input
@@ -318,11 +321,18 @@ export default function MessagePage() {
 						<h3 className="text-lg font-semibold text-slate-900">Messages</h3>
 					</div>
 				<div className="overflow-auto px-4 pb-4 pt-0">
-					{loadingRooms ? (
-						<div className="text-sm text-slate-500">Loading conversations...</div>
-					) : filteredRooms.length === 0 ? (
+					{loadingRooms || followingLoading ? (
+						<div className="text-sm text-slate-500">Loading...</div>
+					) : filteredRooms.length === 0 && followingProfiles.length === 0 ? (
 						<div className="text-sm text-slate-500">
-							{searchTerm ? "No conversations match your search." : "No conversations yet."}
+							{searchTerm ? "No conversations or profiles match your search." : "No conversations yet."}
+						</div>
+					) : filteredRooms.length === 0 && followingProfiles.length > 0 ? (
+						<div className="space-y-3">
+							<div className="mb-2 text-sm font-semibold text-slate-600">People you follow</div>
+							{followingProfiles
+								.filter((profile) => profile.username.toLowerCase().includes(searchTerm.toLowerCase()))
+								.map(renderFollowingProfile)}
 						</div>
 					) : (
 						<div className="space-y-3">

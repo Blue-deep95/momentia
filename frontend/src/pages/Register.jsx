@@ -4,9 +4,9 @@ import api from "../services/api.js";
 
 /* ───────────────── FLOAT CARD ───────────────── */
 const FloatCard = ({ title, sub }) => (
-  <div className="rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-4 py-3 shadow-lg">
+  <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 shadow-lg backdrop-blur-xl">
     <div className="flex items-center gap-3">
-      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
+      <div className="bg-linear-to-br flex h-10 w-10 items-center justify-center rounded-full from-blue-500 to-purple-500 font-bold text-white">
         M
       </div>
 
@@ -73,7 +73,7 @@ const EyeIcon = ({ show, onToggle }) => (
   <button
     type="button"
     onClick={onToggle}
-    className="text-gray-400 hover:text-blue-600 transition"
+    className="text-gray-400 transition hover:text-blue-600"
   >
     {show ? "🙈" : "👁️"}
   </button>
@@ -167,15 +167,15 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 font-sans">
+    <div className="grid min-h-screen font-sans lg:grid-cols-2">
       {/* ───────────────── LEFT ───────────────── */}
-      <div className="hidden lg:flex relative overflow-hidden bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-700 p-10">
+      <div className="bg-linear-to-br relative hidden overflow-hidden from-blue-700 via-indigo-700 to-purple-700 p-10 lg:flex">
         {/* glow */}
-        <div className="absolute top-[-120px] left-[-100px] h-80 w-80 rounded-full bg-blue-400/20 blur-3xl"></div>
+        <div className="-left-25 -top-30 absolute h-80 w-80 rounded-full bg-blue-400/20 blur-3xl"></div>
 
-        <div className="absolute bottom-[-120px] right-[-100px] h-80 w-80 rounded-full bg-purple-400/20 blur-3xl"></div>
+        <div className="-bottom-30 -right-25 absolute h-80 w-80 rounded-full bg-purple-400/20 blur-3xl"></div>
 
-        <div className="relative z-10 flex flex-col justify-between w-full">
+        <div className="relative z-10 flex w-full flex-col justify-between">
           <FloatCard
             title="@creative_world joined"
             sub="Welcome to Momentia"
@@ -183,7 +183,7 @@ const Register = () => {
 
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-lg">
-              <div className="h-2 w-2 rounded-full bg-blue-300 animate-pulse"></div>
+              <div className="h-2 w-2 animate-pulse rounded-full bg-blue-300"></div>
               <span className="text-xs uppercase tracking-[3px] text-blue-100">
                 Join Today
               </span>
@@ -194,7 +194,7 @@ const Register = () => {
               <span className="block text-blue-200">creative journey</span>
             </h1>
 
-            <p className="mt-6 max-w-md text-blue-100/80 leading-7">
+            <p className="mt-6 max-w-md leading-7 text-blue-100/80">
               Connect with creators, share moments, and build your digital
               world with beautiful experiences.
             </p>
@@ -221,22 +221,22 @@ const Register = () => {
 
       {/* ───────────────── RIGHT ───────────────── */}
       <div className="relative flex items-center justify-center overflow-hidden bg-white px-6 py-12">
-        <div className="absolute top-[-100px] right-[-100px] h-72 w-72 rounded-full bg-blue-100 blur-3xl"></div>
+        <div className="-right-25 -top-25 absolute h-72 w-72 rounded-full bg-blue-100 blur-3xl"></div>
 
-        <div className="absolute bottom-[-100px] left-[-100px] h-72 w-72 rounded-full bg-purple-100 blur-3xl"></div>
+        <div className="-bottom-25 -left-25 absolute h-72 w-72 rounded-full bg-purple-100 blur-3xl"></div>
 
         <form
           onSubmit={handleRegister}
           className="relative z-10 w-full max-w-md"
         >
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
-            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500"></div>
             Create your account
           </div>
 
           <h2 className="text-5xl font-black text-gray-900">Sign up</h2>
 
-          <p className="mt-3 mb-8 text-gray-500">
+          <p className="mb-8 mt-3 text-gray-500">
             Begin your journey with Momentia
           </p>
 
@@ -278,7 +278,7 @@ const Register = () => {
                   otpStatus === "sending" ||
                   otpStatus === "verified"
                 }
-                className="rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 text-sm font-semibold text-white shadow-lg transition hover:scale-105 disabled:opacity-50"
+                className="bg-linear-to-r rounded-2xl from-blue-600 to-purple-600 px-5 text-sm font-semibold text-white shadow-lg transition hover:scale-105 disabled:opacity-50"
               >
                 {otpStatus === "sending"
                   ? "Sending..."
@@ -308,7 +308,7 @@ const Register = () => {
                 <button
                   type="button"
                   onClick={handleVerifyOtp}
-                  className="rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 px-5 text-sm font-semibold text-white shadow-lg transition hover:scale-105"
+                  className="bg-linear-to-r rounded-2xl from-blue-600 to-purple-600 px-5 text-sm font-semibold text-white shadow-lg transition hover:scale-105"
                 >
                   {otpStatus === "verifying"
                     ? "Checking..."
@@ -341,7 +341,7 @@ const Register = () => {
           <button
             type="submit"
             disabled={loading || otpStatus !== "verified"}
-            className="mt-3 w-full rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 py-4 text-sm font-bold text-white shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+            className="bg-linear-to-r mt-3 w-full rounded-2xl from-blue-600 via-indigo-600 to-purple-600 py-4 text-sm font-bold text-white shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Creating Account..." : "Create Account →"}
           </button>

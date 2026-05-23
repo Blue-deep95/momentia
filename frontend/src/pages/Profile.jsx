@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../services/api";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ import Sidebar from "../components/Sidebar.jsx";
 import FollowersModal from "../components/FollowersModal.jsx";
 import FollowingModal from "../components/FollowingModal.jsx";
 import FollowButton from "../components/FollowButton.jsx";
+import { updateUser } from "../slices/authSlice";
 
 import {
   Heart,
@@ -39,6 +40,7 @@ const TABS = [
 ];
 
 const Profile = () => {
+  const dispatch = useDispatch();
   const { user } = useSelector((s) => s.auth);
   const { userId } = useParams();
 
@@ -86,7 +88,7 @@ const Profile = () => {
   );
 
   const SavedEmptyState = () => (
-    <div className="flex flex-col items-center justify-center rounded-[32px] border border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
+    <div className="rounded-4xl flex flex-col items-center jusrounded-4xlrder border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2F3EDB]/10 text-[#2F3EDB] shadow-lg">
         <Bookmark size={32} className="text-[#2F3EDB]" />
       </div>
@@ -1103,9 +1105,20 @@ const EditProfileModal = ({
     try {
       setSaving(true);
 
-      await api.post("/profile/edit-profile", formData);
+      const res = await api.post("/profile/edit-profile", formData);
 
       await refreshProfile();
+
+      if (res.data?.user) {
+        dispatch(updateUser(res.data.user));
+      } else {
+        dispatch(
+          updateUser({
+            name: formData.name,
+            username: formData.username,
+          })
+        );
+      }
 
       onClose();
     } catch (err) {
@@ -1124,7 +1137,7 @@ const EditProfileModal = ({
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-[35px] bg-white p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto scroll-smooth"
+        className="max-h-[90vh] w-full max-w-xl overflow-y-auto scroll-smooth rounded-[35px] bg-white p-6 shadow-2xl md:p-8"
       >
 
         <div className="mb-8 flex items-center justify-between">
@@ -1172,7 +1185,7 @@ const EditProfileModal = ({
             </p>
 
             <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white border border-[#E5E7EB]">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-[#E5E7EB] bg-white">
                 <img
                   src={
                     previewImage ||
