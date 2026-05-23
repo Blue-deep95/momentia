@@ -1,4 +1,4 @@
-/**
+﻿/**
  * FollowersModal.jsx
  *
  * Shows the list of people who follow a user.

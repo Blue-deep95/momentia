@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 
 /* ════════════════════════════════════════════════════════════════
@@ -246,7 +245,6 @@ export default function NotificationsPage() {
   const [markingAll, setMarkingAll] = useState(false);
 
   const markedRef = useRef(new Set());
-  const navigate = useNavigate();
 
   /* FETCH */
   const fetchPage = useCallback(async (pg, replace = false) => {
@@ -410,18 +408,7 @@ export default function NotificationsPage() {
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="bg-linear-to-r relative overflow-hidden rounded-[28px] from-[#2F3EDB] via-[#5160F5] to-[#FF7A3D] p-px shadow-2xl">
             <div className="rounded-[28px] bg-white/95 p-4 backdrop-blur-xl">
-              <div className="flex items-center justify-between mb-4 sm:hidden">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm"
-                >
-                  ←
-                </button>
-                <div className="text-lg font-black text-slate-900">Notifications</div>
-                <div className="w-10" />
-              </div>
-
-              <div className="hidden sm:flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-r from-[#2F3EDB] to-[#5160F5] flex items-center justify-center text-white text-xl shadow-lg">
@@ -444,14 +431,14 @@ export default function NotificationsPage() {
                   <button
                     onClick={handleMarkAll}
                     disabled={markingAll}
-                    className="hidden sm:inline-flex px-4 py-2 rounded-2xl bg-white/60 text-[#2F3EDB] text-sm font-semibold shadow-md hover:scale-105 transition"
+                    className="px-4 py-2 rounded-2xl bg-white/60 text-[#2F3EDB] text-sm font-semibold shadow-md hover:scale-105 transition"
                   >
                     {markingAll ? "Loading..." : "Mark all"}
                   </button>
                 )}
               </div>
 
-              <div className="sticky top-4 z-30 mt-2 rounded-3xl border border-white bg-white/70 px-2 shadow-lg backdrop-blur-xl hidden sm:block">
+              <div className="sticky top-4 z-30 mt-2 rounded-3xl border border-white bg-white/70 px-2 shadow-lg backdrop-blur-xl">
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   {TABS.map(({ label, type }) => {
                     const active = tab === label;
