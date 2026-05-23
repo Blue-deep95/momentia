@@ -143,7 +143,7 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
     // status === 'followed' or 'unfollowed'
     setIsFollowing(status === "followed");
     // emit a global event so other parts of app (Profile page) can update counts optimistically
-    window.dispatchEvent(new CustomEvent("follow-status-changed", {
+    window.dispatchEvent(new CustomEvent("momentia:follow-changed", {
       detail: { targetId: actorId, status }
     }));
   };
@@ -192,7 +192,7 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
           {actorId && (
             <FollowButton
               userId={actorId}
-              isFollowing={isFollowing}
+              initialFollowing={isFollowing ?? null}
               onFollowStatusChange={handleFollowStatusChange}
             />
           )}
@@ -293,7 +293,7 @@ const NotificationToaster = () => {
 
   useEffect(() => {
     let socketHandler;
-    const eventNames = ["notification-post-liked", "user-followed"];
+    const eventNames = ["notification-post-liked", "user-followed", "comment-reply"];
 
     const attachSocket = () => {
       const socket = window.__socket;

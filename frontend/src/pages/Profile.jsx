@@ -208,8 +208,8 @@ const Profile = () => {
       });
     };
 
-    window.addEventListener("follow-status-changed", handler);
-    return () => window.removeEventListener("follow-status-changed", handler);
+    window.addEventListener("momentia:follow-changed", handler);
+    return () => window.removeEventListener("momentia:follow-changed", handler);
   }, [profile, user]);
 
   // Socket listeners to update profile counts in real-time when server emits follow/unfollow
@@ -577,17 +577,14 @@ const Profile = () => {
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`flex items-center gap-2 px-6 py-5 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-4 py-4 md:px-6 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
                     activeTab === key
                       ? "bg-linear-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
                       : "text-[#6B7280] hover:text-[#111827]"
                   }`}
                 >
-
                   <Icon size={18} />
-
-                  {label}
-
+                  <span className="hidden sm:inline">{label}</span>
                 </button>
               ))}
 
@@ -1106,7 +1103,7 @@ const EditProfileModal = ({
     try {
       setSaving(true);
 
-      await api.put("/profile/update-profile", formData);
+      await api.post("/profile/edit-profile", formData);
 
       await refreshProfile();
 
@@ -1127,7 +1124,7 @@ const EditProfileModal = ({
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-[35px] bg-white p-8 shadow-2xl"
+        className="w-full max-w-xl rounded-[35px] bg-white p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto scroll-smooth"
       >
 
         <div className="mb-8 flex items-center justify-between">

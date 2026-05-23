@@ -77,7 +77,9 @@ const buildAction = (n) => {
 
     case "comment":
       return {
-        sentence: `commented: "${snippet || "..."}"`,
+        sentence: n.notificationSubType === "reply"
+          ? `replied: "${snippet || "..."}"`
+          : `commented: "${snippet || "..."}"`,
         icon: "💬",
       };
 
@@ -276,7 +278,7 @@ export default function NotificationsPage() {
   /* SOCKET */
   useEffect(() => {
     let socketHandler;
-    const eventNames = ["notification-post-liked", "user-followed"];
+    const eventNames = ["notification-post-liked", "user-followed", "comment-reply"];
 
     const attachSocket = () => {
       const socket = window.__socket;
@@ -439,7 +441,7 @@ export default function NotificationsPage() {
               </div>
 
               <div className="sticky top-4 z-30 mt-2 rounded-3xl border border-white bg-white/70 px-2 shadow-lg backdrop-blur-xl">
-                <div className="flex items-center justify-center overflow-x-auto">
+                <div className="flex flex-wrap items-center justify-center gap-2">
                   {TABS.map(({ label, type }) => {
                     const active = tab === label;
                     const cnt = tabCount(type);
@@ -447,7 +449,7 @@ export default function NotificationsPage() {
                       <button
                         key={label}
                         onClick={() => setTab(label)}
-                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
+                        className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all ${
                           active
                             ? "bg-linear-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
                             : "text-[#6B7280] hover:text-[#111827]"

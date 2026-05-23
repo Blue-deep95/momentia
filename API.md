@@ -168,13 +168,35 @@ Retrieves public profile information for a user.
     }
     ```
 
-### 2. Get User Posts
+### 2. Get Profile by Username
+Retrieves public profile information for a user by their username.
+*   **URL:** `/profile/get-profilebyusername/:username`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "self": true/false,
+      "following": true/false,
+      "profile": {
+        "username": "...",
+        "name": "...",
+        "bio": "...",
+        "profilePicture": { ... },
+        "totalPosts": 0,
+        "followers": 0,
+        "following": 0
+      },
+      "message": "profile search succesful"
+    }
+    ```
+
+### 3. Get User Posts
 Retrieves posts belonging to a specific user (defaults to authenticated user if no ID is provided).
 *   **URL:** `/profile/get-userposts/:id?`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 12)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 12)
 *   **Success Response (200):**
     ```json
     {
@@ -191,13 +213,13 @@ Retrieves posts belonging to a specific user (defaults to authenticated user if 
     }
     ```
 
-### 3. Get Saved Posts
+### 4. Get Saved Posts
 Retrieves posts saved by a specific user (defaults to authenticated user if no ID is provided).
 *   **URL:** `/profile/get-savedposts/:id?`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 12)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 12)
 *   **Success Response (200):**
     ```json
     {
@@ -221,7 +243,7 @@ Retrieves posts saved by a specific user (defaults to authenticated user if no I
     }
     ```
 
-### 4. Get Suggested Users
+### 5. Get Suggested Users
 Retrieves a list of suggested users to follow.
 *   **URL:** `/profile/get-suggested-users`
 *   **Method:** `GET`
@@ -233,7 +255,7 @@ Retrieves a list of suggested users to follow.
     }
     ```
 
-### 5. Upload Avatar
+### 6. Upload Avatar
 Uploads and processes a profile picture via Cloudinary.
 *   **URL:** `/profile/upload-avatar`
 *   **Method:** `POST`
@@ -244,7 +266,7 @@ Uploads and processes a profile picture via Cloudinary.
     { "message": "Profile picture updated succesfully" }
     ```
 
-### 6. Remove Avatar
+### 7. Remove Avatar
 Deletes the user's active profile picture/avatar from Cloudinary and clears it from their database record.
 *   **URL:** `/profile/remove-avatar`
 *   **Method:** `DELETE`
@@ -261,7 +283,7 @@ Deletes the user's active profile picture/avatar from Cloudinary and clears it f
     { "message": "User not found" }
     ```
 
-### 7. Edit Profile
+### 8. Edit Profile
 Updates the authenticated user's profile details.
 *   **URL:** `/profile/edit-profile`
 *   **Method:** `POST`
@@ -279,13 +301,13 @@ Updates the authenticated user's profile details.
     { "message": "Profile update succesful" }
     ```
 
-### 8. Get Followers
+### 9. Get Followers
 Retrieves the list of followers for a specific user with pagination.
 *   **URL:** `/profile/get-followers/:id`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 50)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 50)
 *   **Success Response (200):**
     ```json
     {
@@ -301,13 +323,13 @@ Retrieves the list of followers for a specific user with pagination.
     }
     ```
 
-### 9. Get Following
+### 10. Get Following
 Retrieves the list of users a specific user is following with pagination.
 *   **URL:** `/profile/get-following/:id`
 *   **Method:** `GET`
 *   **Query Parameters:**
-    *   `page` (Number, optional, default: 1)
-    *   `limit` (Number, optional, default: 50)
+*   `page` (Number, optional, default: 1)
+*   `limit` (Number, optional, default: 50)
 *   **Success Response (200):**
     ```json
     {
@@ -326,12 +348,71 @@ Retrieves the list of users a specific user is following with pagination.
 ---
 
 ## 🏠 Feed (`/feed`)
-*All routes in this section require a valid Bearer Token.*
 
-### 1. Get Feed Posts
-Retrieves posts for the main feed using **cursor-based pagination** with a split-timeline (social graph priority) algorithm and interaction metadata.
+### 1. Get MainPage Posts
+Retrieves the top 10 most liked posts. This endpoint is **public** and does not require authentication.
+*   **URL:** `/feed/get-mainpage`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "posts": [
+        {
+          "_id": "...",
+          "author": "...",
+          "caption": "...",
+          "mediaType": "image/video",
+          "thumbImage": "...",
+          "images": [ { "url": "...", "public_id": "..." } ],
+          "video": { "url": "...", "public_id": "..." },
+          "authorDetails": { "_id": "...", "username": "...", "profilePicture": "..." },
+          "isLiked": false,
+          "isFollowing": false,
+          "isSaved": false,
+          "totalLikes": 120,
+          "totalComments": 4,
+          "createdAt": "..."
+        }
+      ],
+      "message": "Posts fetched succesfully"
+    }
+    ```
+
+### 2. Get Carousel Items
+Retrieves posts uploaded by secret/creator users (`userType: 'cdg'`). This endpoint is **public** and does not require authentication.
+*   **URL:** `/feed/get-carousel`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "carouselItems": [
+        {
+          "_id": "post_id_here",
+          "caption": "...",
+          "mediaType": "image",
+          "thumbImage": "...",
+          "images": [ { "url": "...", "public_id": "..." } ],
+          "video": null,
+          "totalLikes": 10,
+          "totalComments": 2,
+          "createdAt": "...",
+          "authorDetails": {
+            "_id": "user_id_here",
+            "username": "secret_creator",
+            "profilePicture": "...",
+            "email": "secret@example.com"
+          }
+        }
+      ],
+      "message": "Carousel items fetched succesfully"
+    }
+    ```
+
+### 3. Get Feed Posts
+Retrieves posts for the main feed using **cursor-based pagination** with a split-timeline (social graph priority) algorithm and interaction metadata. Requires a valid Bearer Token.
 *   **URL:** `/feed/get-posts`
 *   **Method:** `GET`
+*   **Headers:** `Authorization: Bearer <access_token>`
 *   **Query Parameters:**
     *   `cursor` (optional, string): The base64-encoded cursor token from the previous page's response.
 *   **Success Response (200):**
@@ -361,10 +442,11 @@ Retrieves posts for the main feed using **cursor-based pagination** with a split
     }
     ```
 
-### 2. Get Reels
-Retrieves reels (video posts) using **cursor-based pagination**.
+### 4. Get Reels
+Retrieves reels (video posts) using **cursor-based pagination**. Requires a valid Bearer Token.
 *   **URL:** `/feed/get-reels`
 *   **Method:** `GET`
+*   **Headers:** `Authorization: Bearer <access_token>`
 *   **Query Parameters:**
     *   `cursor` (optional, string): The base64-encoded cursor token from the previous page's response.
 *   **Success Response (200):**
@@ -592,8 +674,9 @@ Adds a new comment or a reply to an existing comment.
     {
       "content": "Comment text",
       "postid": "...",
-      "parent": "...", (Optional, ID of parent comment for replies)
-      "reference": "..." (Optional, ID of user being replied to)
+      "parent": "...", // (Optional, ID of parent comment for replies. Required if nested reply)
+      "reference": "...", // (Optional, ID of user being replied to. Required if parent is provided)
+      "referenceComment": "..." // (Optional, ID of direct comment being replied to. Required if parent is provided)
     }
     ```
 *   **Success Response (200):**
@@ -850,4 +933,25 @@ Updates the content of a message and sets an `isEdited` flag. Only the sender ca
       "message": "Message edited successfully",
       "updatedMessage": { ... }
     }
+    ```
+
+### 8. Leave Room
+Removes the authenticated user from a group room. If the group has less than 2 members remaining after the user leaves, the room itself is deleted (conversations are preserved). Users cannot leave DMs.
+*   **URL:** `/message/leave-room`
+*   **Method:** `PUT`
+*   **Body:**
+    ```json
+    { "roomId": "..." }
+    ```
+*   **Success Response (200):**
+    ```json
+    { "message": "User removed successfully from the group" }
+    ```
+*   **Error Response (400):**
+    ```json
+    { "message": "No such group or user found!" }
+    ```
+    OR
+    ```json
+    { "message": "You can't leave a dm" }
     ```

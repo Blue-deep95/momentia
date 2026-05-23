@@ -169,7 +169,7 @@ function UserCard({ item, navigate }) {
           <p className="text-zinc-400 text-xs">{item.name}</p>
         </div>
       </div>
-      <FollowButton userId={item._id} isFollowing={item.isFollowing || false} />
+      <FollowButton userId={item._id} initialFollowing={item.isFollowing ?? null} />
     </div>
   );
 }

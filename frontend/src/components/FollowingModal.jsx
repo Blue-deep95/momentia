@@ -1,135 +1,153 @@
-import React, { useEffect, useState } from "react";
-import { X, User } from "lucide-react";
+﻿import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { X, UserCheck } from "lucide-react";
 import api from "../services/api.js";
 import UserListCard from "./UserListCard.jsx";
+import FollowButton from "./FollowButton.jsx";
 
-const FollowingModal = ({ userId, onClose, onFollowingUpdate, onFollowingCountUpdate }) => {
+/* ── Spinner ─────────────────────────────────────────────────── */
+const Spinner = () => (
+  <div className="spinner-center">
+    <span className="spinner-ring" />
+    <p className="text-sm text-slate-500">Loading following…</p>
+  </div>
+);
+
+/* ── Empty state ─────────────────────────────────────────────── */
+const Empty = ({ text, sub }) => (
+  <div className="empty-state">
+    <div className="empty-illustration">
+      <UserCheck size={22} color="#6B7280" />
+    </div>
+    <p className="empty-title">{text}</p>
+    <p className="empty-subtitle">{sub}</p>
+  </div>
+);
+
+/* ── FollowingModal ───────────────────────────────────────────── */
+const FollowingModal = ({
+  userId,
+  onClose,
+  onFollowingUpdate,
+  onFollowingCountUpdate,
+}) => {
+  const { user } = useSelector((state) => state.auth);
   const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [unfollowingId, setUnfollowingId] = useState(null);
+  const mountedRef = useRef(true);
 
+  /* ── Fetch ── */
   useEffect(() => {
+    mountedRef.current = true;
     if (!userId) return;
 
-    const fetchFollowing = async () => {
+    const fetch = async () => {
       setLoading(true);
       setError(null);
 
       try {
         const res = await api.get(`/profile/get-following/${userId}`);
-        const followingList = res.data.following || [];
-        setFollowing(followingList);
-        if (onFollowingCountUpdate) {
-          onFollowingCountUpdate(followingList.length);
+        let list = res.data.following || [];
+        if (user?.id) {
+          list = list.filter(
+            (item) => String(item.userId || item._id) !== String(user.id)
+          );
         }
+
+        if (!mountedRef.current) return;
+        setFollowing(list);
+        onFollowingCountUpdate?.(list.length);
       } catch (err) {
-        setError(err.response?.data?.message || "Could not load following.");
+        if (mountedRef.current)
+          setError(err.response?.data?.message || "Could not load following.");
       } finally {
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
       }
     };
 
-    fetchFollowing();
+    fetch();
+    return () => {
+      mountedRef.current = false;
+    };
   }, [userId]);
 
-  const handleUnfollow = async (targetId) => {
-    setUnfollowingId(targetId);
-    try {
-      const response = await api.delete(`/follow/unfollow-user/${targetId}`);
-      
-      // Only remove from UI if backend confirms success
-      if (response.status === 200) {
-        const updatedFollowing = following.filter((user) => user.userId !== targetId);
-        setFollowing(updatedFollowing);
-
-        // Notify parent to update following count
-        if (onFollowingUpdate) {
-          onFollowingUpdate();
-        }
-        if (onFollowingCountUpdate) {
-          onFollowingCountUpdate(updatedFollowing.length);
-        }
-      }
-    } catch (err) {
-      console.error("Error unfollowing user:", err);
-      const errorMsg = err.response?.data?.message || "Failed to unfollow user";
-      setError(errorMsg);
-      
-      // Clear error after 3 seconds
-      setTimeout(() => setError(null), 3000);
-    } finally {
-      setUnfollowingId(null);
+  /* ── Handle unfollow from FollowButton ── */
+  const handleFollowStatusChange = (targetUserId, status) => {
+    if (status === "unfollowed" && mountedRef.current) {
+      const updated = following.filter((u) => u.userId !== targetUserId);
+      setFollowing(updated);
+      onFollowingUpdate?.();
+      onFollowingCountUpdate?.(updated.length);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100">
-              <User size={18} className="text-blue-600" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900">Following</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
-        </div>
+  /* ── Close on backdrop click ── */
+  const handleBackdrop = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
 
-        {/* Content */}
-        <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
-          {loading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-spin rounded-full border-3 border-blue-100 border-t-blue-600" />
-                <p className="text-sm text-gray-500">Loading following...</p>
+  return (
+    <div onClick={handleBackdrop} className="modal-backdrop">
+      <div className="modal-shell">
+        <div className="modal-inner">
+          <div className="modal-header">
+            <div className="flex items-center gap-3">
+              <div className="modal-icon-shell">
+                <UserCheck size={18} />
+              </div>
+              <div>
+                <h2 className="modal-title">Following</h2>
+                {!loading && (
+                  <p className="modal-subtitle">
+                    {following.length} {following.length === 1 ? "user" : "users"}
+                  </p>
+                )}
               </div>
             </div>
-          ) : error ? (
-            <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-600 border border-red-200">
-              {error}
-            </div>
-          ) : following.length === 0 ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <div className="text-center">
-                <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                  <User size={20} className="text-gray-400" />
-                </div>
-                <p className="text-sm font-medium text-gray-600">Not following anyone</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Find and follow creators to see their content
-                </p>
+
+            <button type="button" onClick={onClose} className="modal-close" aria-label="Close">
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="modal-list-body modal-scroll">
+            {loading ? (
+              <Spinner />
+            ) : error ? (
+              <div className="modal-alert">{error}</div>
+            ) : following.length === 0 ? (
+              <Empty text="Not following anyone" sub="Find and follow creators to see their content." />
+            ) : (
+              <div className="space-y-3">
+                {following.map((userItem) => (
+                  <UserListCard
+                    key={userItem.userId}
+                    user={userItem}
+                    onUserClick={onClose}
+                    actionNode={
+                      <FollowButton
+                        userId={userItem.userId}
+                        initialFollowing={true}
+                        size="sm"
+                        onFollowStatusChange={(status) =>
+                          handleFollowStatusChange(userItem.userId, status)
+                        }
+                      />
+                    }
+                  />
+                ))}
               </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {following.map((user) => (
-                <UserListCard
-                  key={user.userId}
-                  user={user}
-                  actionLabel="Unfollow"
-                  onActionClick={handleUnfollow}
-                  isLoading={unfollowingId === user.userId}
-                  onUserClick={onClose}
-                />
-              ))}
+            )}
+          </div>
+
+          {!loading && following.length > 0 && (
+            <div className="modal-footer">
+              <span className="text-xs text-slate-500">
+                Following {following.length} {following.length === 1 ? "user" : "users"}
+              </span>
             </div>
           )}
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-gray-100 px-6 py-3 text-right">
-          <span className="text-xs text-gray-500">
-            Following {following.length} {following.length === 1 ? "user" : "users"}
-          </span>
         </div>
       </div>
     </div>

@@ -4,7 +4,8 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const Room = require("../models/Room");
 const Message = require('../models/Message')
-const {messageBus} = require('../events/event')
+const {messageBus} = require('../events/event');
+const { findByIdAndDelete } = require("../models/User");
 
 
 // If the user wants to start a new dm/group with someone
@@ -127,6 +128,51 @@ router.get("/get-rooms", async (req, res) => {
     });
   } catch (err) {
     console.log("Error in get-rooms route", err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// this route is mainly for leaving rooms by the user if he is part of the group
+router.put("/leave-room", async (req, res) => {
+  try {
+    const user = req.user;
+    const { roomId } = req.body;
+
+    // first search if user belongs in the room or not
+    const room = await Room.findOne({ _id: roomId, "members.memberId": user._id.toString() });
+    if (!room) {
+      return res.status(400).json({ message: "No such group or user found!" });
+    }
+
+    // if roomType is dm do not let the user leave room 
+    if (room.roomType === "dm") {
+      return res.status(400).json({ message: "You can't leave a dm" });
+    }
+
+    // remove the user from the room using mongodb atomic updates
+    const newRoom = await Room.findOneAndUpdate(
+      { _id: roomId, "members.memberId": user._id },
+      {
+        $inc: { totalMembers: -1 },
+        $pull: {
+          members: { memberId: user._id }
+        }
+      },
+      { returnDocument: "after" }
+    );
+
+    if (!newRoom) {
+      return res.status(400).json({ message: "Failed to leave the room. You might not be a member." });
+    }
+
+    // if the group has less than 2 people, delete the room itself but save the conversations
+    if (newRoom.totalMembers < 2) {
+      await Room.findByIdAndDelete(roomId);
+    }
+
+    return res.status(200).json({ message: "User removed successfully from the group" });
+  } catch (err) {
+    console.log("Error in leave-room route", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 });

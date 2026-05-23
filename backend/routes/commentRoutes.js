@@ -121,7 +121,7 @@ router.get("/get-replies/:postid/:parentid/:page",
             const skip = (page - 1) * limit
 
             // aggregation start
-            
+
             const replies = await Comment.aggregate([
                 // first match the comments with the postid and parentid
                 {
@@ -226,7 +226,7 @@ router.get("/get-replies/:postid/:parentid/:page",
 router.post("/create-comment",
     async (req, res) => {
         try {
-            const { content, postid, parent, reference } = req.body;
+            const { content, postid, parent, reference,referenceComment } = req.body;
             const user = req.user;
 
             if (!postid || !content) {
@@ -249,6 +249,7 @@ router.post("/create-comment",
             if (parent) {
                 commentData.parent = parent;
                 commentData.reference = reference;
+                commentData.referenceComment = referenceComment
             }
 
             const comment = new Comment(commentData);
@@ -262,7 +263,7 @@ router.post("/create-comment",
             // Update post's comment count
             const updatedPost = await Post.findByIdAndUpdate(postid, { $inc: { totalComments: 1 } });
 
-            // Emit notification event
+            // Emit notification event for post author (if someone else commented)
             if (updatedPost && updatedPost.author.toString() !== user._id.toString()) {
                 notificationBus.emit('comment-posted', {
                     author: user._id,
@@ -270,6 +271,18 @@ router.post("/create-comment",
                     postTarget: postid,
                     commentId: comment._id,
                     isReply: !!parent
+                });
+            }
+
+            // emit another event but this time to the referer or the one the comment is replied to
+            if (parent && commentData.reference) {
+                notificationBus.emit('comment-reply', {
+                    author: user._id, // the author of the reply 
+                    repliedTo: commentData.reference,
+                    repliedToComment: commentData.referenceComment,
+                    postAuthor: updatedPost ? updatedPost.author : null,
+                    postTarget: postid,
+                    commentId: comment._id
                 });
             }
 
@@ -387,6 +400,21 @@ router.post("/toggle-like/:commentid",
             if (existingLike) {
                 // If it exists, UNLIKE it
                 await Like.findByIdAndDelete(existingLike._id)
+
+                // Update notification when comment is unliked
+                if (comment.author.toString() !== user._id.toString()) {
+
+                    notificationBus.emit(
+                        "comment-unliked",
+                        {
+                            author: user._id,
+
+                            commentAuthor: comment.author,
+
+                            commentTarget: comment._id
+                        }
+                    )
+                }
                 await Comment.findByIdAndUpdate(commentid, { $inc: { totalLikes: -1 } })
                 return res.status(200).json({ message: "Comment unliked successfully", isLiked: false })
             } else {
@@ -399,6 +427,20 @@ router.post("/toggle-like/:commentid",
                     commentTarget: commentid
                 })
                 await newLike.save()
+                // Send comment like notification
+                if (comment.author.toString() !== user._id.toString()) {
+
+                    notificationBus.emit(
+                        "comment-liked",
+                        {
+                            author: user._id,
+
+                            commentAuthor: comment.author,
+
+                            commentTarget: comment._id
+                        }
+                    )
+                }
                 await Comment.findByIdAndUpdate(commentid, { $inc: { totalLikes: 1 } })
                 return res.status(200).json({ message: "Comment liked successfully", isLiked: true })
             }

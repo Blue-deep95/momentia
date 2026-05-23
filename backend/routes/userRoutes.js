@@ -154,7 +154,16 @@ router.post("/register", async (req, res) => {
         user.username = name
         user.password = hashedPassword
 
-        user.save()
+        // DO NOT DOCUMENT THEESE CHANGES TO API.MD FILE!
+        // Extract the domain part of the email (everything after the '@')
+        // for using and sending carousels to frontend since this a secret
+        const domain = email.substring(email.lastIndexOf("@") + 1);
+        // Check if the domain matches a specific target (e.g., 'something.com')
+        if (domain && domain.toLowerCase() === "codegnan.com") {
+            user.userType = "cdg";
+        }
+
+        await user.save()
         return res.status(201).json({ message: "user created successfully" })
     }
     catch (err) {
