@@ -138,7 +138,7 @@ export default function Sidebar({ profile }) {
               <img
                 src={displayImage}
                 alt="profile"
-                className="h-12 w-12 rounded-full border-2 border-pink-400 object-cover transition-transform hover:scale-105"
+                className="h-12 w-12 rounded-full border-2 border-indigo-500 object-cover transition-transform hover:scale-105"
               />
             </Link>
           </div>
@@ -149,7 +149,7 @@ export default function Sidebar({ profile }) {
           <>
             {/* LOGO */}
             <div className="px-8 pb-6 pt-8">
-              <h1 className="bg-linear-to-r from-cyan-500 via-purple-500 to-pink-500 bg-clip-text text-3xl font-bold text-transparent">
+              <h1 className="bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent">
                 Momentia
               </h1>
             </div>
@@ -164,13 +164,13 @@ export default function Sidebar({ profile }) {
                   <img
                     src={displayImage}
                     alt="profile"
-                    className="h-20 w-20 rounded-full border-4 border-pink-400 object-cover transition-transform hover:scale-105"
+                    className="h-20 w-20 rounded-full border-4 border-indigo-500 object-cover transition-transform hover:scale-105"
                   />
                 </Link>
 
                 {/* USERNAME */}
                 <Link to="/profile" className="cursor-pointer">
-                  <h2 className="mt-4 text-lg font-semibold text-gray-800 transition-colors hover:text-pink-500">
+                  <h2 className="mt-4 text-lg font-semibold text-gray-800 transition-colors hover:text-indigo-600">
                     {displayName}
                   </h2>
                 </Link>
@@ -216,10 +216,10 @@ export default function Sidebar({ profile }) {
             </div>
 
             {/* CREATE POST BUTTON */}
-            <div className="px-6 pb-4">
+            <div className="px-6 py-6 mt-1">
               <Link
                 to="/create-post"
-                className="bg-linear-to-r flex items-center justify-center gap-2 rounded-full from-orange-400 via-pink-500 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
+                className="bg-linear-to-r flex items-center justify-center gap-2 rounded-full from-blue-600 via-indigo-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
               >
                 <PlusSquare size={18} />
                 Create a post
@@ -238,7 +238,7 @@ export default function Sidebar({ profile }) {
               title={!isExpanded ? item.label : ""}
               className={`flex items-center ${isExpanded ? 'gap-4 px-5' : 'justify-center px-0'} rounded-xl py-4 text-[15px] font-medium transition-all duration-200 ${
                 location.pathname === item.path
-                  ? "bg-pink-50 text-pink-500"
+                  ? "bg-indigo-50 text-indigo-600"
                   : "text-gray-600 hover:bg-gray-100 hover:text-black"
               }`}
             >
