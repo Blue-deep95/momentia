@@ -2,7 +2,7 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { Search } from "lucide-react";
+import { Search,X } from "lucide-react";
 
 export default function MessagePage() {
 	const user = useSelector((state) => state.auth.user);
@@ -11,6 +11,8 @@ export default function MessagePage() {
 	const [rooms, setRooms] = useState([]);
 	const [followingProfiles, setFollowingProfiles] = useState([]);
 	const [activeRoom, setActiveRoom] = useState(null);
+	const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+	const [modalSearch, setModalSearch] = useState("");
 	const [messages, setMessages] = useState([]);
 	const [nextCursor, setNextCursor] = useState(null);
 	const [hasMore, setHasMore] = useState(false);
@@ -122,6 +124,7 @@ export default function MessagePage() {
 				},
 			};
 			setRooms((prev) => [roomWithInfo, ...prev.filter((r) => r._id !== roomWithInfo._id)]);
+			setShowNewMessageModal(false);
 			openRoom(roomWithInfo);
 		} catch (err) {
 			console.error(err);
@@ -144,6 +147,7 @@ export default function MessagePage() {
 
 	async function openRoom(room) {
 		setActiveRoom(room);
+		setShowNewMessageModal(false);
 		setMessages([]);
 		setNextCursor(null);
 		setHasMore(false);
@@ -311,7 +315,7 @@ export default function MessagePage() {
 						<input
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
-							placeholder="Search"
+							id="message-search" placeholder="Search"
 							className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2 pl-10 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
 						/>
 					</div>
@@ -323,16 +327,9 @@ export default function MessagePage() {
 				<div className="overflow-auto px-4 pb-4 pt-0">
 					{loadingRooms || followingLoading ? (
 						<div className="text-sm text-slate-500">Loading...</div>
-					) : filteredRooms.length === 0 && followingProfiles.length === 0 ? (
+					) : filteredRooms.length === 0 ? (
 						<div className="text-sm text-slate-500">
 							{searchTerm ? "No conversations or profiles match your search." : "No conversations yet."}
-						</div>
-					) : filteredRooms.length === 0 && followingProfiles.length > 0 ? (
-						<div className="space-y-3">
-							<div className="mb-2 text-sm font-semibold text-slate-600">People you follow</div>
-							{followingProfiles
-								.filter((profile) => profile.username.toLowerCase().includes(searchTerm.toLowerCase()))
-								.map(renderFollowingProfile)}
 						</div>
 					) : (
 						<div className="space-y-3">
@@ -342,10 +339,12 @@ export default function MessagePage() {
 				</div>
 			</div>
 			<div className={`${activeRoom ? 'flex' : 'hidden'} min-h-0 flex-1 flex-col xl:flex`}>
-				<div className="border-b bg-white p-4">
-					<div className="font-semibold text-slate-900">{activeRoom ? (activeRoom.roomType === 'dm' ? (activeRoom.dmUserInfo?.name || activeRoom.dmUserInfo?.username || 'DM') : activeRoom.roomName || 'Group Chat') : 'Select a conversation'}</div>
-					<div className="mt-1 text-sm text-slate-500">{activeRoom ? (activeRoom.roomType === 'dm' ? 'Chat with your friend' : 'Group conversation') : 'Choose a chat to view messages'}</div>
-				</div>
+				{activeRoom && (
+					<div className="border-b bg-white p-4">
+						<div className="font-semibold text-slate-900">{activeRoom.roomType === 'dm' ? (activeRoom.dmUserInfo?.name || activeRoom.dmUserInfo?.username || 'DM') : activeRoom.roomName || 'Group Chat'}</div>
+						<div className="mt-1 text-sm text-slate-500">{activeRoom.roomType === 'dm' ? 'Chat with your friend' : 'Group conversation'}</div>
+					</div>
+				)}
 				<div className="min-h-0 flex-1 overflow-y-auto bg-slate-100 p-6">
 					{!activeRoom && (
 						<div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
@@ -354,7 +353,14 @@ export default function MessagePage() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 12l9-7" opacity="0.4" />
 							</svg>
 							<h3 className="mt-6 text-xl font-semibold text-slate-700">Your messages</h3>
-							<p className="mt-2 text-sm text-slate-500">Select a chat from the left to continue.</p>
+							<p className="mt-2 text-sm text-slate-500">Send a message to start a chat.</p>
+						<button
+							type="button"
+							onClick={() => setShowNewMessageModal(true)}
+							className="mt-6 inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+						>
+							Send message
+						</button>
 						</div>
 					)}
 					{activeRoom && (
@@ -391,7 +397,8 @@ export default function MessagePage() {
 						</div>
 					)}
 				</div>
-				<form onSubmit={sendMessage} className="flex items-center gap-3 bg-white p-4">
+				{activeRoom && (
+					<form onSubmit={sendMessage} className="flex items-center gap-3 bg-white p-4">
 					<button
 						type="button"
 						disabled={!activeRoom}
@@ -422,8 +429,9 @@ export default function MessagePage() {
 						disabled={!activeRoom}
 						className="flex-1 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed"
 					/>
-					<button type="submit" disabled={!activeRoom || !text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
+					<button type="submit" disabled={!text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
 				</form>
+				)}
 			</div>
 			<div className="xl:w-75 hidden flex-col border-l border-slate-200 bg-white xl:flex">
 				<div className="border-b p-6 text-center">
@@ -466,6 +474,38 @@ export default function MessagePage() {
 					</div>
 				</div>
 			</div>
+			{showNewMessageModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+					<div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+						<div className="mb-4 flex items-center justify-between">
+							<div>
+								<h2 className="text-xl font-semibold text-slate-900">Start a new message</h2>
+								<p className="text-sm text-slate-500">Pick someone you follow to begin a conversation.</p>
+							</div>
+							<button type="button" onClick={() => setShowNewMessageModal(false)} className="text-slate-500 transition hover:text-slate-700">
+								<X className="h-5 w-5" />
+							</button>
+						</div>
+						<div className="mb-4">
+							<div className="relative">
+								<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+								<input
+									value={modalSearch}
+									onChange={(e) => setModalSearch(e.target.value)}
+									placeholder="Search following"
+									className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+								/>
+							</div>
+						</div>
+						<div className="max-h-[60vh] space-y-3 overflow-auto">
+							{followingProfiles.filter((profile) => profile.username.toLowerCase().includes(modalSearch.toLowerCase())).map(renderFollowingProfile)}
+							{followingProfiles.filter((profile) => profile.username.toLowerCase().includes(modalSearch.toLowerCase())).length === 0 && (
+								<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">No matching people found.</div>
+							)}
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
