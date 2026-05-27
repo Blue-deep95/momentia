@@ -20,6 +20,7 @@ const searchRoutes = require('./routes/searchRoutes.js')
 const notificationRoutes = require('./routes/notificationRoutes.js')
 const messageRoutes = require('./routes/messageRoutes.js')
 const mediaRoutes = require('./routes/mediaRoutes.js')
+const globalLimiter = require("./middleware/rateLimiter.js")
 
 // import db 
 const connectDB = require('./db/db.js')
@@ -48,6 +49,9 @@ app.use(cors({
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+
+//Global rate limiter
+app.use(globalLimiter)
 
 
 // trying to connect db
