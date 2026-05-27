@@ -22,5 +22,5 @@
 - **CommentModal** --> Sirisha,Phani,Vishnu(Bug fixing),SaiTeja(Bug fixing)
 - **Create Post** --> Vishnu, Phani, Sirisha(uploading videos)
 - **Single Post, Single profile** --> Vishnu, Phani
-- **Notifications using websockets** --> Phani,Rupa,Vishnu
+- **Notifications using websockets** --> Phani,Rupa,Saiteja
 - **Chat/Messages using websockets** --> Phani,Vishnu
