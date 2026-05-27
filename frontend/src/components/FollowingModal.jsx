@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { X, UserCheck, Search } from "lucide-react";
 import api from "../services/api.js";
@@ -59,11 +59,6 @@ const FollowingModal = ({
       try {
         const res = await api.get(`/profile/get-following/${userId}`);
         let list = res.data.following || [];
-        if (user?.id) {
-          list = list.filter(
-            (item) => String(item.userId || item._id) !== String(user.id)
-          );
-        }
 
         if (!mountedRef.current) return;
         
@@ -187,14 +182,16 @@ const FollowingModal = ({
                     user={userItem}
                     onUserClick={onClose}
                     actionNode={
-                      <FollowButton
-                        userId={userItem.userId || userItem._id}
-                        initialFollowing={true}
-                        size="sm"
-                        onFollowStatusChange={(status) =>
-                          handleFollowStatusChange(userItem.userId || userItem._id, status)
-                        }
-                      />
+                      String(userItem.userId || userItem._id) !== String(user?.id) && (
+                        <FollowButton
+                          userId={userItem.userId || userItem._id}
+                          initialFollowing={true}
+                          size="sm"
+                          onFollowStatusChange={(status) =>
+                            handleFollowStatusChange(userItem.userId || userItem._id, status)
+                          }
+                        />
+                      )
                     }
                   />
                 ))}
