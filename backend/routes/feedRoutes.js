@@ -7,6 +7,7 @@ const User = require('../models/User')
 const Follow = require('../models/Follow')
 const Post = require('../models/Post')
 const Like = require('../models/Like')
+const {protect}  = require('../middleware/authMiddleware')
 const encodeCursor = (obj) => {
     return Buffer.from(JSON.stringify(obj)).toString('base64');
 };
@@ -19,8 +20,93 @@ const decodeCursor = (cursorStr) => {
     }
 };
 
+// this route is only for getting the first 10 most liked posts on the feed page.
+// users can see this page even if they are not logged in but any interaction with the posts 
+// ask the user to login 
+router.get("/get-mainpage",async(req,res) =>{
+    try{
+        // since this page does not need any user we just get the top 10 most liked posts 
+        const postsToSend = await Post.aggregate([
+            {$sort:{totalLikes:-1} },
+            {$limit:10},
+            // join the author data
+            {
+                $lookup:{
+                    from:'users',
+                    localField:'author',
+                    foreignField:'_id',
+                    pipeline:[{$project:{_id:1,username:1,profilePicture:1}}],
+                    as:'authorDetails'
+                }
+            },
+            {$unwind:'$authorDetails'},
+            {
+                $addFields:{
+                    isLiked:false,
+                    isFollowing:false,
+                    isSaved:false
+                }
+        }
+        ])
+        return res.status(200).json({message:"Posts fetched succesfully",posts:postsToSend})
+    }
+    catch(err){
+        console.log("Error in get-mainpage route",err)
+        return res.status(500).json({message:"Internal server error"})
+    }
+})
+
+// this route is mainly for getting the posts uploaded by secret users and display them on the main screen
+// this too will not have any protection from authmiddleware
+router.get("/get-carousel",async(req,res) => {
+    try{
+        // let's include pagination later if the posts themselves are good for now just send everything
+        const carouselItems = await User.aggregate([
+            {$match:{userType:'cdg'}},
+            // try to lookup all the posts by someone with userType:cdg
+            {
+                $lookup:{
+                    from:'posts',
+                    localField:'_id',
+                    foreignField:'author',
+                    as:'postDetails'
+                }
+            },
+            {$unwind:'$postDetails'},
+            // Sort to show the latest secret/carousel posts first
+            {$sort:{'postDetails.createdAt':-1}},
+            {$project:{
+                _id: '$postDetails._id',
+                caption: '$postDetails.caption',
+                mediaType: '$postDetails.mediaType',
+                thumbImage: '$postDetails.thumbImage',
+                images: '$postDetails.images',
+                video: '$postDetails.video',
+                totalLikes: '$postDetails.totalLikes',
+                totalComments: '$postDetails.totalComments',
+                createdAt: '$postDetails.createdAt',
+                authorDetails:{
+                    _id: '$_id',
+                    username: '$username',
+                    name: '$name',
+                    profilePicture: '$profilePicture',
+                    email: '$email'
+                }
+            }}
+
+        ])
+
+        return res.status(200).json({message:"Carousel items fetched succesfully",carouselItems})
+
+    }
+    catch(err){
+        console.log("Error in get-carousel route",err)
+        return res.status(500).json({message:"Internal server error"})
+    }
+})
+
 // the main route that sends posts to the frontend
-router.get("/get-posts",
+router.get("/get-posts",protect,
     async (req, res) => {
         try {
             const user = req.user
@@ -330,7 +416,7 @@ router.get("/get-posts",
     }
 )
 
-router.get("/get-reels",
+router.get("/get-reels",protect,
     async (req, res) => {
         try {
             const user = req.user
@@ -399,7 +485,7 @@ router.get("/get-reels",
                 {
                     $lookup: {
                         from: 'users',
-                        let: { postId: '_id' },
+                        let: { postId: '$_id' },
                         pipeline: [
                             {
                                 $match: {

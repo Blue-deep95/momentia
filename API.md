@@ -348,12 +348,71 @@ Retrieves the list of users a specific user is following with pagination.
 ---
 
 ## 🏠 Feed (`/feed`)
-*All routes in this section require a valid Bearer Token.*
 
-### 1. Get Feed Posts
-Retrieves posts for the main feed using **cursor-based pagination** with a split-timeline (social graph priority) algorithm and interaction metadata.
+### 1. Get MainPage Posts
+Retrieves the top 10 most liked posts. This endpoint is **public** and does not require authentication.
+*   **URL:** `/feed/get-mainpage`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "posts": [
+        {
+          "_id": "...",
+          "author": "...",
+          "caption": "...",
+          "mediaType": "image/video",
+          "thumbImage": "...",
+          "images": [ { "url": "...", "public_id": "..." } ],
+          "video": { "url": "...", "public_id": "..." },
+          "authorDetails": { "_id": "...", "username": "...", "profilePicture": "..." },
+          "isLiked": false,
+          "isFollowing": false,
+          "isSaved": false,
+          "totalLikes": 120,
+          "totalComments": 4,
+          "createdAt": "..."
+        }
+      ],
+      "message": "Posts fetched succesfully"
+    }
+    ```
+
+### 2. Get Carousel Items
+Retrieves posts uploaded by secret/creator users (`userType: 'cdg'`). This endpoint is **public** and does not require authentication.
+*   **URL:** `/feed/get-carousel`
+*   **Method:** `GET`
+*   **Success Response (200):**
+    ```json
+    {
+      "carouselItems": [
+        {
+          "_id": "post_id_here",
+          "caption": "...",
+          "mediaType": "image",
+          "thumbImage": "...",
+          "images": [ { "url": "...", "public_id": "..." } ],
+          "video": null,
+          "totalLikes": 10,
+          "totalComments": 2,
+          "createdAt": "...",
+          "authorDetails": {
+            "_id": "user_id_here",
+            "username": "secret_creator",
+            "profilePicture": "...",
+            "email": "secret@example.com"
+          }
+        }
+      ],
+      "message": "Carousel items fetched succesfully"
+    }
+    ```
+
+### 3. Get Feed Posts
+Retrieves posts for the main feed using **cursor-based pagination** with a split-timeline (social graph priority) algorithm and interaction metadata. Requires a valid Bearer Token.
 *   **URL:** `/feed/get-posts`
 *   **Method:** `GET`
+*   **Headers:** `Authorization: Bearer <access_token>`
 *   **Query Parameters:**
     *   `cursor` (optional, string): The base64-encoded cursor token from the previous page's response.
 *   **Success Response (200):**
@@ -383,10 +442,11 @@ Retrieves posts for the main feed using **cursor-based pagination** with a split
     }
     ```
 
-### 2. Get Reels
-Retrieves reels (video posts) using **cursor-based pagination**.
+### 4. Get Reels
+Retrieves reels (video posts) using **cursor-based pagination**. Requires a valid Bearer Token.
 *   **URL:** `/feed/get-reels`
 *   **Method:** `GET`
+*   **Headers:** `Authorization: Bearer <access_token>`
 *   **Query Parameters:**
     *   `cursor` (optional, string): The base64-encoded cursor token from the previous page's response.
 *   **Success Response (200):**
@@ -873,4 +933,25 @@ Updates the content of a message and sets an `isEdited` flag. Only the sender ca
       "message": "Message edited successfully",
       "updatedMessage": { ... }
     }
+    ```
+
+### 8. Leave Room
+Removes the authenticated user from a group room. If the group has less than 2 members remaining after the user leaves, the room itself is deleted (conversations are preserved). Users cannot leave DMs.
+*   **URL:** `/message/leave-room`
+*   **Method:** `PUT`
+*   **Body:**
+    ```json
+    { "roomId": "..." }
+    ```
+*   **Success Response (200):**
+    ```json
+    { "message": "User removed successfully from the group" }
+    ```
+*   **Error Response (400):**
+    ```json
+    { "message": "No such group or user found!" }
+    ```
+    OR
+    ```json
+    { "message": "You can't leave a dm" }
     ```

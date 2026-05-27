@@ -73,17 +73,17 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="w-full h-screen bg-black text-white flex flex-col lg:pl-[72px] z-1 ">
-      <div className="sticky top-0 z-10 bg-black border-b border-zinc-800">
+    <div className="w-full h-screen bg-white text-gray-900 flex flex-col lg:pl-[72px] z-1 ">
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-4 py-3">
-          <div className="flex items-center bg-zinc-900 rounded-xl px-3 py-2">
-            <Search size={18} className="text-zinc-400" />
+          <div className="flex items-center bg-gray-100 rounded-xl px-3 py-2">
+            <Search size={18} className="text-gray-400" />
             <input
               type="text"
               placeholder={`Search ${activeTab}`}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="bg-transparent outline-none flex-1 px-3 text-sm"
+              className="bg-transparent outline-none flex-1 px-3 text-sm text-gray-800"
             />
           </div>
           <div className="flex gap-5 mt-4 overflow-x-auto scrollbar-hide">
@@ -93,8 +93,8 @@ export default function SearchPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`text-sm whitespace-nowrap pb-2 transition-all ${
                   activeTab === tab
-                    ? "text-white border-b border-white"
-                    : "text-zinc-500"
+                    ? "text-black border-b-2 border-black font-bold"
+                    : "text-gray-400 hover:text-gray-600"
                 }`}
               >
                 {tab}
@@ -103,10 +103,10 @@ export default function SearchPage() {
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden bg-white">
         <div className="max-w-5xl mx-auto h-full">
           {results.length === 0 && debouncedQuery && !loading ? (
-            <div className="flex items-center justify-center h-full text-zinc-500 text-sm">
+            <div className="flex items-center justify-center h-full text-gray-400 text-sm">
               No {activeTab} Found for "{debouncedQuery}"
             </div>
           ) : activeTab === "Users" ? (
@@ -121,7 +121,7 @@ export default function SearchPage() {
                 Footer: () =>
                   loading ? (
                     <div className="flex justify-center py-5">
-                      <Loader2 className="animate-spin text-zinc-500" />
+                      <Loader2 className="animate-spin text-gray-400" />
                     </div>
                   ) : null,
               }}
@@ -139,7 +139,7 @@ export default function SearchPage() {
                 Footer: () =>
                   loading ? (
                     <div className="flex justify-center py-5 w-full col-span-3 md:col-span-4 lg:col-span-5">
-                      <Loader2 className="animate-spin text-zinc-500" />
+                      <Loader2 className="animate-spin text-gray-400" />
                     </div>
                   ) : null,
               }}
@@ -156,17 +156,17 @@ function UserCard({ item, navigate }) {
   return (
     <div 
       onClick={() => navigate(`/profile/${item._id}`)}
-      className="flex items-center justify-between px-4 py-3 hover:bg-zinc-900 transition cursor-pointer"
+      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition cursor-pointer border-b border-gray-50 last:border-0"
     >
       <div className="flex items-center gap-3">
         <img
           src={profilePic}
           alt={item.username}
-          className="w-12 h-12 rounded-full object-cover border border-zinc-800"
+          className="w-12 h-12 rounded-full object-cover border border-gray-100"
         />
         <div>
-          <h3 className="font-semibold text-sm">{item.username}</h3>
-          <p className="text-zinc-400 text-xs">{item.name}</p>
+          <h3 className="font-semibold text-sm text-gray-900">{item.username}</h3>
+          <p className="text-gray-500 text-xs">{item.name}</p>
         </div>
       </div>
       <FollowButton userId={item._id} initialFollowing={item.isFollowing ?? null} />
@@ -178,14 +178,14 @@ function PostGridItem({ item, navigate }) {
   return (
     <div 
       onClick={() => navigate(`/profile/${item.author}`)}
-      className="aspect-square relative group cursor-pointer overflow-hidden rounded-sm"
+      className="aspect-square relative group cursor-pointer overflow-hidden rounded-md bg-gray-100"
     >
       <img
         src={item.thumbImage}
         alt="post"
         className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
       />
-      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
         <div className="flex items-center gap-1 text-white font-bold text-sm">
           <ImageIcon size={16} />
           <span>{item.totalLikes || 0}</span>

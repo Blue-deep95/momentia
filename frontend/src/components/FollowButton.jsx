@@ -1,28 +1,7 @@
-/**
- * FollowButton.jsx
- *
- * Instagram-style follow/unfollow button.
- *
- * Props:
- *   userId            – target user's ID
- *   initialFollowing  – boolean | null  (null = auto-fetch from API)
- *   onFollowStatusChange(status: "followed"|"unfollowed") – optional callback
- *   size              – "sm" | "md" (default "md")
- *   variant           – "default" | "outline" | "minimal"
- *
- * Global event: "momentia:follow-changed" → { targetId, status }
- * Any component can listen to this to react without prop drilling.
- *
- * APIs used:
- *   GET  /profile/get-profile/:userId   → { following: boolean }
- *   POST /follow/follow-user            → { targetId }
- *   DELETE /follow/unfollow-user/:id
- */
-
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import api from "../services/api.js";
+import toast from "react-hot-toast";
 
-/* ── Global event helpers ─────────────────────────────────────── */
 const FOLLOW_EVENT = "momentia:follow-changed";
 
 export const emitFollowChange = (targetId, status) => {
@@ -36,26 +15,14 @@ export const onFollowChange = (handler) => {
   return () => window.removeEventListener(FOLLOW_EVENT, handler);
 };
 
-/* ── Spinner ──────────────────────────────────────────────────── */
-const Spinner = ({ color = "currentColor" }) => (
-  <span
-    style={{
-      display: "inline-block",
-      width: 13,
-      height: 13,
-      border: `2px solid ${color}44`,
-      borderTop: `2px solid ${color}`,
-      borderRadius: "50%",
-      animation: "fb-spin .6s linear infinite",
-      flexShrink: 0,
-    }}
-  />
+const Spinner = ({ className = "" }) => (
+  <span className={`spinner-ring ${className}`} />
 );
 
-/* ── Icons ────────────────────────────────────────────────────── */
 const PlusIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
@@ -65,7 +32,6 @@ const CheckIcon = () => (
   </svg>
 );
 
-/* ── FollowButton ─────────────────────────────────────────────── */
 const FollowButton = ({
   userId,
   initialFollowing = null,
@@ -73,14 +39,13 @@ const FollowButton = ({
   size = "md",
   variant = "default",
 }) => {
-  const [following, setFollowing]   = useState(initialFollowing);
-  const [loading, setLoading]       = useState(false);
-  const [fetching, setFetching]     = useState(initialFollowing === null);
-  const [hovered, setHovered]       = useState(false);
-  const [error, setError]           = useState(null);
-  const mountedRef                  = useRef(true);
+  const [following, setFollowing] = useState(initialFollowing);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(initialFollowing === null);
+  const [hovered, setHovered] = useState(false);
+  const [error, setError] = useState(null);
+  const mountedRef = useRef(true);
 
-  /* ── 1. Auto-fetch follow status if not provided ── */
   useEffect(() => {
     mountedRef.current = true;
 
@@ -95,7 +60,6 @@ const FollowButton = ({
       try {
         const res = await api.get(`/profile/get-profile/${userId}`);
         if (!mountedRef.current) return;
-        // backend returns `following: boolean` on profile endpoint
         setFollowing(Boolean(res.data.following));
       } catch (_) {
         if (mountedRef.current) setFollowing(false);
@@ -105,10 +69,11 @@ const FollowButton = ({
     };
 
     fetchStatus();
-    return () => { mountedRef.current = false; };
+    return () => {
+      mountedRef.current = false;
+    };
   }, [userId, initialFollowing]);
 
-  /* ── 2. Listen for global follow events from OTHER components ── */
   useEffect(() => {
     const handler = (e) => {
       if (e.detail.targetId !== userId) return;
@@ -117,7 +82,6 @@ const FollowButton = ({
     return onFollowChange(handler);
   }, [userId]);
 
-  /* ── 3. Toggle follow/unfollow ── */
   const handleToggle = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -125,9 +89,8 @@ const FollowButton = ({
     if (loading || fetching) return;
 
     const nextFollowing = !following;
-    const status        = nextFollowing ? "followed" : "unfollowed";
+    const status = nextFollowing ? "followed" : "unfollowed";
 
-    // Optimistic UI
     setFollowing(nextFollowing);
     setLoading(true);
     setError(null);
@@ -138,135 +101,93 @@ const FollowButton = ({
       } else {
         await api.post(`/follow/follow-user`, { targetId: userId });
       }
-
       if (!mountedRef.current) return;
-
-      // Emit global event so every FollowButton with same userId syncs
       emitFollowChange(userId, status);
-
-      // Notify parent
       onFollowStatusChange?.(status);
-
+      
+      // Show success toast
+      toast.success(
+        nextFollowing ? "User followed!" : "User unfollowed!",
+        {
+          duration: 2,
+          position: "bottom-center",
+        }
+      );
     } catch (err) {
       if (!mountedRef.current) return;
-
-      // Revert optimistic update
       setFollowing(following);
       const msg = err.response?.data?.message || "Something went wrong";
       setError(msg);
+      
+      // Show error toast
+      toast.error(msg, {
+        duration: 3,
+        position: "bottom-center",
+      });
+      
       setTimeout(() => mountedRef.current && setError(null), 3000);
     } finally {
       if (mountedRef.current) setLoading(false);
     }
   };
 
-  /* ── Sizing ── */
-  const sizeMap = {
-    sm: { padding: "5px 12px", fontSize: 11, height: 28, gap: 4, minWidth: 72 },
-    md: { padding: "7px 18px", fontSize: 13, height: 34, gap: 6, minWidth: 90 },
-  };
-  const s = sizeMap[size] || sizeMap.md;
+  const sizeClass = size === "sm" ? "follow-button-sm" : "follow-button-md";
+  const isFollowing = following === true;
+  const showUnfollow = isFollowing && hovered;
 
-  /* ── Visual state ── */
-  const isFollowing  = following === true;
-  const showUnfollow = isFollowing && hovered; // show "Unfollow" on hover like Instagram
+  const stateClass = loading || fetching
+    ? "follow-button-loading"
+    : isFollowing
+      ? showUnfollow
+        ? "follow-button-danger"
+        : "follow-button-muted"
+      : variant === "outline"
+        ? "follow-button-outline"
+        : "follow-button-primary";
 
-  /* ── Styles ── */
-  const btnStyle = (() => {
-    if (fetching || loading) return {
-      background: "#F3F4F6",
-      color: "#9CA3AF",
-      border: "1px solid #E5E7EB",
-    };
-
-    if (isFollowing) {
-      if (showUnfollow) return {
-        background: "#FEF2F2",
-        color: "#EF4444",
-        border: "1px solid #FECACA",
-      };
-      return {
-        background: "#F3F4F6",
-        color: "#374151",
-        border: "1px solid #E5E7EB",
-      };
-    }
-
-    // Not following
-    if (variant === "outline") return {
-      background: "transparent",
-      color: "#2F3EDB",
-      border: "1.5px solid #2F3EDB",
-    };
-
-    return {
-      background: "linear-gradient(135deg, #2F3EDB 0%, #4F5EF0 100%)",
-      color: "#fff",
-      border: "none",
-      boxShadow: "0 3px 12px rgba(47,62,219,0.28)",
-    };
-  })();
-
-  const label = (() => {
-    if (fetching)     return <Spinner color={isFollowing ? "#9CA3AF" : "#fff"} />;
-    if (loading)      return <Spinner color={isFollowing ? "#9CA3AF" : "#fff"} />;
-    if (showUnfollow) return "Unfollow";
-    if (isFollowing)  return (
-      <span style={{ display:"flex", alignItems:"center", gap: 4 }}>
-        <CheckIcon /> Following
-      </span>
-    );
-    return (
-      <span style={{ display:"flex", alignItems:"center", gap: 4 }}>
-        <PlusIcon /> Follow
-      </span>
-    );
-  })();
+  const label = loading || fetching
+    ? <Spinner className={isFollowing ? "text-slate-400" : "text-white"} />
+    : showUnfollow
+      ? "Unfollow"
+      : isFollowing
+        ? (
+          <span className="inline-flex items-center gap-1">
+            <CheckIcon />
+            Following
+          </span>
+        )
+        : (
+          <span className="inline-flex items-center gap-1">
+            <PlusIcon />
+            Follow
+          </span>
+        );
 
   return (
-    <div onClick={e => e.stopPropagation()}>
-      <style>{`
-        @keyframes fb-spin { to { transform: rotate(360deg); } }
-        .fb-btn { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
-        .fb-btn:active:not(:disabled) { transform: scale(0.97) !important; }
-      `}</style>
-
+    <div onClick={(e) => e.stopPropagation()}>
       <button
-        className="fb-btn"
+        type="button"
         onClick={handleToggle}
         disabled={loading || fetching}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: s.gap,
-          padding: s.padding,
-          height: s.height,
-          minWidth: s.minWidth,
-          fontSize: s.fontSize,
-          fontWeight: 700,
-          borderRadius: 10,
-          cursor: loading || fetching ? "not-allowed" : "pointer",
-          transition: "all 0.18s ease",
-          transform: hovered && !loading && !fetching ? "translateY(-1px)" : "translateY(0)",
-          letterSpacing: "0.1px",
-          whiteSpace: "nowrap",
-          ...btnStyle,
-        }}
+        className={`follow-button ${sizeClass} ${stateClass} ${hovered && !loading && !fetching ? "-translate-y-[1px]" : "translate-y-0"}`}
+        title={error || ""}
+        aria-label={
+          loading || fetching
+            ? "Loading…"
+            : isFollowing
+            ? "Unfollow user"
+            : "Follow user"
+        }
       >
         {label}
       </button>
 
       {error && (
-        <p style={{
-          marginTop: 4, fontSize: 10.5, color: "#EF4444",
-          background: "#FEF2F2", padding: "3px 8px", borderRadius: 6,
-          border: "1px solid #FECACA", fontFamily: "inherit",
-        }}>
+        <div className="mt-1 text-xs text-red-600 truncate" title={error}>
           {error}
-        </p>
+        </div>
       )}
     </div>
   );

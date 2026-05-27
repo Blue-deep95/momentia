@@ -12,7 +12,9 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-
+    // a new userType for implementing carousel like system
+    // in main page
+    userType:String,
     name: String,
     
     bio: {
@@ -43,6 +45,21 @@ const UserSchema = new mongoose.Schema({
         },
         profileView: String,
         commentView: String
+    },
+
+    gridFSProfilePicture: {
+        original: {
+            url: String,
+            fileId: mongoose.Schema.Types.ObjectId
+        },
+        profileView: {
+            url: String,
+            fileId: mongoose.Schema.Types.ObjectId
+        },
+        commentView: {
+            url: String,
+            fileId: mongoose.Schema.Types.ObjectId
+        }
     },
 
     // for saved posts instead of creating seperate schema we can simply use 

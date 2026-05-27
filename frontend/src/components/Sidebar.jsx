@@ -13,12 +13,14 @@ import {
   Heart,
   Settings,
   LogOut,
+  Trophy,
 } from "lucide-react";
 
 export default function Sidebar({ profile }) {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const hideMobileNav = location.pathname.startsWith("/messages");
   const { user } = useSelector((state) => state.auth);
   const [sidebarProfile, setSidebarProfile] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -73,6 +75,11 @@ export default function Sidebar({ profile }) {
       icon: <Film size={24} />,
     },
     {
+        path: "/top-placed",
+        label: "Top Placed",
+        icon: <Trophy size={24} />,
+      },
+    {
       path: "/messages",
       label: "Messages",
       icon: <Send size={24} />,
@@ -92,31 +99,33 @@ export default function Sidebar({ profile }) {
   return (
     <>
       {/* ================= MOBILE NAVBAR ================= */}
-      <div className=" fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white px-2 py-3 shadow-md md:hidden">
+      {!hideMobileNav && (
+        <div className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white px-2 py-3 shadow-md md:hidden">
 
-        {navItems.slice(0, 5).map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`flex flex-col items-center ${
-              location.pathname === item.path
-                ? "text-pink-500"
-                : "text-gray-500"
-            }`}
-          >
-            {item.icon}
+          {navItems.slice(0, 5).map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex flex-col items-center ${
+                location.pathname === item.path
+                  ? "text-pink-500"
+                  : "text-gray-500"
+              }`}
+            >
+              {item.icon}
 
-            <span className="mt-1 text-[11px] font-medium">
-              {item.label}
-            </span>
-          </Link>
-        ))}
-      </div>
+              <span className="mt-1 text-[11px] font-medium">
+                {item.label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* ================= DESKTOP / TABLET SIDEBAR ================= */}
       <div
         className={`z-50 fixed left-0 top-0 hidden h-screen flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-300 ease-in-out lg:flex ${
-          isExpanded ? 'w-[260px]' : 'w-[72px]'
+          isExpanded ? 'w-65' : 'w-18'
         }`}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
@@ -129,7 +138,7 @@ export default function Sidebar({ profile }) {
               <img
                 src={displayImage}
                 alt="profile"
-                className="h-12 w-12 rounded-full border-2 border-pink-400 object-cover transition-transform hover:scale-105"
+                className="h-12 w-12 rounded-full border-2 border-indigo-500 object-cover transition-transform hover:scale-105"
               />
             </Link>
           </div>
@@ -140,7 +149,7 @@ export default function Sidebar({ profile }) {
           <>
             {/* LOGO */}
             <div className="px-8 pb-6 pt-8">
-              <h1 className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 bg-clip-text text-3xl font-bold text-transparent">
+              <h1 className="bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent">
                 Momentia
               </h1>
             </div>
@@ -155,13 +164,13 @@ export default function Sidebar({ profile }) {
                   <img
                     src={displayImage}
                     alt="profile"
-                    className="h-20 w-20 rounded-full border-4 border-pink-400 object-cover transition-transform hover:scale-105"
+                    className="h-20 w-20 rounded-full border-4 border-indigo-500 object-cover transition-transform hover:scale-105"
                   />
                 </Link>
 
                 {/* USERNAME */}
                 <Link to="/profile" className="cursor-pointer">
-                  <h2 className="mt-4 text-lg font-semibold text-gray-800 transition-colors hover:text-pink-500">
+                  <h2 className="mt-4 text-lg font-semibold text-gray-800 transition-colors hover:text-indigo-600">
                     {displayName}
                   </h2>
                 </Link>
@@ -207,10 +216,10 @@ export default function Sidebar({ profile }) {
             </div>
 
             {/* CREATE POST BUTTON */}
-            <div className="px-6 pb-4">
+            <div className="px-6 py-6 mt-1">
               <Link
                 to="/create-post"
-                className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
+                className="bg-linear-to-r flex items-center justify-center gap-2 rounded-full from-blue-600 via-indigo-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
               >
                 <PlusSquare size={18} />
                 Create a post
@@ -220,7 +229,7 @@ export default function Sidebar({ profile }) {
         )}
 
         {/* NAVIGATION - Icons always visible, text only when expanded */}
-        <div className="mt-8 flex flex-1 min-h-0 flex-col gap-2 px-4 overflow-y-auto pb-4">
+        <div className="mt-8 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4">
 
           {navItems.map((item) => (
             <Link
@@ -229,7 +238,7 @@ export default function Sidebar({ profile }) {
               title={!isExpanded ? item.label : ""}
               className={`flex items-center ${isExpanded ? 'gap-4 px-5' : 'justify-center px-0'} rounded-xl py-4 text-[15px] font-medium transition-all duration-200 ${
                 location.pathname === item.path
-                  ? "bg-pink-50 text-pink-500"
+                  ? "bg-indigo-50 text-indigo-600"
                   : "text-gray-600 hover:bg-gray-100 hover:text-black"
               }`}
             >

@@ -1,31 +1,51 @@
-const express = require("express")
-const router = express.Router()
-const bcrypt = require("bcrypt")
-const jwt = require("jsonwebtoken")
-const User = require("../models/User.js")
-const { generateAccessToken, generateRefreshToken } = require("../utils/generateToken.js")
-const transporter = require("../utils/sendEmail.js")
+const express = require("express");
+const router = express.Router();
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User.js");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../utils/generateToken.js");
+const transporter = require("../utils/sendEmail.js");
+
+// import the zod schema here
+const {
+  emailSchema,
+  otpSchema,
+  usernameSchema,
+  otpEmailValidation,
+  registerSchema,
+  loginSchema,
+} = require("../zodSchema/validationSchema.js");
 
 router.post("/send-otp", async (req, res) => {
-    const { email } = req.body
-    try {
-        let user = await User.findOne({ email })
-        console.log("email", email)
-        if (!user) {
-            user = new User({ email })
-        }
-        let otp = Math.floor(90000 * Math.random() + 10000)
-        // only for production we use a simple otp
-        user.otp = otp
-        user.otpExpiry = 5 * 60 * 1000 + Date.now()
-        user.username = email
-        await user.save()
-        console.log(user)
-        await transporter.sendMail({
-            from: process.env.EMAIL,
-            to: email,
-            subject: "Momentia - Email Verification OTP",
-            html: `
+  try {
+    // performa a zod validation here safe parsing to prevent crashing
+    const validation = emailSchema.safeParse(req.body.email);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: validation.error.errors.map((err) => err.message),
+      });
+    }
+    const email = validation.data;
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({ email });
+    }
+    let otp = Math.floor(90000 * Math.random() + 10000);
+    // only for production we use a simple otp
+    user.otp = otp;
+    user.otpExpiry = 5 * 60 * 1000 + Date.now();
+    user.username = email;
+    await user.save();
+    console.log(user);
+    await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: email,
+      subject: "Momentia - Email Verification OTP",
+      html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -100,134 +120,173 @@ router.post("/send-otp", async (req, res) => {
             </td>
           </tr>
           
-        </table>
+          </table>
       </td>
     </tr>
   </table>
 </body>
 </html>
-`
-        })
-        return res.status(201).json({ message: "Email sent successfully" })
-    }
-    catch (err) {
-        console.log("Server error in send-otp endpoint", err)
-        res.status(500).json({ message: "Internal server error" })
-    }
-})
+`,
+    });
+    return res.status(201).json({ message: "Email sent successfully" });
+  } catch (err) {
+    console.log("Server error in send-otp endpoint", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 router.post("/verify-otp", async (req, res) => {
-    try {
-        const { email, otp } = req.body
-        const user = await User.findOne({ email })
-        if (!user) {
-            return res.status(400).json({ message: "User didnt created otp" })
-        }
-        if (user.otp != otp || user.otpExpiry < Date.now()) {
-            return res.status(400).json({ message: "Otp expired" })
-        }
-        user.isEmailVerified = true
-        user.otp = null
-        user.otpExpiry = null
-        await user.save()
-        return res.status(200).json({ message: "Email Verified" })
+  try {
+    const validation = otpEmailValidation.safeParse({
+      email: req.body.email,
+      otp: req.body.otp,
+    });
+    if (!validation.success) {
+      return res
+        .status(400)
+        .json({
+          message: "Invalid email or otp",
+          errors: validation.error.errors.map((err) => err.message),
+        });
     }
-    catch (err) {
-        console.log()
-        res.status(500).json({ message: "Internal server error while verifying otp" })
+    const { email, otp } = validation.data;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User didnt created otp" });
     }
-})
+    if (user.otp != otp || user.otpExpiry < Date.now()) {
+      return res.status(400).json({ message: "Otp expired" });
+    }
+    user.isEmailVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+    return res.status(200).json({ message: "Email Verified" });
+  } catch (err) {
+    console.log();
+    res
+      .status(500)
+      .json({ message: "Internal server error while verifying otp" });
+  }
+});
 
 router.post("/register", async (req, res) => {
-    try {
-        const { name, email, password } = req.body
-        const user = await User.findOne({ email })
-
-        if (!user.isEmailVerified) {
-            return res.status(400).json({ message: "user email verification not completed" })
-        }
-        if (user.password) {
-            return res.status(400).json({ message: "User already exists!" })
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10)
-        user.username = name
-        user.password = hashedPassword
-
-        user.save()
-        return res.status(201).json({ message: "user created successfully" })
+  try {
+    const validation = registerSchema.safeParse({
+      username: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+    });
+    if (!validation.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: validation.error.errors.map((err) => err.message),
+      });
     }
-    catch (err) {
-        console.log(err)
-        res.status(500).json({ message: "server error" })
-    }
-})
+    const { username, email, password } = validation.data;
+    const user = await User.findOne({ email });
 
+    if (!user || !user.isEmailVerified) {
+      return res
+        .status(400)
+        .json({ message: "user email verification not completed" });
+    }
+    if (user.password) {
+      return res.status(400).json({ message: "User already exists!" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.username = username;
+    user.password = hashedPassword;
+
+    // DO NOT DOCUMENT THEESE CHANGES TO API.MD FILE!
+    // Extract the domain part of the email (everything after the '@')
+    // for using and sending carousels to frontend since this a secret
+    const domain = email.substring(email.lastIndexOf("@") + 1);
+    // Check if the domain matches a specific target (e.g., 'something.com')
+    if (domain && domain.toLowerCase() === "codegnan.com") {
+      user.userType = "cdg";
+    }
+
+    await user.save();
+    return res.status(201).json({ message: "user created successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "server error" });
+  }
+});
 
 router.post("/login", async (req, res) => {
-    try {
-        const { email, password } = req.body
-        const user = await User.findOne({ email })
-        //console.log('request reached login route')
-
-        if (!user) {
-            return res.status(400).json({ message: "invalid email or user not found" })
-        }
-        const isMatch = await bcrypt.compare(password, user.password)
-        if (!isMatch) {
-            return res.status(400).json({ message: "invalid password" })
-        }
-        const accessToken = generateAccessToken(user)
-        const refreshToken = generateRefreshToken(user)
-        user.refreshToken = refreshToken
-        await user.save()
-
-        const isProduction = process.env.NODE_ENV === "production";
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            sameSite: isProduction ? "none" : "lax",
-            secure: isProduction,
-            path: "/",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        })
-        return res.status(200).json({
-            accessToken: accessToken,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                // aditionally give profile pictures too to the users
-                // so it can be used with react-redux toolkit to send information
-                profilePicture: user.profilePicture
-            },
-            message: "Login successful"
-        })
+  try {
+    const validation = loginSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: validation.error.errors.map((err) => err.message),
+      });
     }
-    catch (err) {
-        console.log(err)
-        res.status(500).json({ message: "error from user login" })
-    }
-})
+    const { email, password } = validation.data;
+    const user = await User.findOne({ email });
 
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "invalid email or user not found" });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "invalid password" });
+    }
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    return res.status(200).json({
+      accessToken: accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        // additionally give profile pictures too to the users
+        // so it can be used with react-redux toolkit to send information
+        profilePicture: user.profilePicture,
+      },
+      message: "Login successful",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "error from user login" });
+  }
+});
 
 router.post("/forgot-password", async (req, res) => {
-    try {
-        const { email } = req.body
+  try {
+    const { email } = req.body;
 
-        const user = await User.findOne({ email })
-        if (!user) {
-            return res.status(404).json({ message: "User not found" })
-        }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-        const otp = Math.floor(100000 + Math.random() * 900000)
+    const otp = Math.floor(100000 + Math.random() * 900000);
 
-        user.otp = otp
-        user.otpExpiry = Date.now() + 5 * 60 * 1000
-        await transporter.sendMail({
-            from: process.env.EMAIL,
-            to: email,
-            subject: "Momentia - Reset Password OTP",
-            html: `
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 5 * 60 * 1000;
+    await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: email,
+      subject: "Momentia - Reset Password OTP",
+      html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -308,94 +367,91 @@ router.post("/forgot-password", async (req, res) => {
   </table>
 </body>
 </html>
-`
-        })
+`,
+    });
 
-        await user.save()
-        return res.status(200).json({ message: "OTP sent to email" })
-
-    } catch (error) {
-        console.error("Forgot Password Error:", error)
-        res.status(500).json({ message: "Server error" })
-    }
-})
+    await user.save();
+    return res.status(200).json({ message: "OTP sent to email" });
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 router.post("/reset-password", async (req, res) => {
-    try {
-        const { email, otp, password } = req.body
+  try {
+    const { email, otp, password } = req.body;
 
-        const user = await User.findOne({ email })
+    const user = await User.findOne({ email });
 
-        if (!user || user.otp != otp || user.otpExpiry < Date.now()) {
-            return res.status(400).json({ message: "Invalid or expired OTP" })
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10)
-
-        user.password = hashedPassword
-        user.otp = null
-        user.otpExpiry = null
-
-        await user.save()
-
-        res.status(200).json({ message: "Password reset successful" })
-
-    } catch (error) {
-        console.error("Reset Password Error:", error)
-        res.status(500).json({ message: "Server error" })
+    if (!user || user.otp != otp || user.otpExpiry < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
-})
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    user.password = hashedPassword;
+    user.otp = null;
+    user.otpExpiry = null;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 router.post("/regenerate-access-token", async (req, res) => {
-    const refreshToken = req.cookies?.refreshToken
-    if (!refreshToken) {
-        return res.status(401).json({ message: "Refresh token not found" })
+  const refreshToken = req.cookies?.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({ message: "Refresh token not found" });
+  }
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
     }
-    try {
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN)
-        const user = await User.findById(decoded.id)
-        if (!user) {
-            return res.status(401).json({ message: "User not found" })
-        }
-        const newAccessToken = generateAccessToken(user)
-        return res.status(200).json({ accessToken: newAccessToken })
-    }
-    catch (err) {
-        console.log("Error in regenerate-access-token:", err.message)
-        return res.status(401).json({ message: "Invalid or expired refresh token" })
-    }
-})
+    const newAccessToken = generateAccessToken(user);
+    return res.status(200).json({ accessToken: newAccessToken });
+  } catch (err) {
+    console.log("Error in regenerate-access-token:", err.message);
+    return res
+      .status(401)
+      .json({ message: "Invalid or expired refresh token" });
+  }
+});
 
 router.post("/logout", async (req, res) => {
-    try {
-        const refreshToken = req.cookies?.refreshToken
-        if (refreshToken) {
-            try {
-                const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN)
-                const user = await User.findById(decoded.id)
-                if (user) {
-                    user.refreshToken = null
-                    await user.save()
-                }
-            } catch (jwtErr) {
-                // If token is invalid or expired, we still clear the cookie on the browser
-                console.log("JWT verify failed during logout:", jwtErr.message)
-            }
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+    if (refreshToken) {
+      try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
+        const user = await User.findById(decoded.id);
+        if (user) {
+          user.refreshToken = null;
+          await user.save();
         }
-    } catch (err) {
-        console.error("Logout database error:", err)
+      } catch (jwtErr) {
+        // If token is invalid or expired, we still clear the cookie on the browser
+        console.log("JWT verify failed during logout:", jwtErr.message);
+      }
     }
+  } catch (err) {
+    console.error("Logout database error:", err);
+  }
 
-    const isProduction = process.env.NODE_ENV === "production";
-    res.clearCookie("refreshToken", {
-        httpOnly: true,
-        sameSite: isProduction ? "none" : "lax",
-        secure: isProduction,
-        path: "/"
-    })
-    return res.status(200).json({ message: "Logout successful" })
-})
+  const isProduction = process.env.NODE_ENV === "production";
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
+    path: "/",
+  });
+  return res.status(200).json({ message: "Logout successful" });
+});
 
-
-module.exports = router
+module.exports = router;

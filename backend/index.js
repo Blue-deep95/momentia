@@ -19,6 +19,7 @@ const feedRoutes = require('./routes/feedRoutes.js')
 const searchRoutes = require('./routes/searchRoutes.js')
 const notificationRoutes = require('./routes/notificationRoutes.js')
 const messageRoutes = require('./routes/messageRoutes.js')
+const mediaRoutes = require('./routes/mediaRoutes.js')
 
 // import db 
 const connectDB = require('./db/db.js')
@@ -58,10 +59,11 @@ app.use("/api/profile", protect, profileRoutes) // call the middleware right her
 app.use("/api/post", protect, postRoutes)
 app.use("/api/comment", protect, commentRoutes)
 app.use("/api/follow", protect, followRoutes)
-app.use("/api/feed", protect, feedRoutes)
+app.use("/api/feed",feedRoutes)
 app.use("/api/search", protect, searchRoutes)
 app.use("/api/notifications",protect,notificationRoutes)
 app.use("/api/message",protect,messageRoutes)
+app.use("/api/media", mediaRoutes)
 
 // event listeners
 require('./services/notificationService.js') // for sending notifications

@@ -75,6 +75,59 @@ Sent when a user's post is liked. This event is rate-limited to 1 minute per pos
   }
   ```
 
+### `notification-comment-posted`
+Sent when a user's post receives a comment. This event is rate-limited to 1 minute.
+- **Payload (Notification Object):**
+  ```json
+  {
+    "_id": "ObjectId",
+    "recipient": "UserId",
+    "notificationType": "post",
+    "notificationSubType": "comment",
+    "targetEntityId": {
+      "_id": "PostId",
+      "caption": "string",
+      "thumbImage": "string"
+    },
+    "actors": [
+      {
+        "_id": "UserId",
+        "username": "string",
+        "profilePicture": { "profileView": "url", ... }
+      }
+    ],
+    "actorCount": "number",
+    "isRead": false,
+    "updatedAt": "ISO Date"
+  }
+  ```
+
+### `notification-comment-liked`
+Sent when a user's comment is liked. This event is rate-limited to 1 minute.
+- **Payload (Notification Object):**
+  ```json
+  {
+    "_id": "ObjectId",
+    "recipient": "UserId",
+    "notificationType": "comment",
+    "notificationSubType": "like",
+    "targetEntityId": {
+      "_id": "CommentId",
+      "content": "string"
+    },
+    "actors": [
+      {
+        "_id": "UserId",
+        "username": "string",
+        "profilePicture": { "profileView": "url", ... }
+      }
+    ],
+    "actorCount": "number",
+    "isRead": false,
+    "updatedAt": "ISO Date"
+  }
+  ```
+
 ### `user-followed`
 Sent when someone follows the authenticated user. Rate-limited to 1 minute.
 - **Payload (Notification Object):**

@@ -2,6 +2,7 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { Search,X } from "lucide-react";
 
 export default function MessagePage() {
 	const user = useSelector((state) => state.auth.user);
@@ -10,13 +11,13 @@ export default function MessagePage() {
 	const [rooms, setRooms] = useState([]);
 	const [followingProfiles, setFollowingProfiles] = useState([]);
 	const [activeRoom, setActiveRoom] = useState(null);
+	const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+	const [modalSearch, setModalSearch] = useState("");
 	const [messages, setMessages] = useState([]);
 	const [nextCursor, setNextCursor] = useState(null);
 	const [hasMore, setHasMore] = useState(false);
 	const [text, setText] = useState("");
 	const [searchTerm, setSearchTerm] = useState("");
-	const [sortOption, setSortOption] = useState("latest");
-	const [showSortDropdown, setShowSortDropdown] = useState(false);
 	const [loadingRooms, setLoadingRooms] = useState(false);
 	const [followingLoading, setFollowingLoading] = useState(false);
 	const [loadingMessages, setLoadingMessages] = useState(false);
@@ -53,11 +54,11 @@ export default function MessagePage() {
 					const idx = prev.findIndex((r) => r._id === payload.roomId.toString());
 					if (idx === -1) return prev;
 					const copy = [...prev];
-					copy[idx] = { 
-						...copy[idx], 
-						lastMessage: { content: payload.content, sender: payload.sender }, 
-						lastMessageAt: Date.now(), 
-						currentMessageCount: (copy[idx].currentMessageCount || 0) + 1 
+					copy[idx] = {
+						...copy[idx],
+						lastMessage: { content: payload.content, sender: payload.sender },
+						lastMessageAt: Date.now(),
+						currentMessageCount: (copy[idx].currentMessageCount || 0) + 1
 					};
 					// move to top
 					const moved = copy.splice(idx, 1)[0];
@@ -123,6 +124,7 @@ export default function MessagePage() {
 				},
 			};
 			setRooms((prev) => [roomWithInfo, ...prev.filter((r) => r._id !== roomWithInfo._id)]);
+			setShowNewMessageModal(false);
 			openRoom(roomWithInfo);
 		} catch (err) {
 			console.error(err);
@@ -145,6 +147,7 @@ export default function MessagePage() {
 
 	async function openRoom(room) {
 		setActiveRoom(room);
+		setShowNewMessageModal(false);
 		setMessages([]);
 		setNextCursor(null);
 		setHasMore(false);
@@ -228,28 +231,16 @@ export default function MessagePage() {
 			return title.toLowerCase().includes(searchTerm.toLowerCase());
 		})
 		.sort((a, b) => {
-			if (sortOption === "latest") {
-				// Prioritize conversations with messages first, then sort by recency
-				const aHasMessage = a.lastMessageAt && a.lastMessageAt > 0;
-				const bHasMessage = b.lastMessageAt && b.lastMessageAt > 0;
-				
-				if (aHasMessage && !bHasMessage) return -1; // a has messages, b doesn't
-				if (!aHasMessage && bHasMessage) return 1;  // b has messages, a doesn't
-				
-				// Both have messages or both don't - sort by timestamp
-				const aTime = a.lastMessageAt || a.updatedAt || a.createdAt || 0;
-				const bTime = b.lastMessageAt || b.updatedAt || b.createdAt || 0;
-				return new Date(bTime) - new Date(aTime);
-			} else if (sortOption === "older") {
-				// Sort by oldest message first
-				const aTime = a.lastMessageAt || a.updatedAt || a.createdAt || 0;
-				const bTime = b.lastMessageAt || b.updatedAt || b.createdAt || 0;
-				return new Date(aTime) - new Date(bTime);
-			} else if (sortOption === "frequent") {
-				// Sort by most messages first
-				return (b.currentMessageCount || 0) - (a.currentMessageCount || 0);
-			}
-			return 0;
+			// Prioritize conversations with messages first, then sort by recency
+			const aHasMessage = a.lastMessageAt && a.lastMessageAt > 0;
+			const bHasMessage = b.lastMessageAt && b.lastMessageAt > 0;
+
+			if (aHasMessage && !bHasMessage) return -1;
+			if (!aHasMessage && bHasMessage) return 1;
+
+			const aTime = a.lastMessageAt || a.updatedAt || a.createdAt || 0;
+			const bTime = b.lastMessageAt || b.updatedAt || b.createdAt || 0;
+			return new Date(bTime) - new Date(aTime);
 		});
 
 	const getProfileImage = (profile) =>
@@ -259,20 +250,21 @@ export default function MessagePage() {
 		"";
 
 	const renderRoom = (room) => {
-		const displayName = room.roomType === "dm" ? room.dmUserInfo?.username || "Direct Message" : room.roomName;
+		const displayName = room.roomType === "dm"
+			? room.dmUserInfo?.name || room.dmUserInfo?.username || "Direct Message"
+			: room.roomName || "Group Chat";
 		const profileImage = room.dmUserInfo?.profilePicture?.profileView || room.dmUserInfo?.profilePicture || "";
 		const isActive = activeRoom?._id === room._id;
 		return (
 			<button
 				key={room._id}
 				onClick={() => openRoom(room)}
-				className={`flex w-full items-center gap-3 rounded-3xl border px-4 py-3 text-left transition ${
-					isActive
-						? "border-blue-400 bg-blue-50"
-						: "border-slate-200 bg-slate-50 hover:bg-slate-100"
-				}`}
+				className={`flex w-full items-center gap-3 rounded-3xl border px-4 py-3 text-left transition ${isActive
+					? "border-blue-400 bg-blue-50"
+					: "border-slate-200 bg-slate-50 hover:bg-slate-100"
+					}`}
 			>
-				<div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full bg-slate-200">
+				<div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-slate-200">
 					{profileImage ? (
 						<img src={profileImage} alt={displayName} className="h-full w-full object-cover" />
 					) : (
@@ -312,81 +304,32 @@ export default function MessagePage() {
 
 	return (
 		<div className="lg:pl-18 flex h-screen min-h-screen overflow-hidden bg-slate-100 text-slate-900">
-			<div className="hidden min-h-0 flex-col border-r border-slate-200 bg-white xl:flex xl:w-[320px]">
-				<div className="border-b p-4">
-					<div className="flex items-center justify-between gap-3">
-						<div>
-							<h2 className="text-lg font-semibold">Messages</h2>
-							<p className="text-sm text-slate-500">Latest conversations</p>
-						</div>
-						<button onClick={fetchFollowing} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
-							+
-						</button>
+			<div className={`${activeRoom ? 'hidden' : 'flex w-full'} min-h-0 flex-col border-r border-slate-200 bg-white xl:flex xl:w-[320px]`}>
+
+				<div className="px-4 py-4">
+					<div className="mb-4">
+						<h2 className="text-xl font-bold text-slate-900">{user?.username }</h2>
 					</div>
-				</div>
-				<div className="border-b px-4 py-4">
-					<div className="mb-3">
+					<div className="relative mb-3">
+						<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 						<input
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
-							placeholder="Search conversations"
-							className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+							id="message-search" placeholder="Search"
+							className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2 pl-10 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
 						/>
 					</div>
-					<div className="relative flex items-center justify-between text-sm font-semibold text-slate-700">
-						<span>
-							{sortOption === "latest" ? "Latest" : sortOption === "older" ? "Older" : "Most Frequent"}
-						</span>
-						<div className="relative">
-							<button onClick={() => setShowSortDropdown(!showSortDropdown)} className="text-blue-600 hover:underline">
-								Sort
-							</button>
-							{showSortDropdown && (
-								<div className="absolute right-0 z-10 mt-2 w-40 rounded-lg border border-slate-200 bg-white shadow-lg">
-									<button
-										onClick={() => {
-											setSortOption("latest");
-											setShowSortDropdown(false);
-										}}
-										className={`block w-full text-left px-4 py-2 text-sm ${
-											sortOption === "latest" ? "bg-blue-50 text-blue-600 font-semibold" : "text-slate-700"
-										} hover:bg-slate-100`}
-									>
-										Latest
-									</button>
-									<button
-										onClick={() => {
-											setSortOption("older");
-											setShowSortDropdown(false);
-										}}
-										className={`block w-full text-left px-4 py-2 text-sm ${
-											sortOption === "older" ? "bg-blue-50 text-blue-600 font-semibold" : "text-slate-700"
-										} hover:bg-slate-100`}
-									>
-										Older
-									</button>
-									<button
-										onClick={() => {
-											setSortOption("frequent");
-											setShowSortDropdown(false);
-										}}
-										className={`block w-full text-left px-4 py-2 text-sm ${
-											sortOption === "frequent" ? "bg-blue-50 text-blue-600 font-semibold" : "text-slate-700"
-										} hover:bg-slate-100`}
-									>
-										Frequent
-									</button>
-								</div>
-							)}
-						</div>
-					</div>
+					
 				</div>
-				<div className="overflow-auto border-t border-slate-200 p-4">
-					{loadingRooms ? (
-						<div className="text-sm text-slate-500">Loading conversations...</div>
+				<div className="mb-2 ml-4">
+						<h3 className="text-lg font-semibold text-slate-900">Messages</h3>
+					</div>
+				<div className="overflow-auto px-4 pb-4 pt-0">
+					{loadingRooms || followingLoading ? (
+						<div className="text-sm text-slate-500">Loading...</div>
 					) : filteredRooms.length === 0 ? (
 						<div className="text-sm text-slate-500">
-							{searchTerm ? "No conversations match your search." : "No conversations yet."}
+							{searchTerm ? "No conversations or profiles match your search." : "No conversations yet."}
 						</div>
 					) : (
 						<div className="space-y-3">
@@ -395,11 +338,13 @@ export default function MessagePage() {
 					)}
 				</div>
 			</div>
-		<div className="flex min-h-0 flex-1 flex-col">
-				<div className="border-b bg-white p-4">
-					<div className="font-semibold text-slate-900">{activeRoom ? (activeRoom.roomType === 'dm' ? (activeRoom.dmUserInfo?.username || 'DM') : activeRoom.roomName) : 'Select a conversation'}</div>
-					<div className="mt-1 text-sm text-slate-500">{activeRoom ? (activeRoom.roomType === 'dm' ? 'Chat with your friend' : 'Group conversation') : 'Choose a chat to view messages'}</div>
-				</div>
+			<div className={`${activeRoom ? 'flex' : 'hidden'} min-h-0 flex-1 flex-col xl:flex`}>
+				{activeRoom && (
+					<div className="border-b bg-white p-4">
+						<div className="font-semibold text-slate-900">{activeRoom.roomType === 'dm' ? (activeRoom.dmUserInfo?.name || activeRoom.dmUserInfo?.username || 'DM') : activeRoom.roomName || 'Group Chat'}</div>
+						<div className="mt-1 text-sm text-slate-500">{activeRoom.roomType === 'dm' ? 'Chat with your friend' : 'Group conversation'}</div>
+					</div>
+				)}
 				<div className="min-h-0 flex-1 overflow-y-auto bg-slate-100 p-6">
 					{!activeRoom && (
 						<div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
@@ -408,7 +353,14 @@ export default function MessagePage() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 12l9-7" opacity="0.4" />
 							</svg>
 							<h3 className="mt-6 text-xl font-semibold text-slate-700">Your messages</h3>
-							<p className="mt-2 text-sm text-slate-500">Select a chat from the left to continue.</p>
+							<p className="mt-2 text-sm text-slate-500">Send a message to start a chat.</p>
+						<button
+							type="button"
+							onClick={() => setShowNewMessageModal(true)}
+							className="mt-6 inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+						>
+							Send message
+						</button>
 						</div>
 					)}
 					{activeRoom && (
@@ -423,7 +375,7 @@ export default function MessagePage() {
 									return (
 										<div key={m._id} className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
 											{!isOwn && (
-												<div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-slate-200">
+												<div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-200">
 													{senderProfilePic ? (
 														<img src={senderProfilePic} alt="sender" className="h-full w-full object-cover" />
 													) : (
@@ -445,7 +397,8 @@ export default function MessagePage() {
 						</div>
 					)}
 				</div>
-				<form onSubmit={sendMessage} className="flex items-center gap-3 bg-white p-4">
+				{activeRoom && (
+					<form onSubmit={sendMessage} className="flex items-center gap-3 bg-white p-4">
 					<button
 						type="button"
 						disabled={!activeRoom}
@@ -460,7 +413,7 @@ export default function MessagePage() {
 										<div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-600">
 											C
 										</div>
-										)}
+									)}
 								</div>
 							) : (
 								<span>{activeRoom.roomName || 'Group Chat'}</span>
@@ -476,8 +429,9 @@ export default function MessagePage() {
 						disabled={!activeRoom}
 						className="flex-1 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed"
 					/>
-					<button type="submit" disabled={!activeRoom || !text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
+					<button type="submit" disabled={!text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
 				</form>
+				)}
 			</div>
 			<div className="xl:w-75 hidden flex-col border-l border-slate-200 bg-white xl:flex">
 				<div className="border-b p-6 text-center">
@@ -520,6 +474,38 @@ export default function MessagePage() {
 					</div>
 				</div>
 			</div>
+			{showNewMessageModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+					<div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+						<div className="mb-4 flex items-center justify-between">
+							<div>
+								<h2 className="text-xl font-semibold text-slate-900">Start a new message</h2>
+								<p className="text-sm text-slate-500">Pick someone you follow to begin a conversation.</p>
+							</div>
+							<button type="button" onClick={() => setShowNewMessageModal(false)} className="text-slate-500 transition hover:text-slate-700">
+								<X className="h-5 w-5" />
+							</button>
+						</div>
+						<div className="mb-4">
+							<div className="relative">
+								<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+								<input
+									value={modalSearch}
+									onChange={(e) => setModalSearch(e.target.value)}
+									placeholder="Search following"
+									className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+								/>
+							</div>
+						</div>
+						<div className="max-h-[60vh] space-y-3 overflow-auto">
+							{followingProfiles.filter((profile) => profile.username.toLowerCase().includes(modalSearch.toLowerCase())).map(renderFollowingProfile)}
+							{followingProfiles.filter((profile) => profile.username.toLowerCase().includes(modalSearch.toLowerCase())).length === 0 && (
+								<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">No matching people found.</div>
+							)}
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
