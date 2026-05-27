@@ -66,20 +66,22 @@ const actorName = (actors = []) => {
 };
 
 const buildAction = (n) => {
-  const snippet = n.commentDetails?.content?.slice(0, 50);
+  const commentSnippet = n.commentDetails?.content?.slice(0, 50);
+  const postSnippet = n.postDetails?.caption?.slice(0, 70);
 
   switch (n.notificationType) {
     case "post":
       return {
-        sentence: `liked your post`,
+        sentence: `liked your post${postSnippet ? `: "${postSnippet}"` : ""}`,
         icon: "❤️",
       };
 
     case "comment":
       return {
-        sentence: n.notificationSubType === "reply"
-          ? `replied: "${snippet || "..."}"`
-          : `commented: "${snippet || "..."}"`,
+        sentence:
+          n.notificationSubType === "reply"
+            ? `replied to your comment${commentSnippet ? `: "${commentSnippet}"` : ""}`
+            : `commented on your post${commentSnippet ? `: "${commentSnippet}"` : ""}`,
         icon: "💬",
       };
 
