@@ -47,6 +47,21 @@ const UserSchema = new mongoose.Schema({
         commentView: String
     },
 
+    gridFSProfilePicture: {
+        original: {
+            url: String,
+            fileId: mongoose.Schema.Types.ObjectId
+        },
+        profileView: {
+            url: String,
+            fileId: mongoose.Schema.Types.ObjectId
+        },
+        commentView: {
+            url: String,
+            fileId: mongoose.Schema.Types.ObjectId
+        }
+    },
+
     // for saved posts instead of creating seperate schema we can simply use 
     // this to store the postids of posts that user saved in this array.
     savedPosts: [
