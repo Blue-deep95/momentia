@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FollowersModal.jsx
  *
  * Shows the list of people who follow a user.
@@ -82,13 +82,6 @@ const FollowersModal = ({
       try {
         const res = await api.get(`/profile/get-followers/${userId}`);
         let list = res.data.followers || [];
-
-        // Filter out current user to avoid duplicate
-        if (user?.id) {
-          list = list.filter(
-            (item) => String(item.userId || item._id) !== String(user.id)
-          );
-        }
 
         if (!mountedRef.current) return;
         
@@ -259,25 +252,15 @@ const FollowersModal = ({
                         onUserClick={onClose}
                         actionNode={
                           <div className="flex items-center gap-2">
-                            <FollowButton
-                              userId={followerId}
-                              initialFollowing={follower.isFollowing ?? null}
-                              size="sm"
-                              onFollowStatusChange={(status) =>
-                                handleFollowStatusChange(followerId, status)
-                              }
-                            />
-                            {isOwnProfile && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemove(followerId);
-                                }}
-                                disabled={removingId === followerId}
-                                className="rounded-full px-4 py-2 text-sm font-semibold border border-gray-200 bg-gray-50 hover:bg-blue-50 text-gray-900 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                              >
-                                {removingId === followerId ? "Removing…" : "Remove"}
-                              </button>
+                            {String(followerId) !== String(user?.id) && (
+                              <FollowButton
+                                userId={followerId}
+                                initialFollowing={follower.isFollowing ?? null}
+                                size="sm"
+                                onFollowStatusChange={(status) =>
+                                  handleFollowStatusChange(followerId, status)
+                                }
+                              />
                             )}
                           </div>
                         }
