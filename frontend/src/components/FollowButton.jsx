@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import api from "../services/api.js";
+import toast from "react-hot-toast";
 
 const FOLLOW_EVENT = "momentia:follow-changed";
 
@@ -103,11 +104,27 @@ const FollowButton = ({
       if (!mountedRef.current) return;
       emitFollowChange(userId, status);
       onFollowStatusChange?.(status);
+      
+      // Show success toast
+      toast.success(
+        nextFollowing ? "User followed!" : "User unfollowed!",
+        {
+          duration: 2,
+          position: "bottom-center",
+        }
+      );
     } catch (err) {
       if (!mountedRef.current) return;
       setFollowing(following);
       const msg = err.response?.data?.message || "Something went wrong";
       setError(msg);
+      
+      // Show error toast
+      toast.error(msg, {
+        duration: 3,
+        position: "bottom-center",
+      });
+      
       setTimeout(() => mountedRef.current && setError(null), 3000);
     } finally {
       if (mountedRef.current) setLoading(false);
@@ -155,11 +172,23 @@ const FollowButton = ({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={`follow-button ${sizeClass} ${stateClass} ${hovered && !loading && !fetching ? "-translate-y-[1px]" : "translate-y-0"}`}
+        title={error || ""}
+        aria-label={
+          loading || fetching
+            ? "Loading…"
+            : isFollowing
+            ? "Unfollow user"
+            : "Follow user"
+        }
       >
         {label}
       </button>
 
-      {error && <p className="follow-error">{error}</p>}
+      {error && (
+        <div className="mt-1 text-xs text-red-600 truncate" title={error}>
+          {error}
+        </div>
+      )}
     </div>
   );
 };

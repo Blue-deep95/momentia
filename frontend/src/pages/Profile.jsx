@@ -89,13 +89,13 @@ const Profile = () => {
 
   const SavedEmptyState = () => (
     <div className="rounded-4xl flex flex-col items-center jusrounded-4xlrder border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2F3EDB]/10 text-[#2F3EDB] shadow-lg">
-        <Bookmark size={32} className="text-[#2F3EDB]" />
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-600 shadow-lg">
+        <Bookmark size={32} className="text-indigo-600" />
       </div>
-      <h2 className="mt-6 text-3xl font-bold text-[#111827] dark:text-white">
+      <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
         Nothing saved yet
       </h2>
-      <p className="mt-3 max-w-md text-center text-sm text-[#6B7280] dark:text-slate-400">
+      <p className="mt-3 max-w-md text-center text-sm text-gray-600 dark:text-slate-400">
         Save posts from your feed to see them here in your saved collection.
       </p>
     </div>
@@ -339,9 +339,9 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F5F6FB]">
+      <div className="flex min-h-screen items-center justify-center bg-blue-50">
         <div className="rounded-2xl bg-white px-6 py-4 shadow-lg">
-          <p className="animate-pulse font-semibold text-[#2F3EDB]">
+          <p className="animate-pulse font-semibold text-indigo-600">
             Loading profile...
           </p>
         </div>
@@ -350,7 +350,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F5F6FB] text-[#111827]">
+    <div className="flex min-h-screen bg-blue-50 text-gray-900">
 
       {/* SIDEBAR */}
 
@@ -366,12 +366,12 @@ const Profile = () => {
 
           {/* PROFILE HEADER */}
 
-          <div className="bg-linear-to-r relative overflow-hidden rounded-[35px] from-[#2F3EDB] via-[#5160F5] to-[#FF7A3D] p-px shadow-2xl">
+          <div className="bg-linear-to-r relative overflow-hidden rounded-[35px] from-blue-600 via-indigo-600 to-purple-600 p-px shadow-2xl">
 
             <div className="rounded-[35px] bg-[#F8FAFF]/95 p-6 backdrop-blur-xl md:p-10">
 
-              <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#FF7A3D]/20 blur-3xl" />
-              <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-[#2F3EDB]/20 blur-3xl" />
+              <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-purple-600/20 blur-3xl" />
+              <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-blue-600/20 blur-3xl" />
 
               <div className="relative flex flex-col gap-10 xl:flex-row">
 
@@ -381,7 +381,7 @@ const Profile = () => {
 
                   <div className="group relative">
 
-                    <div className="bg-linear-to-br rounded-full from-[#2F3EDB] to-[#FF7A3D] p-1 shadow-2xl">
+                    <div className="bg-linear-to-br rounded-full from-blue-600 to-indigo-600 p-1 shadow-2xl">
 
                       <div className="h-40 w-40 overflow-hidden rounded-full border-[6px] border-white bg-white md:h-52 md:w-52">
 
@@ -398,7 +398,7 @@ const Profile = () => {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="bg-linear-to-br flex h-full w-full items-center justify-center from-[#2F3EDB] to-[#FF7A3D] text-6xl font-bold text-white">
+                          <div className="bg-linear-to-br flex h-full w-full items-center justify-center from-blue-600 to-indigo-600 text-6xl font-bold text-white">
                             {profile?.name?.[0]}
                           </div>
                         )}
@@ -423,18 +423,18 @@ const Profile = () => {
 
                       <div className="flex flex-wrap items-center gap-3">
 
-                        <h1 className="text-3xl font-bold text-[#111827] md:text-5xl">
+                        <h1 className="text-3xl font-bold text-gray-900 md:text-5xl">
                           {profile?.username}
                         </h1>
 
                         <BadgeCheck
                           size={28}
-                          className="text-[#2F3EDB]"
+                          className="text-indigo-600"
                         />
 
                       </div>
 
-                      <p className="mt-2 text-lg text-[#6B7280]">
+                      <p className="mt-2 text-lg text-gray-600">
                         @{profile?.username}
                       </p>
 
@@ -448,14 +448,14 @@ const Profile = () => {
                         <>
                           <button
                             onClick={() => setShowEdit(true)}
-                            className="rounded-2xl border border-[#E5E7EB] bg-white px-6 py-3 font-semibold text-[#111827] shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
+                            className="rounded-2xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-900 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
                           >
                             Edit Profile
                           </button>
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex items-center gap-2 rounded-2xl bg-[#FF7A3D] px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
                           >
                             <Share2 size={18} />
                             Share
@@ -475,11 +475,11 @@ const Profile = () => {
 
                     <div className="rounded-3xl border border-white bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
 
-                      <h3 className="text-3xl font-bold text-[#2F3EDB]">
+                      <h3 className="text-3xl font-bold text-indigo-600">
                         {profile?.totalPosts || 0}
                       </h3>
 
-                      <p className="mt-1 text-[#6B7280]">
+                      <p className="mt-1 text-gray-600">
                         Posts
                       </p>
 
@@ -490,11 +490,11 @@ const Profile = () => {
                       className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
-                      <h3 className="text-3xl font-bold text-[#FF7A3D]">
+                      <h3 className="text-3xl font-bold text-purple-600">
                         {profile?.followers || 0}
                       </h3>
 
-                      <p className="mt-1 text-[#6B7280]">
+                      <p className="mt-1 text-gray-600">
                         Followers
                       </p>
 
@@ -505,11 +505,11 @@ const Profile = () => {
                       className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
-                      <h3 className="text-3xl font-bold text-[#2F3EDB]">
+                      <h3 className="text-3xl font-bold text-indigo-600">
                         {profile?.following || 0}
                       </h3>
 
-                      <p className="mt-1 text-[#6B7280]">
+                      <p className="mt-1 text-gray-600">
                         Following
                       </p>
 
@@ -521,12 +521,12 @@ const Profile = () => {
 
                   <div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
 
-                    <h2 className="text-2xl font-bold text-[#111827]">
+                    <h2 className="text-2xl font-bold text-gray-900">
                       {profile?.name}
                     </h2>
 
                     {profile?.bio && (
-                      <p className="mt-4 text-[15px] leading-8 text-[#4B5563]">
+                      <p className="mt-4 text-[15px] leading-8 text-gray-700">
                         {profile.bio}
                       </p>
                     )}
@@ -534,7 +534,7 @@ const Profile = () => {
                     <div className="mt-5 flex flex-wrap gap-5">
 
                       {profile?.location && (
-                        <div className="flex items-center gap-2 text-[#6B7280]">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <MapPin size={16} />
                           {profile.location}
                         </div>
@@ -545,7 +545,7 @@ const Profile = () => {
                           href={profile.website}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center gap-2 font-medium text-[#2F3EDB]"
+                          className="flex items-center gap-2 font-medium text-indigo-600"
                         >
                           <Link2 size={16} />
                           Website
@@ -581,8 +581,8 @@ const Profile = () => {
                   onClick={() => setActiveTab(key)}
                   className={`flex items-center gap-2 px-4 py-4 md:px-6 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
                     activeTab === key
-                      ? "bg-linear-to-r from-[#2F3EDB] to-[#5160F5] text-white shadow-lg"
-                      : "text-[#6B7280] hover:text-[#111827]"
+                      ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   <Icon size={18} />
@@ -994,11 +994,11 @@ const PostModal = ({ post, onClose }) => {
 
               <div>
 
-                <h3 className="font-semibold text-[#111827]">
+                <h3 className="font-semibold text-gray-900">
                   {post.user?.username}
                 </h3>
 
-                <p className="text-sm text-[#6B7280]">
+                <p className="text-sm text-gray-600">
                   {post.user?.name}
                 </p>
 
@@ -1010,7 +1010,7 @@ const PostModal = ({ post, onClose }) => {
               onClick={onClose}
               className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F3F4F6]"
             >
-              <X className="text-[#111827]" />
+              <X className="text-gray-900" />
             </button>
 
           </div>
@@ -1030,7 +1030,7 @@ const PostModal = ({ post, onClose }) => {
 
                 <div className="rounded-2xl bg-[#F9FAFB] px-4 py-3">
 
-                  <p className="text-sm text-[#111827]">
+                  <p className="text-sm text-gray-900">
 
                     <span className="mr-2 font-semibold">
                       {comment.user?.username || "user"}
@@ -1067,7 +1067,7 @@ const PostModal = ({ post, onClose }) => {
 
             </div>
 
-            <p className="mt-4 font-semibold text-[#111827]">
+            <p className="mt-4 font-semibold text-gray-900">
               {post.totalLikes || 0} likes
             </p>
 
@@ -1098,7 +1098,7 @@ const EditProfileModal = ({
     website: profile?.website || "",
     location: profile?.location || "",
   });
-
+  const dispatch = useDispatch();
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -1142,7 +1142,7 @@ const EditProfileModal = ({
 
         <div className="mb-8 flex items-center justify-between">
 
-          <h2 className="text-3xl font-bold text-[#111827]">
+          <h2 className="text-3xl font-bold text-gray-900">
             Edit Profile
           </h2>
 
@@ -1180,7 +1180,7 @@ const EditProfileModal = ({
           />
 
           <div className="rounded-3xl border border-[#E5E7EB] bg-[#F9FAFB] p-5 shadow-sm">
-            <p className="mb-3 text-sm font-semibold text-[#111827]">
+            <p className="mb-3 text-sm font-semibold text-gray-900">
               Profile Photo
             </p>
 
@@ -1197,7 +1197,7 @@ const EditProfileModal = ({
                 />
               </div>
 
-              <label className="inline-flex cursor-pointer items-center rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm font-semibold text-[#111827] shadow-sm transition hover:bg-[#F3F4F6]">
+              <label className="inline-flex cursor-pointer items-center rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50">
                 {uploading ? (
                   <span className="flex items-center gap-2">
                     <Loader2 size={16} className="animate-spin" />
@@ -1215,13 +1215,13 @@ const EditProfileModal = ({
               </label>
             </div>
 
-            <p className="mt-2 text-sm text-[#6B7280]">
+            <p className="mt-2 text-sm text-gray-600">
               Supported formats: jpg, jpeg, png, webp.
             </p>
           </div>
 
           <div>
-            <label className="text-sm font-medium text-[#6B7280]">
+            <label className="text-sm font-medium text-gray-600">
               Bio
             </label>
 
@@ -1234,7 +1234,7 @@ const EditProfileModal = ({
                   bio: e.target.value,
                 })
               }
-              className="mt-2 w-full resize-none rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] px-5 py-4 text-[#111827] outline-none focus:border-[#2F3EDB]"
+              className="mt-2 w-full resize-none rounded-2xl border border-gray-200 bg-white/90 px-5 py-4 text-gray-900 outline-none focus:border-indigo-600"
             />
 
           </div>
@@ -1264,7 +1264,7 @@ const EditProfileModal = ({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="bg-linear-to-r flex w-full items-center justify-center gap-2 rounded-2xl from-[#2F3EDB] to-[#FF7A3D] py-4 font-semibold text-white shadow-xl transition hover:scale-[1.02]"
+            className="bg-linear-to-r flex w-full items-center justify-center gap-2 rounded-2xl from-blue-600 via-indigo-600 to-purple-600 py-4 font-semibold text-white shadow-xl transition hover:scale-[1.02]"
           >
 
             {saving && (
