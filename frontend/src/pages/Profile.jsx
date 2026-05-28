@@ -441,14 +441,24 @@ const Profile = () => {
 
                           <button
                             onClick={handleShareProfile}
-                            className="bg-linear-to-r gapbg-linear-to-rrom-indigo-600 flex items-center to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
                           >
                             <Share2 size={18} />
                             Share
                           </button>
                         </>
                       ) : (
-                        <FollowButton userId={profileUserId} />
+                        <>
+                          <FollowButton userId={profileUserId} />
+
+                          <button
+                            onClick={handleShareProfile}
+                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                          >
+                            <Share2 size={18} />
+                            Share
+                          </button>
+                        </>
                       )}
 
                     </div>

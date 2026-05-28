@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   X,
@@ -6,17 +7,23 @@ import {
   MessageCircle,
   Send,
   Share2,
-  Twitter,
   Check,
 } from "lucide-react";
 
 const ShareProfileModal = ({ profile, onClose }) => {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
-  if (!profile?.username) return null;
+  if (!profile) return null;
 
-  const profileUrl = `https://momentia.com/profile/${profile.username}`;
-  const shareText = `Check out my profile on Momentia: ${profile.name}`;
+  const profileUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${window.location.pathname}`
+      : `https://momentia.com/profile/${profile._id || profile.username}`;
+
+  const shareText = profile?.name
+    ? `Check out my profile on Momentia: ${profile.name}`
+    : `Check out this profile on Momentia`;
 
   const handleCopyLink = async () => {
     try {
@@ -61,6 +68,23 @@ const ShareProfileModal = ({ profile, onClose }) => {
       `https://t.me/share/url?url=${encodeURIComponent(profileUrl)}&text=${message}`,
       "_blank"
     );
+  };
+
+  const handleShareToMomentia = async () => {
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      toast.success("Profile link copied successfully");
+      navigate("/messages", {
+        state: {
+          shareProfile: profileUrl,
+          sharedUsername: profile.username,
+        },
+      });
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to share via Momentia");
+    }
   };
 
   const handleTwitter = () => {
@@ -151,6 +175,14 @@ const ShareProfileModal = ({ profile, onClose }) => {
               </button>
             )}
 
+            <button
+              onClick={handleShareToMomentia}
+              className="flex w-full items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3 font-semibold text-white transition hover:bg-slate-800"
+            >
+              <MessageCircle size={20} />
+              Share in Momentia Messages
+            </button>
+
             {/* WhatsApp */}
             <button
               onClick={handleWhatsApp}
@@ -174,7 +206,7 @@ const ShareProfileModal = ({ profile, onClose }) => {
               onClick={handleTwitter}
               className="flex w-full items-center gap-3 rounded-2xl bg-black px-4 py-3 font-semibold text-white transition hover:bg-gray-900"
             >
-              <Twitter size={20} />
+              <Share2 size={20} />
               Share on Twitter/X
             </button>
           </div>
