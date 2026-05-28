@@ -32,10 +32,10 @@ const Feed = () => {
       <Navbar />
 
       {/* MAIN CONTENT */}
-      <div className="max-w-275 mx-auto flex justify-between gap-6 px-4 py-6">
+      <div className="flex w-full justify-between gap-6 px-4 py-6">
 
         {/* LEFT / CENTER FEED */}
-        <div className="lg:max-w-153.5 md:max-w-153.5 w-full space-y-6 md:mx-auto lg:mx-0">
+        <div className="w-full space-y-6 md:mx-auto lg:mx-0 lg:basis-[60%]">
 
           {/* STORIES */}
           <StoryBar />
@@ -69,13 +69,13 @@ const Feed = () => {
         </div>
 
         {/* RIGHT SIDEBAR (Desktop only) */}
-        <div className="hidden w-80 shrink-0 lg:block lg:self-start">
-          <div className="sticky top-24 space-y-6">
-            {/* SUGGESTED PROFILES */}
-            <SuggestedProfiles />
-            
+        <div className="mt-10 hidden lg:flex lg:basis-[40%] lg:justify-end lg:self-start">
+          <div className="w-md fixed right-4 top-20 z-10 hidden flex-col space-y-6 lg:flex lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
             {/* CAROUSEL SLIDESHOW */}
             <CarouselSlideshow />
+
+            {/* SUGGESTED PROFILES */}
+            <SuggestedProfiles />
           </div>
         </div>
 

@@ -32,7 +32,7 @@ const SuggestedProfiles = () => {
   const [followLoading, setFollowLoading] = useState({});
   const [toast, setToast] = useState(null);
   const [nextIndex, setNextIndex] = useState(0);
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 3;
   const navigate = useNavigate();
 
   const handleFollow = async (targetId) => {
@@ -87,7 +87,7 @@ const SuggestedProfiles = () => {
         />
       )}
 
-      <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mx-auto w-full max-w-md rounded-3xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-gray-900">Suggested for you</h2>
         <Link

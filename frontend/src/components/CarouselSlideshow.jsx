@@ -1,29 +1,43 @@
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import api from "../services/api";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import cdgLogo from "../assets/cdg logo.png";
+
+const topStudents = [
+  {
+    id: 1,
+    name: "Siddharth Jain",
+    company: "Goldman Sachs",
+    package: "32 LPA",
+    image: "https://i.pravatar.cc/300?img=12",
+  },
+  {
+    id: 2,
+    name: "Priya Patel",
+    company: "Microsoft",
+    package: "42 LPA",
+    image: "https://i.pravatar.cc/300?img=18",
+  },
+  {
+    id: 3,
+    name: "Amit Sharma",
+    company: "Amazon",
+    package: "40 LPA",
+    image: "https://i.pravatar.cc/300?img=32",
+  },
+  {
+    id: 4,
+    name: "Neha Singh",
+    company: "Adobe",
+    package: "38 LPA",
+    image: "https://i.pravatar.cc/300?img=15",
+  },
+];
 
 const CarouselSlideshow = () => {
-  const [items, setItems] = useState([]);
+  const [items] = useState(topStudents);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [autoPlay, setAutoPlay] = useState(true);
 
-  useEffect(() => {
-    const fetchCarouselItems = async () => {
-      try {
-        const res = await api.get("/feed/get-carousel");
-        setItems(res.data.carouselItems || []);
-      } catch (err) {
-        console.error("Failed to load carousel:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCarouselItems();
-  }, []);
-
-  // Auto-play carousel
   useEffect(() => {
     if (!autoPlay || items.length === 0) return;
 
@@ -44,120 +58,76 @@ const CarouselSlideshow = () => {
     setAutoPlay(false);
   };
 
-  if (loading) {
-    return (
-      <div className="w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-md">
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="animate-spin text-gray-400" size={32} />
-        </div>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return null;
-  }
-
   const currentItem = items[currentIndex];
+  const studentHandle = `JFS-${currentItem.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")}-${(currentIndex + 1).toString().padStart(3, "0")}`;
 
   return (
-    <div className="relative w-full rounded-2xl border border-gray-200 bg-white shadow-md overflow-hidden group">
-      {/* Carousel Content */}
-      <div className="relative bg-black">
-        {/* Image/Video Display */}
-        {currentItem.mediaType === "image" && currentItem.images?.length > 0 ? (
-          <img
-            src={currentItem.images[0].url}
-            alt="carousel"
-            className="h-96 w-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : currentItem.mediaType === "video" && currentItem.video?.url ? (
-          <video
-            src={currentItem.video.url}
-            preload="none"
-            poster={currentItem.thumbImage || currentItem.images?.[0]?.url || ""}
-            className="h-96 w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="h-96 w-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-400">No media</span>
+    <div className="rounded-4xl relative mx-auto w-full max-w-md overflow-hidden border border-slate-200 bg-white shadow-xl">
+      <div className="flex flex-col gap-6 p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <img
+                src={cdgLogo}
+                alt="Codegnan logo"
+                className="h-8 w-auto object-contain"
+                loading="lazy"
+              />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900">Placed Students</h2>
+            </div>
           </div>
-        )}
 
-        {/* Left Arrow */}
-        <button
-          onClick={goToPrevious}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/80 opacity-0 group-hover:opacity-100"
-          aria-label="Previous"
-        >
-          <ChevronLeft size={24} />
-        </button>
-
-        {/* Right Arrow */}
-        <button
-          onClick={goToNext}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/80 opacity-0 group-hover:opacity-100"
-          aria-label="Next"
-        >
-          <ChevronRight size={24} />
-        </button>
-
-        {/* Indicators */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-          {items.map((_, index) => (
+          <div className="flex items-center gap-2">
             <button
-              key={index}
-              onClick={() => {
-                setCurrentIndex(index);
-                setAutoPlay(false);
-              }}
-              className={`h-2 rounded-full transition ${
-                index === currentIndex
-                  ? "w-6 bg-white"
-                  : "w-2 bg-white/60 hover:bg-white/80"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Post Info */}
-      <div className="p-4">
-        {/* Author Info */}
-        <div className="mb-3 flex items-center gap-3">
-          <img
-            src={
-              currentItem.authorDetails?.profilePicture?.profileView ||
-              "https://i.pravatar.cc/150?img=12"
-            }
-            alt={currentItem.authorDetails?.username}
-            className="h-10 w-10 rounded-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-          <div>
-            <h3 className="font-semibold text-gray-900 text-sm">
-              {currentItem.authorDetails?.username || "User"}
-            </h3>
-            <p className="text-xs text-gray-500">Momentia</p>
+              onClick={goToPrevious}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100"
+              aria-label="Previous"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={goToNext}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100"
+              aria-label="Next"
+            >
+              <ChevronRight size={18} />
+            </button>
+            <div className="rounded-full bg-violet-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-violet-700">
+              {currentItem.package}
+            </div>
           </div>
         </div>
 
-        {/* Caption */}
-        {currentItem.caption && (
-          <p className="mb-2 text-sm text-gray-700 line-clamp-2">
-            {currentItem.caption}
-          </p>
-        )}
+        <div className="grid gap-5 rounded-[1.75rem] border border-slate-100 bg-slate-50 p-6 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div className="space-y-4">
+            <div>
+              <p className="text-2xl font-bold text-slate-900">{currentItem.name}</p>
+              <p className="mt-1 text-sm text-slate-500">{studentHandle}</p>
+            </div>
+            <div className="inline-flex items-center rounded-full bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+              {currentItem.company}
+            </div>
+          </div>
 
-        {/* Stats */}
-        <div className="flex gap-4 text-xs text-gray-600">
-          <span>❤️ {currentItem.totalLikes || 0} likes</span>
-          <span>💬 {currentItem.totalComments || 0} comments</span>
+          <div className="relative flex items-center justify-center">
+            <div className="h-24 w-24 overflow-hidden rounded-full bg-slate-100 shadow-lg">
+              <img
+                src={currentItem.image}
+                alt={currentItem.name}
+                className="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <div className="absolute -bottom-2 right-0 rounded-full bg-blue-700 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-white shadow-sm">
+              Placed
+            </div>
+          </div>
         </div>
       </div>
     </div>

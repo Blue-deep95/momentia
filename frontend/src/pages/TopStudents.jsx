@@ -1,7 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
 import { Award, Briefcase, GraduationCap, TrendingUp } from "lucide-react";
 
 const students = [
@@ -54,33 +53,32 @@ export default function TopStudents() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 lg:ml-[72px] xl:ml-[72px]">
-        <Topbar />
+      <div className="lg:ml-18 xl:ml-18 flex-1">
         
-        <div className="max-w-6xl mx-auto px-4 py-8 mt-16 lg:mt-0">
+        <div className="mx-auto mt-16 max-w-6xl px-4 py-8 lg:mt-0">
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
+            className="mb-12 text-center"
           >
-            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 mb-4">
+            <h1 className="bg-linear-to-r mb-4 from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-4xl font-extrabold text-transparent">
               Codegnan's Hall of Fame
             </h1>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            <p className="mx-auto max-w-2xl text-lg text-gray-600">
               Celebrating our top 20 students who achieved incredible placements at global tech giants. 
               Inspiring the next generation of tech leaders.
             </p>
-            <div className="flex justify-center gap-8 mt-8">
+            <div className="mt-8 flex justify-center gap-8">
                 <div className="flex flex-col items-center">
-                    <Award className="text-yellow-500 w-8 h-8 mb-2" />
+                    <Award className="mb-2 h-8 w-8 text-yellow-500" />
                     <span className="text-sm font-semibold text-gray-700">Top Placements</span>
                 </div>
                 <div className="flex flex-col items-center">
-                    <Briefcase className="text-blue-500 w-8 h-8 mb-2" />
+                    <Briefcase className="mb-2 h-8 w-8 text-blue-500" />
                     <span className="text-sm font-semibold text-gray-700">Fortune 500</span>
                 </div>
                 <div className="flex flex-col items-center">
-                    <TrendingUp className="text-green-500 w-8 h-8 mb-2" />
+                    <TrendingUp className="mb-2 h-8 w-8 text-green-500" />
                     <span className="text-sm font-semibold text-gray-700">High Packages</span>
                 </div>
             </div>
@@ -91,47 +89,47 @@ export default function TopStudents() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
             {students.map((student, index) => (
               <motion.div
                 key={student.id}
                 variants={itemVariants}
                 whileHover={{ scale: 1.03 }}
-                className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col"
+                className="flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-300 hover:shadow-xl"
               >
-                <div className="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-                <div className="p-6 flex flex-col items-center text-center">
+                <div className="bg-linear-to-r h-3 from-blue-500 via-purple-500 to-pink-500" />
+                <div className="flex flex-col items-center p-6 text-center">
                   <div className="relative mb-4">
                     <img 
                       src={student.image} 
                       alt={student.name} 
-                      className="w-24 h-24 rounded-full border-4 border-gray-50 object-cover shadow-sm"
+                      className="h-24 w-24 rounded-full border-4 border-gray-50 object-cover shadow-sm"
                     />
-                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1 shadow-md border border-gray-100">
-                        <span className="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                    <div className="absolute -bottom-2 -right-2 rounded-full border border-gray-100 bg-white p-1 shadow-md">
+                        <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-bold text-yellow-700">
                             <Award size={10} /> #{index + 1}
                         </span>
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-bold text-gray-800 mb-1">{student.name}</h3>
-                  <p className="text-sm text-blue-600 font-medium mb-4 flex items-center gap-1">
+                  <h3 className="mb-1 text-xl font-bold text-gray-800">{student.name}</h3>
+                  <p className="mb-4 flex items-center gap-1 text-sm font-medium text-blue-600">
                     <GraduationCap size={14} /> {student.role}
                   </p>
                   
-                  <div className="w-full space-y-3 mt-auto">
-                    <div className="bg-gray-50 rounded-xl p-3 flex items-center justify-between">
+                  <div className="mt-auto w-full space-y-3">
+                    <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3">
                       <div className="text-left">
-                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Company</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Company</p>
                         <p className="text-sm font-bold text-gray-700">{student.company}</p>
                       </div>
                       <Briefcase className="text-gray-300" size={18} />
                     </div>
                     
-                    <div className="bg-pink-50 rounded-xl p-3 flex items-center justify-between">
+                    <div className="flex items-center justify-between rounded-xl bg-pink-50 p-3">
                       <div className="text-left">
-                        <p className="text-[10px] uppercase tracking-wider text-pink-400 font-bold">Package</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-pink-400">Package</p>
                         <p className="text-sm font-bold text-pink-600">{student.package}</p>
                       </div>
                       <TrendingUp className="text-pink-200" size={18} />
@@ -146,7 +144,7 @@ export default function TopStudents() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mt-16 text-center text-gray-400 text-sm"
+            className="mt-16 text-center text-sm text-gray-400"
           >
             © 2026 Codegnan Placement Cell. All rights reserved.
           </motion.div>
