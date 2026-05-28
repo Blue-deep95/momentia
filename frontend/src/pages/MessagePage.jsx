@@ -1,12 +1,14 @@
 ﻿import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
-import { Search,X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function MessagePage() {
 	const user = useSelector((state) => state.auth.user);
 	const navigate = useNavigate();
+	const location = useLocation();
 	const userId = user?._id ? String(user._id) : user?.id ? String(user.id) : null;
 	const [rooms, setRooms] = useState([]);
 	const [followingProfiles, setFollowingProfiles] = useState([]);
@@ -17,8 +19,11 @@ export default function MessagePage() {
 	const [nextCursor, setNextCursor] = useState(null);
 	const [hasMore, setHasMore] = useState(false);
 	const [text, setText] = useState("");
-	const [searchTerm, setSearchTerm] = useState("");
 	const [loadingRooms, setLoadingRooms] = useState(false);
+	const [roomsError, setRoomsError] = useState("");
+	const [pendingShareLink, setPendingShareLink] = useState("");
+	const [pendingShareLabel, setPendingShareLabel] = useState("");
+	const [searchTerm, setSearchTerm] = useState("");
 	const [followingLoading, setFollowingLoading] = useState(false);
 	const [loadingMessages, setLoadingMessages] = useState(false);
 	const bottomRef = useRef(null);
@@ -28,6 +33,19 @@ export default function MessagePage() {
 	useEffect(() => {
 		activeRoomRef.current = activeRoom;
 	}, [activeRoom]);
+
+	// Handle shared profile link from Profile page
+	useEffect(() => {
+		const shareProfile = location.state?.shareProfile;
+		if (shareProfile) {
+			setPendingShareLink(shareProfile);
+			setPendingShareLabel(location.state?.sharedUsername ? `@${location.state.sharedUsername}` : "Profile link");
+			setShowNewMessageModal(true);
+			toast.success("Profile link ready to share in Momentia messages");
+			// Clear the location state so it doesn't persist on refresh
+			window.history.replaceState({}, document.title, window.location.pathname);
+		}
+	}, [location.state?.shareProfile, location.state?.sharedUsername]);
 
 	useEffect(() => {
 		if (!userId) return;
@@ -125,7 +143,7 @@ export default function MessagePage() {
 			};
 			setRooms((prev) => [roomWithInfo, ...prev.filter((r) => r._id !== roomWithInfo._id)]);
 			setShowNewMessageModal(false);
-			openRoom(roomWithInfo);
+			await openRoom(roomWithInfo);
 		} catch (err) {
 			console.error(err);
 			alert(err.response?.data?.message || err.message || "Failed to start chat");
@@ -135,11 +153,14 @@ export default function MessagePage() {
 	async function fetchRooms() {
 		try {
 			setLoadingRooms(true);
+			setRoomsError("");
 			const res = await api.get("/message/get-rooms");
 			setRooms(res.data.userRooms || []);
 		} catch (err) {
-			console.error(err);
-			alert(err.response?.data?.message || err.message || "Failed to load rooms");
+			const message = err.response?.data?.message || err.message || "Failed to load rooms";
+			console.error("Message room load error:", message, err);
+			setRoomsError(message);
+			toast.error(message);
 		} finally {
 			setLoadingRooms(false);
 		}
@@ -152,6 +173,10 @@ export default function MessagePage() {
 		setNextCursor(null);
 		setHasMore(false);
 		await fetchMessages(room._id, null, true);
+		if (pendingShareLink) {
+			setText(pendingShareLink);
+			setPendingShareLink("");
+		}
 		// mark read later when messages loaded
 	}
 
@@ -327,6 +352,17 @@ export default function MessagePage() {
 				<div className="overflow-auto px-4 pb-4 pt-0">
 					{loadingRooms || followingLoading ? (
 						<div className="text-sm text-slate-500">Loading...</div>
+					) : roomsError ? (
+						<div className="space-y-3 rounded-3xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+							<p className="font-semibold">Unable to load conversations.</p>
+							<p>{roomsError}</p>
+							<button
+								onClick={fetchRooms}
+								className="mt-3 inline-flex items-center justify-center rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+							>
+								Retry
+							</button>
+						</div>
 					) : filteredRooms.length === 0 ? (
 						<div className="text-sm text-slate-500">
 							{searchTerm ? "No conversations or profiles match your search." : "No conversations yet."}
@@ -485,8 +521,12 @@ export default function MessagePage() {
 							<button type="button" onClick={() => setShowNewMessageModal(false)} className="text-slate-500 transition hover:text-slate-700">
 								<X className="h-5 w-5" />
 							</button>
+						</div>					{pendingShareLink && (
+						<div className="mb-4 rounded-3xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">
+							<div className="font-semibold text-slate-900">Share profile link</div>
+							<p className="mt-1">Choose a person below and the link will be ready in the message composer.</p>
 						</div>
-						<div className="mb-4">
+					)}						<div className="mb-4">
 							<div className="relative">
 								<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 								<input
