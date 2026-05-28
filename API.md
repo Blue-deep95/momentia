@@ -316,7 +316,8 @@ Retrieves the list of followers for a specific user with pagination.
           "userId": "...", 
           "username": "...", 
           "name": "...", 
-          "profilePicture": "..." 
+          "profilePicture": "...",
+          "isFollowing": true
         }
       ],
       "message": "Followers list retrieved successfully"
@@ -338,7 +339,8 @@ Retrieves the list of users a specific user is following with pagination.
           "userId": "...", 
           "username": "...", 
           "name": "...", 
-          "profilePicture": "..." 
+          "profilePicture": "...",
+          "isFollowing": true
         }
       ],
       "message": "Following list retrieved successfully"

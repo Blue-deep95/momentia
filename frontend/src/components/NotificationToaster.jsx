@@ -183,9 +183,15 @@ const NotificationToastCard = ({ notification, isNew, onClick }) => {
           </div>
 
           <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-            {notification.notificationType === "comment"
-              ? notification.commentDetails?.content || "Commented on your post"
-              : `@${actors[0]?.username || "someone"} ${typeMeta.label}`}
+            {notification.notificationType === "comment" ? (
+              notification.notificationSubType === "reply" ?
+                notification.commentDetails?.content || "Replied to your comment"
+                : notification.commentDetails?.content || "Commented on your post"
+            ) : notification.notificationType === "post" ? (
+              notification.postDetails?.caption || "Liked your post"
+            ) : (
+              `@${actors[0]?.username || "someone"} ${typeMeta.label}`
+            )}
           </p>
         </div>
         <div className="ml-2 flex items-start">
