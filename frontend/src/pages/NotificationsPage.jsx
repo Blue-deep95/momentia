@@ -173,6 +173,8 @@ const NotifCard = ({ n, onRead, isNew }) => {
           src={avatar}
           alt={name}
           className="w-12 h-12 rounded-full object-cover border-2 border-white shadow"
+          loading="lazy"
+          decoding="async"
         />
 
         <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-[10px]">
@@ -221,6 +223,8 @@ const NotifCard = ({ n, onRead, isNew }) => {
             src={thumb}
             alt="post"
             className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
         </div>
       )}

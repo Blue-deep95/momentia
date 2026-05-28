@@ -204,11 +204,15 @@ const SinglePost = () => {
               src={post.images[0].url}
               alt="post"
               className="h-[640px] w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           ) : post.mediaType === "video" && post.video?.url ? (
             <video
               src={post.video.url}
               controls
+              preload="none"
+              poster={post.thumbImage || post.images?.[0]?.url || ""}
               className="h-[640px] w-full object-cover"
             />
           ) : (
@@ -234,6 +238,8 @@ const SinglePost = () => {
                 }
                 alt="profile"
                 className="h-10 w-10 rounded-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
 
               <div>
