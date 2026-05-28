@@ -21,4 +21,7 @@ const FollowSchema = new mongoose.Schema({
     }
 },{timestamps:true})
 
+FollowSchema.index({ host: 1, target: 1 }, { unique: true })
+
 module.exports = mongoose.model('follow',FollowSchema)
+

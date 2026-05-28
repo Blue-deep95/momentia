@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import api from "../services/api";
+import toast from "react-hot-toast";
 import {
   Heart,
   MessageCircleMore,
@@ -43,6 +44,7 @@ const SinglePost = () => {
           setLikesCount(res.data.post.totalLikes || 0);
           setCommentsCount(res.data.post.totalComments || 0);
           setIsFollowing(res.data.post.isFollowing || false);
+          setSaved(res.data.post.isSaved || false);
           
           // Fetch comments separately
           try {
@@ -119,6 +121,18 @@ const SinglePost = () => {
     }
   };
 
+  const handleToggleSave = async () => {
+    try {
+      const res = await api.post(`/post/toggle-savedposts/${post._id}`);
+      const isSaved = res.data.isSaved;
+      setSaved(isSaved);
+      toast.success(isSaved ? "Post saved" : "Post removed from saved");
+    } catch (err) {
+      console.error("Error toggling save", err);
+      toast.error("Could not update saved posts");
+    }
+  };
+
   const handleAddComment = (newComment) => {
     setComments([...comments, newComment]);
     setCommentsCount((c) => c + 1);
@@ -190,11 +204,15 @@ const SinglePost = () => {
               src={post.images[0].url}
               alt="post"
               className="h-[640px] w-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           ) : post.mediaType === "video" && post.video?.url ? (
             <video
               src={post.video.url}
               controls
+              preload="none"
+              poster={post.thumbImage || post.images?.[0]?.url || ""}
               className="h-[640px] w-full object-cover"
             />
           ) : (
@@ -220,6 +238,8 @@ const SinglePost = () => {
                 }
                 alt="profile"
                 className="h-10 w-10 rounded-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
 
               <div>
@@ -318,7 +338,7 @@ const SinglePost = () => {
                 </button>
               </div>
 
-              <button onClick={() => setSaved(!saved)} className="transition hover:scale-110">
+                <button onClick={handleToggleSave} className="transition hover:scale-110">
                 <Bookmark size={24} className={`transition ${saved ? "fill-gray-700 text-gray-700" : "text-gray-700"}`} />
               </button>
             </div>

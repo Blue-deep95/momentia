@@ -1,23 +1,23 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
-import Register from "./pages/Register.jsx"
-import Login from "./pages/Login.jsx"
-import Feed from "./pages/Feed.jsx"
-import ForgotPassword from "./pages/ForgotPassword.jsx"
-import Profile from "./pages/Profile.jsx"
-import SearchPage from "./pages/SearchPage.jsx"
-import Reels from "./pages/Reels.jsx"
-import CreatePost from "./pages/CreatePost.jsx"
-import SinglePost from "./pages/SinglePost.jsx"
-import MessagePage from "./pages/MessagePage.jsx"
-
-import Notifications from "./pages/NotificationsPage.jsx"
+const Register = lazy(() => import("./pages/Register.jsx"));
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Feed = lazy(() => import("./pages/Feed.jsx"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const SearchPage = lazy(() => import("./pages/SearchPage.jsx"));
+const Reels = lazy(() => import("./pages/Reels.jsx"));
+const CreatePost = lazy(() => import("./pages/CreatePost.jsx"));
+const SinglePost = lazy(() => import("./pages/SinglePost.jsx"));
+const MessagePage = lazy(() => import("./pages/MessagePage.jsx"));
+const Notifications = lazy(() => import("./pages/NotificationsPage.jsx"));
+const TopStudents = lazy(() => import("./pages/TopStudents.jsx"));
 import { initSocket, disconnectSocket } from "./socket.js"
 import { login, logout } from "./slices/authSlice.js"
 import api from "./services/api.js"
 
-import ProtectedRoutes from './components/ProtectedRoutes.jsx'
+const ProtectedRoutes = lazy(() => import('./components/ProtectedRoutes.jsx'));
 import NotificationToaster from './components/NotificationToaster.jsx'
 
 export default function App() {
@@ -76,28 +76,32 @@ export default function App() {
     <div>
       <BrowserRouter>
         <NotificationToaster />
-        <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center bg-white text-gray-500">
+            Loading...
+          </div>
+        }>
+          <Routes>
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
+            <Route path="/" element={<ProtectedRoutes />}>
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:userId" element={<Profile />} />
 
-          <Route path="/" element={<ProtectedRoutes />}>
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/reels" element={<Reels />} />
+              <Route path="/post/:postId" element={<SinglePost />} />
+              <Route path="/" element={<Feed />} />
+              <Route path="/messages" element={<MessagePage />} />
+              <Route path="/create-post" element={<CreatePost />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/top-placed" element={<TopStudents />} />
+            </Route>
 
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/reels" element={<Reels />} />
-            <Route path="/post/:postId" element={<SinglePost />} />
-            <Route path="/" element={<Feed />} />
-            <Route path="/messages" element={<MessagePage />} />
-            <Route path="/create-post" element={<CreatePost />} />
-            <Route path="/notifications" element={<Notifications />} />
-
-          </Route>
-
-
-        </Routes>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </div>
   )

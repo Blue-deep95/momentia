@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { X, User } from "lucide-react";
 import api from "../services/api.js";
 
-const Fallow = ({ title, onClose, userId, type = "followers" }) => {
+const Follow = ({ title, onClose, userId, type = "followers" }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -112,4 +112,4 @@ const Fallow = ({ title, onClose, userId, type = "followers" }) => {
   );
 };
 
-export default Fallow;
+export default Follow;

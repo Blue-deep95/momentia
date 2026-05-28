@@ -2,13 +2,14 @@
 // events related to notifications
 const { notificationBus } = require("../events/event");
 const Notification = require("../models/Notification"); // import the model
+const Post = require("../models/Post")
 const { io } = require("../socket/socket");
 const { onlineUsers } = require("../socket/socketStore");
 
 // to prevent notifications from firing every second or so,
 // limit sending notifications by this time
 // we use this with updated at field from mongodb
-const GLOBAL_NOTIFICATION_LIMIT = 1000 ; // 1 miniute limit
+const GLOBAL_NOTIFICATION_LIMIT = 1000; // 1 miniute limit
 
 // start listening to events
 notificationBus.on("post-liked", async (data) => {
@@ -50,7 +51,7 @@ notificationBus.on("post-liked", async (data) => {
       const shouldNotify =
         !oldNotification ||
         Date.now() - oldNotification.updatedAt.getTime() >
-          GLOBAL_NOTIFICATION_LIMIT;
+        GLOBAL_NOTIFICATION_LIMIT;
       // only send the notifications after certain time limit to prevent notification spam
       if (shouldNotify) {
         // write aggregation pipeline like joining user data and post data here
@@ -62,10 +63,10 @@ notificationBus.on("post-liked", async (data) => {
           isRead: false,
         })
           .populate("actors", "_id username profilePicture")
-          .populate({ 
-            path: "targetEntityId", 
-            model: "post", 
-            select: "_id caption thumbImage" 
+          .populate({
+            path: "targetEntityId",
+            model: "post",
+            select: "_id caption thumbImage"
           });
         io.to(targetSocketId).emit("notification-post-liked", notificationData);
       }
@@ -138,7 +139,7 @@ notificationBus.on("follow-user", async (data) => {
       const shouldNotify =
         !oldNotification ||
         Date.now() - oldNotification.updatedAt.getTime() >
-          GLOBAL_NOTIFICATION_LIMIT;
+        GLOBAL_NOTIFICATION_LIMIT;
 
       if (shouldNotify) {
         const notificationData = await Notification.findOne({
@@ -178,3 +179,344 @@ notificationBus.on("unfollow-user", async (data) => {
     console.error("Error in unfollow-user event listener", error);
   }
 });
+
+
+// notification for replying to anohter user what we will send is the comment he is 
+// being replied to and the content of the comment
+notificationBus.on("comment-reply", async (data) => {
+  try {
+    // we should send the notification to data.repliedTo with the same targetEntityId as comment
+    const oldNotification = await Notification.findOneAndUpdate(
+      {
+        recipient: data.repliedTo,
+        notificationType: 'comment',
+        notificationSubType: 'reply',
+        targetEntityId: data.repliedToComment,
+        isRead: false
+      },
+      {
+        $inc: { actorCount: 1 },
+        $push: {
+          actors: {
+            $each: [data.author],
+            $position: 0,
+            $slice: 3
+          }
+        }
+      },
+      { upsert: true, returnDocument: 'before' })
+    // check if the user is online or not 
+    const targetSocketId = onlineUsers.get(data.repliedTo.toString())
+
+    // if the user is online send notification
+    if (targetSocketId) {
+      const shouldNotify = !oldNotification || Date.now() - oldNotification.updatedAt.getTime() > GLOBAL_NOTIFICATION_LIMIT
+      // again should notify is similar to the way we did for post-liked notifications
+      if (shouldNotify) {
+        const notificationData = await Notification.findOne({
+          recipient: data.repliedTo,
+          targetEntityId: data.repliedToComment,
+          notificationType: 'comment',
+          notificationSubType: 'reply',
+          isRead: false
+        })
+          .populate('actors', '_id username profilePicture')
+          .populate({
+            path: 'targetEntityId',
+            model: 'comment',
+            select: '_id content'
+          })
+
+        // also get the post data where the user is getting replies from
+        const postData = await Post.findById(data.postTarget)
+          .select("_id thumbImage caption")
+
+        const responseData = {
+          ...notificationData.toObject(),
+          actorDetails: notificationData.actors,
+          commentDetails: {
+            _id: notificationData.targetEntityId?._id,
+            content: notificationData.targetEntityId?.content,
+            postInfo: {
+              thumbImage: postData ? postData.thumbImage : null
+            }
+          }
+        };
+        io.to(targetSocketId).emit('comment-reply', responseData);
+      }
+    }
+  }
+  catch (error) {
+    console.error('Error in comment-reply notification service', error)
+  }
+})
+//for comments on post
+notificationBus.on("comment-posted", async (data) => {
+  try {
+
+    const oldNotification =
+      await Notification.findOneAndUpdate(
+        {
+          recipient: data.postAuthor,
+          notificationType: "post",
+          notificationSubType: "comment",
+          targetEntityId: data.postTarget,
+          isRead: false,
+        },
+
+        {
+          $inc: { actorCount: 1 },
+
+          $push: {
+            actors: {
+              $each: [data.author],
+              $position: 0,
+              $slice: 3,
+            },
+          },
+        },
+
+        {
+          upsert: true,
+          returnDocument: "before",
+        }
+      );
+
+
+
+    // CHECK ONLINE USER
+    const targetSocketId =
+      onlineUsers.get(
+        data.postAuthor.toString()
+      );
+
+
+    if (targetSocketId) {
+
+      const shouldNotify =
+        !oldNotification ||
+        Date.now() -
+        oldNotification.updatedAt.getTime() >
+        GLOBAL_NOTIFICATION_LIMIT;
+
+      if (shouldNotify) {
+
+        const notificationData =
+          await Notification.findOne({
+            recipient: data.postAuthor,
+
+            targetEntityId:
+              data.postTarget,
+
+            notificationType: "post",
+
+            notificationSubType: "comment",
+
+            isRead: false,
+          })
+
+            .populate(
+              "actors",
+              "_id username profilePicture"
+            )
+
+            .populate({
+              path: "targetEntityId",
+              model: "post",
+              select:
+                "_id caption thumbImage",
+            });
+
+
+
+        io.to(targetSocketId).emit(
+          "notification-comment-posted",
+          notificationData
+        );
+      }
+    }
+  } catch (error) {
+    console.log(
+      "Error in comment-posted listener",
+      error
+    );
+  }
+});
+
+// Comment like notification
+notificationBus.on(
+  "comment-liked",
+  async (data) => {
+
+    try {
+
+      const oldNotification =
+        await Notification.findOneAndUpdate(
+
+          {
+            recipient: data.commentAuthor,
+
+            notificationType: "comment",
+
+            notificationSubType: "like",
+
+            targetEntityId: data.commentTarget,
+
+            isRead: false
+          },
+
+          {
+            $inc: { actorCount: 1 },
+
+            $push: {
+              actors: {
+                $each: [data.author],
+
+                $position: 0,
+
+                $slice: 3
+              }
+            }
+          },
+
+          {
+            upsert: true,
+
+            returnDocument: "before"
+          }
+        )
+
+
+
+      // CHECK IF USER ONLINE
+      const targetSocketId =
+        onlineUsers.get(
+          data.commentAuthor.toString()
+        )
+
+
+
+      if (targetSocketId) {
+
+        const shouldNotify =
+          !oldNotification ||
+
+          Date.now() -
+          oldNotification.updatedAt.getTime()
+          >
+          GLOBAL_NOTIFICATION_LIMIT
+
+
+
+        if (shouldNotify) {
+
+          const notificationData =
+            await Notification.findOne({
+
+              recipient: data.commentAuthor,
+
+              notificationType: "comment",
+
+              notificationSubType: "like",
+
+              targetEntityId: data.commentTarget,
+
+              isRead: false
+            })
+
+              .populate(
+                "actors",
+                "_id username profilePicture"
+              )
+
+              .populate({
+                path: "targetEntityId",
+
+                model: "comment",
+
+                select: "_id content"
+              })
+
+
+
+          io.to(targetSocketId).emit(
+            "notification-comment-liked",
+            notificationData.toObject()
+          )
+        }
+      }
+
+    }
+    catch (error) {
+      console.log(
+        "Error in comment-liked listener",
+        error
+      )
+    }
+  }
+)
+
+
+// Comment unlike
+notificationBus.on(
+  "comment-unliked",
+  async (data) => {
+
+    try {
+
+      const editNotification =
+        await Notification.findOneAndUpdate(
+
+          {
+            recipient: data.commentAuthor,
+
+            notificationType: "comment",
+
+            notificationSubType: "like",
+
+            targetEntityId: data.commentTarget,
+
+            isRead: false
+          },
+
+          {
+            // decrease actor count
+            $inc: {
+              actorCount: -1
+            },
+
+            // remove actor
+            $pull: {
+              actors: data.author
+            }
+          },
+
+          {
+            returnDocument: "after"
+          }
+        )
+
+
+
+      // Delete notification
+      // if no actors left
+      if (
+        editNotification &&
+        editNotification.actorCount < 1
+      ) {
+
+        await Notification.findOneAndDelete({
+          _id: editNotification._id
+        })
+      }
+
+    }
+    catch (error) {
+
+      console.log(
+        "Error in comment-unliked listener",
+        error
+      )
+    }
+  }
+)

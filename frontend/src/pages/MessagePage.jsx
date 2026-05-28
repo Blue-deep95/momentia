@@ -1,18 +1,29 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
+import { Search, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function MessagePage() {
 	const user = useSelector((state) => state.auth.user);
+	const navigate = useNavigate();
+	const location = useLocation();
+	const userId = user?._id ? String(user._id) : user?.id ? String(user.id) : null;
 	const [rooms, setRooms] = useState([]);
 	const [followingProfiles, setFollowingProfiles] = useState([]);
 	const [activeRoom, setActiveRoom] = useState(null);
+	const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+	const [modalSearch, setModalSearch] = useState("");
 	const [messages, setMessages] = useState([]);
 	const [nextCursor, setNextCursor] = useState(null);
 	const [hasMore, setHasMore] = useState(false);
 	const [text, setText] = useState("");
-	const [searchTerm, setSearchTerm] = useState("");
 	const [loadingRooms, setLoadingRooms] = useState(false);
+	const [roomsError, setRoomsError] = useState("");
+	const [pendingShareLink, setPendingShareLink] = useState("");
+	const [pendingShareLabel, setPendingShareLabel] = useState("");
+	const [searchTerm, setSearchTerm] = useState("");
 	const [followingLoading, setFollowingLoading] = useState(false);
 	const [loadingMessages, setLoadingMessages] = useState(false);
 	const bottomRef = useRef(null);
@@ -23,8 +34,21 @@ export default function MessagePage() {
 		activeRoomRef.current = activeRoom;
 	}, [activeRoom]);
 
+	// Handle shared profile link from Profile page
 	useEffect(() => {
-		if (!user?.id) return;
+		const shareProfile = location.state?.shareProfile;
+		if (shareProfile) {
+			setPendingShareLink(shareProfile);
+			setPendingShareLabel(location.state?.sharedUsername ? `@${location.state.sharedUsername}` : "Profile link");
+			setShowNewMessageModal(true);
+			toast.success("Profile link ready to share in Momentia messages");
+			// Clear the location state so it doesn't persist on refresh
+			window.history.replaceState({}, document.title, window.location.pathname);
+		}
+	}, [location.state?.shareProfile, location.state?.sharedUsername]);
+
+	useEffect(() => {
+		if (!userId) return;
 		fetchFollowing();
 		fetchRooms();
 
@@ -48,11 +72,11 @@ export default function MessagePage() {
 					const idx = prev.findIndex((r) => r._id === payload.roomId.toString());
 					if (idx === -1) return prev;
 					const copy = [...prev];
-					copy[idx] = { 
-						...copy[idx], 
-						lastMessage: { content: payload.content, sender: payload.sender }, 
-						lastMessageAt: Date.now(), 
-						currentMessageCount: (copy[idx].currentMessageCount || 0) + 1 
+					copy[idx] = {
+						...copy[idx],
+						lastMessage: { content: payload.content, sender: payload.sender },
+						lastMessageAt: Date.now(),
+						currentMessageCount: (copy[idx].currentMessageCount || 0) + 1
 					};
 					// move to top
 					const moved = copy.splice(idx, 1)[0];
@@ -91,10 +115,10 @@ export default function MessagePage() {
 	}, [messages]);
 
 	async function fetchFollowing() {
-		if (!user?.id) return;
+		if (!userId) return;
 		try {
 			setFollowingLoading(true);
-			const res = await api.get(`/profile/get-following/${user.id}`);
+			const res = await api.get(`/profile/get-following/${userId}`);
 			setFollowingProfiles(res.data.following || []);
 		} catch (err) {
 			console.error(err);
@@ -118,7 +142,8 @@ export default function MessagePage() {
 				},
 			};
 			setRooms((prev) => [roomWithInfo, ...prev.filter((r) => r._id !== roomWithInfo._id)]);
-			openRoom(roomWithInfo);
+			setShowNewMessageModal(false);
+			await openRoom(roomWithInfo);
 		} catch (err) {
 			console.error(err);
 			alert(err.response?.data?.message || err.message || "Failed to start chat");
@@ -128,11 +153,14 @@ export default function MessagePage() {
 	async function fetchRooms() {
 		try {
 			setLoadingRooms(true);
+			setRoomsError("");
 			const res = await api.get("/message/get-rooms");
 			setRooms(res.data.userRooms || []);
 		} catch (err) {
-			console.error(err);
-			alert(err.response?.data?.message || err.message || "Failed to load rooms");
+			const message = err.response?.data?.message || err.message || "Failed to load rooms";
+			console.error("Message room load error:", message, err);
+			setRoomsError(message);
+			toast.error(message);
 		} finally {
 			setLoadingRooms(false);
 		}
@@ -140,10 +168,15 @@ export default function MessagePage() {
 
 	async function openRoom(room) {
 		setActiveRoom(room);
+		setShowNewMessageModal(false);
 		setMessages([]);
 		setNextCursor(null);
 		setHasMore(false);
 		await fetchMessages(room._id, null, true);
+		if (pendingShareLink) {
+			setText(pendingShareLink);
+			setPendingShareLink("");
+		}
 		// mark read later when messages loaded
 	}
 
@@ -217,16 +250,59 @@ export default function MessagePage() {
 		}
 	}
 
-	const filteredRooms = rooms.filter((r) => {
-		const title = r.roomType === "dm" ? r.dmUserInfo?.username || "Direct Message" : r.roomName;
-		return title.toLowerCase().includes(searchTerm.toLowerCase());
-	});
+	const filteredRooms = rooms
+		.filter((r) => {
+			const title = r.roomType === "dm" ? r.dmUserInfo?.username || "Direct Message" : r.roomName;
+			return title.toLowerCase().includes(searchTerm.toLowerCase());
+		})
+		.sort((a, b) => {
+			// Prioritize conversations with messages first, then sort by recency
+			const aHasMessage = a.lastMessageAt && a.lastMessageAt > 0;
+			const bHasMessage = b.lastMessageAt && b.lastMessageAt > 0;
+
+			if (aHasMessage && !bHasMessage) return -1;
+			if (!aHasMessage && bHasMessage) return 1;
+
+			const aTime = a.lastMessageAt || a.updatedAt || a.createdAt || 0;
+			const bTime = b.lastMessageAt || b.updatedAt || b.createdAt || 0;
+			return new Date(bTime) - new Date(aTime);
+		});
 
 	const getProfileImage = (profile) =>
-		profile.profilePicture?.profileView ||
-		profile.profilePicture ||
-		profile.profilePicture?.original?.url ||
+		profile?.profilePicture?.profileView ||
+		profile?.profilePicture ||
+		profile?.profilePicture?.original?.url ||
 		"";
+
+	const renderRoom = (room) => {
+		const displayName = room.roomType === "dm"
+			? room.dmUserInfo?.name || room.dmUserInfo?.username || "Direct Message"
+			: room.roomName || "Group Chat";
+		const profileImage = room.dmUserInfo?.profilePicture?.profileView || room.dmUserInfo?.profilePicture || "";
+		const isActive = activeRoom?._id === room._id;
+		return (
+			<button
+				key={room._id}
+				onClick={() => openRoom(room)}
+				className={`flex w-full items-center gap-3 rounded-3xl border px-4 py-3 text-left transition ${isActive
+					? "border-blue-400 bg-blue-50"
+					: "border-slate-200 bg-slate-50 hover:bg-slate-100"
+					}`}
+			>
+				<div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-slate-200">
+					{profileImage ? (
+						<img src={profileImage} alt={displayName} className="h-full w-full object-cover" />
+					) : (
+						<div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-600">{displayName?.[0]}</div>
+					)}
+				</div>
+				<div className="min-w-0 flex-1">
+					<div className="truncate font-semibold text-slate-900">{displayName}</div>
+					<div className="mt-1 truncate text-sm text-slate-500">{room.lastMessage?.content || "No messages yet"}</div>
+				</div>
+			</button>
+		);
+	};
 
 	const renderFollowingProfile = (profile) => {
 		const profileImage = getProfileImage(profile);
@@ -252,50 +328,59 @@ export default function MessagePage() {
 	};
 
 	return (
-		<div className="flex h-screen min-h-screen overflow-hidden bg-slate-100 text-slate-900 lg:pl-[72px]">
-			<div className="hidden min-h-0 flex-col border-r border-slate-200 bg-white xl:flex xl:w-[320px]">
-				<div className="border-b p-4">
-					<div className="flex items-center justify-between gap-3">
-						<div>
-							<h2 className="text-lg font-semibold">Messages</h2>
-							<p className="text-sm text-slate-500">Latest conversations</p>
-						</div>
-						<button onClick={fetchFollowing} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">
-							+
-						</button>
+		<div className="lg:pl-18 flex h-screen min-h-screen overflow-hidden bg-slate-100 text-slate-900">
+			<div className={`${activeRoom ? 'hidden' : 'flex w-full'} min-h-0 flex-col border-r border-slate-200 bg-white xl:flex xl:w-[320px]`}>
+
+				<div className="px-4 py-4">
+					<div className="mb-4">
+						<h2 className="text-xl font-bold text-slate-900">{user?.username }</h2>
 					</div>
-				</div>
-				<div className="border-b px-4 py-4">
-					<div className="mb-3">
+					<div className="relative mb-3">
+						<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 						<input
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
-							placeholder="Search conversations"
-							className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+							id="message-search" placeholder="Search"
+							className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-2 pl-10 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
 						/>
 					</div>
-					<div className="flex items-center justify-between text-sm font-semibold text-slate-700">
-						<span>Latest First</span>
-						<button className="text-blue-600 hover:underline">Sort</button>
-					</div>
+					
 				</div>
-				<div className="overflow-auto border-t border-slate-200 p-4">
-					{followingLoading ? (
-						<div className="text-sm text-slate-500">Loading profiles...</div>
-					) : followingProfiles.length === 0 ? (
-						<div className="text-sm text-slate-500">No profiles found.</div>
+				<div className="mb-2 ml-4">
+						<h3 className="text-lg font-semibold text-slate-900">Messages</h3>
+					</div>
+				<div className="overflow-auto px-4 pb-4 pt-0">
+					{loadingRooms || followingLoading ? (
+						<div className="text-sm text-slate-500">Loading...</div>
+					) : roomsError ? (
+						<div className="space-y-3 rounded-3xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+							<p className="font-semibold">Unable to load conversations.</p>
+							<p>{roomsError}</p>
+							<button
+								onClick={fetchRooms}
+								className="mt-3 inline-flex items-center justify-center rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
+							>
+								Retry
+							</button>
+						</div>
+					) : filteredRooms.length === 0 ? (
+						<div className="text-sm text-slate-500">
+							{searchTerm ? "No conversations or profiles match your search." : "No conversations yet."}
+						</div>
 					) : (
 						<div className="space-y-3">
-							{followingProfiles.map(renderFollowingProfile)}
+							{filteredRooms.map(renderRoom)}
 						</div>
 					)}
 				</div>
 			</div>
-		<div className="flex min-h-0 flex-1 flex-col">
-				<div className="border-b bg-white p-4">
-					<div className="font-semibold text-slate-900">{activeRoom ? (activeRoom.roomType === 'dm' ? (activeRoom.dmUserInfo?.username || 'DM') : activeRoom.roomName) : 'Select a conversation'}</div>
-					<div className="mt-1 text-sm text-slate-500">{activeRoom ? (activeRoom.roomType === 'dm' ? 'Chat with your friend' : 'Group conversation') : 'Choose a chat to view messages'}</div>
-				</div>
+			<div className={`${activeRoom ? 'flex' : 'hidden'} min-h-0 flex-1 flex-col xl:flex`}>
+				{activeRoom && (
+					<div className="border-b bg-white p-4">
+						<div className="font-semibold text-slate-900">{activeRoom.roomType === 'dm' ? (activeRoom.dmUserInfo?.name || activeRoom.dmUserInfo?.username || 'DM') : activeRoom.roomName || 'Group Chat'}</div>
+						<div className="mt-1 text-sm text-slate-500">{activeRoom.roomType === 'dm' ? 'Chat with your friend' : 'Group conversation'}</div>
+					</div>
+				)}
 				<div className="min-h-0 flex-1 overflow-y-auto bg-slate-100 p-6">
 					{!activeRoom && (
 						<div className="flex h-full flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
@@ -304,7 +389,14 @@ export default function MessagePage() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 12l9-7" opacity="0.4" />
 							</svg>
 							<h3 className="mt-6 text-xl font-semibold text-slate-700">Your messages</h3>
-							<p className="mt-2 text-sm text-slate-500">Select a chat from the left to continue.</p>
+							<p className="mt-2 text-sm text-slate-500">Send a message to start a chat.</p>
+						<button
+							type="button"
+							onClick={() => setShowNewMessageModal(true)}
+							className="mt-6 inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+						>
+							Send message
+						</button>
 						</div>
 					)}
 					{activeRoom && (
@@ -312,30 +404,72 @@ export default function MessagePage() {
 							{loadingMessages && <div className="text-sm text-slate-500">Loading messages...</div>}
 							{hasMore && <button onClick={loadMore} className="text-sm text-blue-600 hover:underline">Load earlier messages</button>}
 							<div className="space-y-3">
-								{messages.map((m) => (
-									<div key={m._id} className={`max-w-[72%] rounded-3xl p-4 shadow-sm ${m.sender === user?._id ? 'ml-auto bg-blue-600 text-white' : 'bg-white text-slate-900'}`}>
-										<div className="text-sm leading-relaxed">{m.content}</div>
-										<div className="mt-2 text-right text-xs text-slate-400">{m.isEdited ? 'edited Â· ' : ''}{new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-									</div>
-								))}
+								{messages.map((m) => {
+									const senderId = m.sender?._id ? String(m.sender._id) : m.sender ? String(m.sender) : null;
+									const isOwn = userId && senderId && senderId === userId;
+									const senderProfilePic = m.sender?.profilePicture?.profileView || m.sender?.profilePicture || "";
+									return (
+										<div key={m._id} className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+											{!isOwn && (
+												<div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-200">
+													{senderProfilePic ? (
+														<img src={senderProfilePic} alt="sender" className="h-full w-full object-cover" />
+													) : (
+														<div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-600">
+															{m.sender?.username?.[0] || "?"}
+														</div>
+													)}
+												</div>
+											)}
+											<div className={`max-w-[72%] rounded-3xl p-4 shadow-sm ${isOwn ? 'bg-blue-600 text-white' : 'bg-white text-slate-900'}`}>
+												<div className="text-sm leading-relaxed">{m.content}</div>
+												<div className={`mt-2 text-xs ${isOwn ? 'text-blue-200' : 'text-slate-400'}`}>{m.isEdited ? 'edited · ' : ''}{new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+											</div>
+										</div>
+									);
+								})}
 								<div ref={bottomRef} />
 							</div>
 						</div>
 					)}
 				</div>
-				<form onSubmit={sendMessage} className="flex items-center gap-3 border-t border-slate-200 bg-white p-4">
-					<button type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 hover:bg-slate-100">ðŸ“Ž</button>
+				{activeRoom && (
+					<form onSubmit={sendMessage} className="flex items-center gap-3 bg-white p-4">
+					<button
+						type="button"
+						disabled={!activeRoom}
+						className="inline-flex h-11 items-center justify-center rounded-2xl bg-slate-50 px-4 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						{activeRoom ? (
+							activeRoom.roomType === 'dm' ? (
+								<div className="h-8 w-8 overflow-hidden rounded-full bg-slate-200 transition-transform duration-200 ease-out hover:scale-110">
+									{getProfileImage(activeRoom.dmUserInfo) ? (
+										<img src={getProfileImage(activeRoom.dmUserInfo)} alt="Chat avatar" className="h-full w-full object-cover" />
+									) : (
+										<div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-600">
+											C
+										</div>
+									)}
+								</div>
+							) : (
+								<span>{activeRoom.roomName || 'Group Chat'}</span>
+							)
+						) : (
+							<span>No chat selected</span>
+						)}
+					</button>
 					<input
 						value={text}
 						onChange={(e) => setText(e.target.value)}
 						placeholder={activeRoom ? "Write a message..." : "Select a conversation to message"}
 						disabled={!activeRoom}
-						className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed"
+						className="flex-1 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed"
 					/>
-					<button type="submit" disabled={!activeRoom || !text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
+					<button type="submit" disabled={!text.trim()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50">Send</button>
 				</form>
+				)}
 			</div>
-			<div className="hidden flex-col border-l border-slate-200 bg-white xl:flex xl:w-[300px]">
+			<div className="xl:w-75 hidden flex-col border-l border-slate-200 bg-white xl:flex">
 				<div className="border-b p-6 text-center">
 					<div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full bg-slate-200">
 						{(() => {
@@ -353,7 +487,7 @@ export default function MessagePage() {
 					<div className="text-lg font-semibold text-slate-900">{activeRoom?.dmUserInfo?.username || 'Select a chat'}</div>
 					<p className="mt-2 text-sm text-slate-500">{activeRoom?.dmUserInfo ? 'Personal blog' : 'Conversation details'}</p>
 					<p className="mt-3 text-sm leading-6 text-slate-500">{activeRoom?.dmUserInfo ? 'This is a quick preview of the selected conversation partner. Tap view profile to learn more.' : 'Pick a chat from the left to see profile details.'}</p>
-					<button className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">View profile</button>
+					<button onClick={() => activeRoom?.dmUserInfo?._id && navigate(`/profile/${activeRoom.dmUserInfo._id}`)} className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">View profile</button>
 				</div>
 				<div className="flex flex-1 flex-col justify-between gap-4 p-6">
 					<div className="grid grid-cols-2 gap-3">
@@ -376,6 +510,42 @@ export default function MessagePage() {
 					</div>
 				</div>
 			</div>
+			{showNewMessageModal && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+					<div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+						<div className="mb-4 flex items-center justify-between">
+							<div>
+								<h2 className="text-xl font-semibold text-slate-900">Start a new message</h2>
+								<p className="text-sm text-slate-500">Pick someone you follow to begin a conversation.</p>
+							</div>
+							<button type="button" onClick={() => setShowNewMessageModal(false)} className="text-slate-500 transition hover:text-slate-700">
+								<X className="h-5 w-5" />
+							</button>
+						</div>					{pendingShareLink && (
+						<div className="mb-4 rounded-3xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">
+							<div className="font-semibold text-slate-900">Share profile link</div>
+							<p className="mt-1">Choose a person below and the link will be ready in the message composer.</p>
+						</div>
+					)}						<div className="mb-4">
+							<div className="relative">
+								<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+								<input
+									value={modalSearch}
+									onChange={(e) => setModalSearch(e.target.value)}
+									placeholder="Search following"
+									className="w-full rounded-full border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+								/>
+							</div>
+						</div>
+						<div className="max-h-[60vh] space-y-3 overflow-auto">
+							{followingProfiles.filter((profile) => profile.username.toLowerCase().includes(modalSearch.toLowerCase())).map(renderFollowingProfile)}
+							{followingProfiles.filter((profile) => profile.username.toLowerCase().includes(modalSearch.toLowerCase())).length === 0 && (
+								<div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">No matching people found.</div>
+							)}
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

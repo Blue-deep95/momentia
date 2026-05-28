@@ -50,6 +50,15 @@ const PostSchema = new mongoose.Schema({
         public_id:String
     },
 
+    gridFsMedia: [
+        {
+            url: String,
+            fileId: mongoose.Schema.Types.ObjectId
+        }
+    ],
+
+    gridFsThumbImage: String,
+
     // hashtags for future use 
     hashtags: [
         {

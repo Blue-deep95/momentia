@@ -12,6 +12,8 @@ const multer = require('multer')
 const router = express.Router()
 const uploadToCloudinary = require('../utils/uploadToCloudinary')
 const deleteFromCloudinary = require('../utils/deleteFromCloudinary')
+const { uploadToGridFS, deleteFromGridFS } = require('../utils/gridfs')
+const { processAvatar } = require('../utils/imageProcessor')
 
 // prepare multer
 const upload = multer({
@@ -140,13 +142,46 @@ router.get("/get-profile/:id",
             if (isUserFollowingTarget) {
                 following = true
             }
-            // null the savedposts to prevent sending unnecessary information 
-
 
             return res.status(200).json({ self: false, following, profile: target, message: "profile search succesful" })
         }
         catch (err) {
             console.log('Error in get-profile route', err)
+            return res.status(500).json({ message: 'Internal server error' })
+        }
+    }
+)
+
+// this is another route get-profile by username
+router.get("/get-profilebyusername/:username",
+    async (req, res) => {
+        try {
+            // user here is stored in req.user
+            const user = req.user
+            const { username } = req.params
+            // try to find the user in db
+            const target = await User.findOne({ username })
+                .select('-password -email -otp -refreshToken -savedPosts -blockedUsers')
+            if (!target) {
+                return res.status(404).json({ message: "User not found" })
+            }
+            // case where the request is from the user 
+            if (target._id.toString() === user._id.toString()) {
+                return res.status(200).
+                    json({ self: true, following: false, profile: target, message: "Your profile fetched succesfully" })
+            }
+            // for fetching other's profile we must also check whether the user is following the target or not
+            const isUserFollowingTarget = await Follow.findOne({ host: user._id, target: target._id })
+
+            let following = false
+            if (isUserFollowingTarget) {
+                following = true
+            }
+
+            return res.status(200).json({ self: false, following, profile: target, message: "profile search succesful" })
+        }
+        catch (err) {
+            console.log('Error in get-profilebyusername route', err)
             return res.status(500).json({ message: 'Internal server error' })
         }
     }
@@ -223,43 +258,77 @@ router.post("/upload-avatar",
             if (!req.file) {
                 return res.status(400).json({ message: "No image provided" })
             }
-            // upload to cloudinary using utility function
             const userId = req.user._id
-
-            // additional steps If the user already has an image uploaded remove it from cloudinary
-            // then upload to the file 
 
             const user = await User.findById(userId)
             if (!user) {
                 return res.status(400).json({ message: "invalid user" })
             }
-            const old_public_id = user.profilePicture?.original?.public_id
 
+            // 1. Delete old images from Cloudinary & GridFS in parallel
+            const deletePromises = []
+            const old_public_id = user.profilePicture?.original?.public_id
             if (old_public_id) {
-                await deleteFromCloudinary(old_public_id, 'image')
+                deletePromises.push(deleteFromCloudinary(old_public_id, 'image'))
+            }
+            if (user.gridFSProfilePicture) {
+                if (user.gridFSProfilePicture.original?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.original.fileId))
+                if (user.gridFSProfilePicture.profileView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.profileView.fileId))
+                if (user.gridFSProfilePicture.commentView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.commentView.fileId))
+            }
+            if (deletePromises.length > 0) {
+                await Promise.all(deletePromises).catch(err => console.error("Error deleting old avatar files:", err))
             }
 
+            // 2. Upload to Cloudinary (Primary) and GridFS (Backup) in parallel
+            const cloudinaryPromise = uploadToCloudinary(req.file.buffer, 'momentia/profiles', 'avatar', 'image')
 
-            // the result if succesfull gives out a secure_url that points to that specific image
-            const result = await uploadToCloudinary(req.file.buffer, 'momentia/profiles', 'avatar', 'image')
+            const gridFSPromise = (async () => {
+                try {
+                    const { original, profileView, commentView } = await processAvatar(req.file.buffer)
+                    const filenameBase = `${userId}_avatar_${Date.now()}`
+                    const [origRes, profRes, commRes] = await Promise.all([
+                        uploadToGridFS(original, `${filenameBase}_original.webp`, 'image/webp'),
+                        uploadToGridFS(profileView, `${filenameBase}_profile.webp`, 'image/webp'),
+                        uploadToGridFS(commentView, `${filenameBase}_comment.webp`, 'image/webp')
+                    ])
 
-            // create seperate profile and comment views
-            const profileViewUrl = result.secure_url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto/')
-            const commentViewUrl = result.secure_url.replace('/upload/', '/upload/w_50,h_50,c_fill,g_face,q_auto/')
-
-            // try to update the user profile pictures in mongodb
-            const response = await User.findByIdAndUpdate(userId,
-                {
-                    profilePicture: {
-                        original: {
-                            url: result.secure_url,
-                            public_id: result.public_id
-                        },
-                        profileView: profileViewUrl,
-                        commentView: commentViewUrl
+                    const getGridFSUrl = (fileId) => `${req.protocol}://${req.get('host')}/api/media/gridfs/${fileId}`
+                    return {
+                        original: { url: getGridFSUrl(origRes.fileId), fileId: origRes.fileId },
+                        profileView: { url: getGridFSUrl(profRes.fileId), fileId: profRes.fileId },
+                        commentView: { url: getGridFSUrl(commRes.fileId), fileId: commRes.fileId }
                     }
+                } catch (gridfsErr) {
+                    console.error("[GridFS Backup] Avatar upload failed:", gridfsErr)
+                    return null
                 }
-            )
+            })()
+
+            const [cloudinaryResult, gridFSResult] = await Promise.all([
+                cloudinaryPromise,
+                gridFSPromise
+            ])
+
+            const profileViewUrl = cloudinaryResult.secure_url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto/')
+            const commentViewUrl = cloudinaryResult.secure_url.replace('/upload/', '/upload/w_50,h_50,c_fill,g_face,q_auto/')
+
+            const updateData = {
+                profilePicture: {
+                    original: {
+                        url: cloudinaryResult.secure_url,
+                        public_id: cloudinaryResult.public_id
+                    },
+                    profileView: profileViewUrl,
+                    commentView: commentViewUrl
+                }
+            }
+
+            if (gridFSResult) {
+                updateData.gridFSProfilePicture = gridFSResult
+            }
+
+            await User.findByIdAndUpdate(userId, updateData)
             return res.status(200).json({ message: 'Profile picture updated succesfully' })
         }
         catch (err) {
@@ -270,39 +339,51 @@ router.post("/upload-avatar",
 )
 
 // per frontend teams request write a new remove-profile-picture route
-router.delete("/remove-avatar",async(req,res) => {
-    try{
-        
-        // first get the user details 
+router.delete("/remove-avatar", async (req, res) => {
+    try {
         const user = await User.findById(req.user._id)
 
         if (!user) {
-            return res.status(404).json({message:"User not found"})
+            return res.status(404).json({ message: "User not found" })
         }
 
-        // prevent the operation if the profile picture does not exist already
-        if (!user.profilePicture?.original?.public_id){
-            return res.status(400).json({message:"User profile picture does not exist"})
+        const hasCloudinary = !!user.profilePicture?.original?.public_id
+        const hasGridFS = !!(user.gridFSProfilePicture?.original?.fileId)
+
+        if (!hasCloudinary && !hasGridFS) {
+            return res.status(400).json({ message: "User profile picture does not exist" })
         }
 
-        // first we have to delete the profile picture from cloudinary 
-        const deleteProfilePicture = await deleteFromCloudinary(user.profilePicture.original.public_id,'image')
+        // Delete from Cloudinary & GridFS in parallel
+        const deletePromises = []
+        if (user.profilePicture?.original?.public_id) {
+            deletePromises.push(deleteFromCloudinary(user.profilePicture.original.public_id, 'image'))
+        }
+        if (user.gridFSProfilePicture) {
+            if (user.gridFSProfilePicture.original?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.original.fileId))
+            if (user.gridFSProfilePicture.profileView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.profileView.fileId))
+            if (user.gridFSProfilePicture.commentView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.commentView.fileId))
+        }
 
-        // after the deletion null the fields of profile picture
+        await Promise.all(deletePromises).catch(err => console.error("Error removing avatar files:", err))
+
         user.profilePicture.original.public_id = null
         user.profilePicture.original.url = null
         user.profilePicture.commentView = null
         user.profilePicture.profileView = null
 
+        user.gridFSProfilePicture = {
+            original: { url: null, fileId: null },
+            profileView: { url: null, fileId: null },
+            commentView: { url: null, fileId: null }
+        }
+
         await user.save()
-
-        return res.status(200).json({message:"Removal of avatar succesfull"})
-
-
+        return res.status(200).json({ message: "Removal of avatar succesfull" })
     }
-    catch(err){
-        console.log("Error in remove-avatar route",err)
-        return res.status(500).json({message:"Internal server error"})
+    catch (err) {
+        console.log("Error in remove-avatar route", err)
+        return res.status(500).json({ message: "Internal server error" })
     }
 })
 
@@ -333,7 +414,16 @@ router.post("/edit-profile",
 
             await user.save()
 
-            return res.status(200).json({ message: 'Profile update succesful' })
+            return res.status(200).json({
+                message: 'Profile update succesful',
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    email: user.email,
+                    profilePicture: user.profilePicture,
+                },
+            })
         }
 
         catch (err) {
@@ -349,6 +439,7 @@ router.get("/get-followers/:id",
     async (req, res) => {
         try {
             const { id } = req.params // This is the ID of the user whose followers we want to see
+            const currentUserId = new mongoose.Types.ObjectId(req.user._id);
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: "Invalid user ID" });
@@ -373,15 +464,42 @@ router.get("/get-followers/:id",
                 },
                 { $unwind: '$followerData' },
                 {
+                    $lookup: {
+                        from: 'follows',
+                        let: { followerId: '$followerData._id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$host', currentUserId] },
+                                            { $eq: ['$target', '$$followerId'] }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        as: 'followStatus'
+                    }
+                },
+                {
+                    $addFields: {
+                        isFollowing: { $gt: [{ $size: '$followStatus' }, 0] }
+                    }
+                },
+                {
                     $project: {
                         _id: 0,
                         userId: '$followerData._id',
                         username: '$followerData.username',
                         name: '$followerData.name',
-                        profilePicture: '$followerData.profilePicture.commentView'
+                        profilePicture: '$followerData.profilePicture.commentView',
+                        isFollowing: 1
                     }
                 }
             ]);
+
+            //console.log('followers are -->',followers)
 
             return res.status(200).json({
                 followers: followers,
@@ -460,6 +578,8 @@ router.get("/get-following/:id",
                     }
                 }
             ]);
+
+            //console.log("Following are -->",following)
 
             return res.status(200).json({
                 following: following,

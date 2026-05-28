@@ -1,94 +1,114 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { BadgeCheck } from "lucide-react";
+﻿import { useNavigate } from "react-router-dom";
 
 const UserListCard = ({
   user,
-  onActionClick,
-  actionLabel = "Remove",
-  isLoading = false,
   onUserClick,
+  actionNode = null,
   showOnline = false,
   animationDelay = 0,
 }) => {
   const navigate = useNavigate();
 
+  // Safely get profile picture from different possible locations
   const avatarSrc =
-    user.profilePicture?.commentView ||
-    user.profilePicture?.profileView ||
-    (typeof user.profilePicture === "string" ? user.profilePicture : null);
+    user?.profilePicture?.commentView ||
+    user?.profilePicture?.profileView ||
+    user?.profilePicture?.url ||
+    (typeof user?.profilePicture === "string" ? user.profilePicture : null);
 
+  const username = user?.username || user?.name || "Unknown";
+  const realName = user?.username && user?.name ? user.name : null;
+  
+  // Determine status label
+  const statusLabel =
+    user?.isFollowing === false
+      ? "Follow"
+      : user?.isFollowing === true
+      ? "Following"
+      : null;
+  
+  const initial = username[0]?.toUpperCase() || "U";
+
+  // Handle user card click - navigate to profile
   const handleUserClick = () => {
-    if (onUserClick) onUserClick();
-    navigate(`/profile/${user.userId}`);
+    onUserClick?.();
+    const profileId = user?.userId || user?._id;
+    
+    if (profileId) {
+      navigate(`/profile/${profileId}`, { replace: false });
+    }
   };
 
-  const btnStyles =
-    actionLabel === "Remove"
-      ? "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:border-red-500/40 hover:shadow-[0_6px_20px_-4px_rgba(239,68,68,0.25)]"
-      : actionLabel === "Follow" || actionLabel === "Unfollow"
-      ? "bg-gradient-to-br from-emerald-700 via-emerald-500 to-emerald-400 text-white shadow-[0_4px_16px_-4px_rgba(16,185,129,0.4)] hover:shadow-[0_8px_24px_-4px_rgba(16,185,129,0.55)]"
-      : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:border-emerald-400/30 hover:text-emerald-300";
+  // Handle image load error - hide broken images
+  const handleImageError = (e) => {
+    e.target.style.display = "none";
+  };
 
   return (
     <div
-      style={{ animationDelay: `${animationDelay}s` }}
-      className="group relative flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] bg-white border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+      className="user-card"
+      style={animationDelay ? { animationDelay: `${animationDelay}s` } : {}}
     >
-      {/* Hover glow overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-200/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-[18px]" />
-
-      {/* LEFT: avatar + info */}
-      <div
-        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-        onClick={handleUserClick}
-      >
-        {/* Avatar ring */}
-        <div className="relative flex-shrink-0 w-[52px] h-[52px] rounded-full p-[2px] bg-white border border-slate-200 shadow-sm">
-          {avatarSrc ? (
-            <img
-              src={avatarSrc}
-              alt={user.username}
-              className="w-full h-full rounded-full object-cover block"
-            />
-          ) : (
-            <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xl font-bold">
-              {(user.name || user.username || "U")[0].toUpperCase()}
+      <div className="card-main" onClick={handleUserClick}>
+        <div className="avatar-ring">
+          <div className="avatar-inner">
+            <div className="avatar-content">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt={username}
+                  className="h-full w-full object-cover"
+                  onError={handleImageError}
+                  loading="lazy"
+                />
+              ) : (
+                <span className="avatar-initial">{initial}</span>
+              )}
             </div>
-          )}
-
-          {/* Online dot */}
-          {showOnline && (
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white shadow-[0_0_6px_2px_rgba(52,238,129,0.35)] animate-pulse" />
-          )}
+          </div>
+          {showOnline && <span className="online-dot" />}
         </div>
 
-        {/* Name + handle */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[15px] font-semibold text-slate-900 truncate leading-tight">
-              {user.name || user.username}
+        <div className="user-details">
+          <div className="user-name">
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap block">
+              {username}
             </span>
-            <BadgeCheck size={13} className="text-emerald-500 flex-shrink-0" />
+            {statusLabel && (
+              <span className={`status-pill ${statusLabel === "Follow" ? "follow" : "following"}`}>
+                {statusLabel}
+              </span>
+            )}
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="flex-shrink-0"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" fill="#2F3EDB" opacity="0.15" />
+              <circle cx="12" cy="12" r="10" stroke="#2F3EDB" strokeWidth="1.5" fill="none" />
+              <polyline
+                points="8 12 11 15 16 9"
+                stroke="#2F3EDB"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
-          <p className="text-[12px] text-slate-500 truncate mt-0.5">
-            @{user.username}
+          <p className="user-handle" title={realName ? `@${user?.username}` : ""}>
+            {realName ? realName : `@${user?.username || "user"}`}
           </p>
         </div>
       </div>
 
-      {/* RIGHT: action button */}
-      <button
-        onClick={() => onActionClick(user.userId)}
-        disabled={isLoading}
-        className={`relative flex-shrink-0 flex items-center gap-1.5 px-3.5 py-[7px] rounded-[10px] text-[11px] font-bold tracking-[0.3px] hover:-translate-y-px transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${btnStyles}`}
-      >
-        {isLoading ? (
-          <span className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin inline-block" />
-        ) : (
-          actionLabel
-        )}
-      </button>
+      {actionNode && (
+        <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          {actionNode}
+        </div>
+      )}
     </div>
   );
 };

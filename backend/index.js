@@ -19,6 +19,8 @@ const feedRoutes = require('./routes/feedRoutes.js')
 const searchRoutes = require('./routes/searchRoutes.js')
 const notificationRoutes = require('./routes/notificationRoutes.js')
 const messageRoutes = require('./routes/messageRoutes.js')
+const mediaRoutes = require('./routes/mediaRoutes.js')
+const globalLimiter = require("./middleware/rateLimiter.js")
 
 // import db 
 const connectDB = require('./db/db.js')
@@ -48,20 +50,24 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
 
+//Global rate limiter
+app.use(globalLimiter)
+
 
 // trying to connect db
 connectDB(app)
-console.log('request reached server')
+//console.log('request reached server')
 // routes
 app.use("/api/user", userRoutes)
 app.use("/api/profile", protect, profileRoutes) // call the middleware right here
 app.use("/api/post", protect, postRoutes)
 app.use("/api/comment", protect, commentRoutes)
 app.use("/api/follow", protect, followRoutes)
-app.use("/api/feed", protect, feedRoutes)
+app.use("/api/feed",feedRoutes)
 app.use("/api/search", protect, searchRoutes)
 app.use("/api/notifications",protect,notificationRoutes)
 app.use("/api/message",protect,messageRoutes)
+app.use("/api/media", mediaRoutes)
 
 // event listeners
 require('./services/notificationService.js') // for sending notifications

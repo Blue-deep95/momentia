@@ -22,7 +22,7 @@ const Toast = ({ message, type = "error", onClose }) => {
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 z-60 p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
+    <div className={`fixed top-4 right-4 z-[70] p-4 rounded-2xl shadow-xl text-white transition-all duration-300 border-2 ${
       type === "error" ? "bg-red-500 border-red-400" : "bg-green-500 border-green-400"
     }`}>
       <div className="flex items-center gap-2">
@@ -44,7 +44,6 @@ const CommentItem = ({ comment, postId, onReply }) => {
   const [hasMoreReplies, setHasMoreReplies] = useState(comment.totalReplies > 0);
   const [loadingReplies, setLoadingReplies] = useState(false);
 
-  // Map backend field authorDetails to a consistent internal format if needed
   const author = comment.authorDetails || comment.author;
   const referencedUsername = comment.referencedUser?.username;
   const cleanedContent = (() => {
@@ -85,7 +84,6 @@ const CommentItem = ({ comment, postId, onReply }) => {
     try {
       const res = await deleteComment({ commentId: comment._id, parent: comment.parent }).unwrap();
       const deletedCount = res?.deletedCount || 1;
-      // notify post card to update count
       window.dispatchEvent(new CustomEvent('commentCountChanged', { detail: { postId, delta: -deletedCount } }));
     } catch (err) {
       console.error('Error deleting comment', err);
@@ -98,7 +96,6 @@ const CommentItem = ({ comment, postId, onReply }) => {
     setLoadingReplies(true);
     try {
       const res = await api.get(`/comment/get-replies/${postId}/${comment._id}/${repliesPage}`);
-      // Backend returns { replies: [...] }
       const newReplies = res.data.replies;
       if (newReplies && Array.isArray(newReplies) && newReplies.length > 0) {
         setReplies(prev => [...prev, ...newReplies]);
@@ -130,32 +127,32 @@ const CommentItem = ({ comment, postId, onReply }) => {
           <img
             src={author?.profilePicture?.commentView || author?.profilePicture?.profileView || "https://i.pravatar.cc/150?img=50"}
             alt=""
-            className="h-9 w-9 rounded-full object-cover"
+            className="h-9 w-9 rounded-full object-cover border border-gray-100"
           />
 
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-white">
+              <h3 className="text-sm font-bold text-gray-900">
                 {author?.username || "user"}
               </h3>
-              <span className="text-xs text-zinc-500">
+              <span className="text-[10px] text-gray-400 font-medium">
                 {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : "Just now"}
               </span>
             </div>
 
-            <p className="mt-1 text-sm text-zinc-300">
+            <p className="mt-0.5 text-sm text-gray-700 leading-snug">
               {referencedUsername && (
-                <span className="mr-1 text-blue-400">@{referencedUsername}</span>
+                <span className="mr-1 font-bold text-blue-600">@{referencedUsername}</span>
               )}
               {cleanedContent}
             </p>
 
-            <div className="mt-2 flex items-center gap-4 text-xs font-semibold text-zinc-500">
-              <button onClick={() => onReply(comment)} className="hover:text-zinc-300">
+            <div className="mt-2 flex items-center gap-4 text-[11px] font-bold text-gray-400">
+              <button onClick={() => onReply(comment)} className="hover:text-gray-900 transition-colors">
                 Reply
               </button>
               {currentUserId && commentAuthorId && String(currentUserId) === String(commentAuthorId) && (
-                <button onClick={handleDelete} className="text-red-400 hover:text-red-200">
+                <button onClick={handleDelete} className="text-red-500 hover:text-red-700 transition-colors">
                   Delete
                 </button>
               )}
@@ -168,10 +165,10 @@ const CommentItem = ({ comment, postId, onReply }) => {
           <button onClick={toggleLike}>
             <Heart
               size={14}
-              className={`${isLiked ? "fill-red-500 text-red-500" : "text-zinc-500"}`}
+              className={`${isLiked ? "fill-red-500 text-red-500" : "text-gray-300 hover:text-gray-400"}`}
             />
           </button>
-          <span className="mt-0.5 text-[10px] text-zinc-500">
+          <span className="mt-0.5 text-[10px] font-bold text-gray-400">
             {likesCount}
           </span>
         </div>
@@ -182,9 +179,9 @@ const CommentItem = ({ comment, postId, onReply }) => {
         <div className="ml-12">
           <button 
             onClick={handleToggleReplies}
-            className="flex items-center gap-2 text-xs font-semibold text-zinc-500 transition hover:text-zinc-300"
+            className="flex items-center gap-2 text-[11px] font-bold text-gray-400 transition hover:text-gray-600"
           >
-            <div className="h-px w-6 bg-zinc-700" />
+            <div className="h-px w-6 bg-gray-200" />
             {showReplies ? (
               <>Hide replies <ChevronUp size={14} /></>
             ) : (
@@ -193,7 +190,7 @@ const CommentItem = ({ comment, postId, onReply }) => {
           </button>
 
           {showReplies && (
-            <div className="mt-4 space-y-4 border-l border-zinc-800 pl-4">
+            <div className="mt-4 space-y-4 border-l-2 border-gray-50 pl-4">
               {replies.map(reply => (
                 <CommentItem 
                   key={reply._id || Math.random()} 
@@ -205,7 +202,7 @@ const CommentItem = ({ comment, postId, onReply }) => {
               {hasMoreReplies && (
                 <button 
                   onClick={fetchReplies}
-                  className="mt-2 text-xs font-semibold text-zinc-500"
+                  className="mt-2 text-[11px] font-bold text-blue-500 hover:text-blue-600"
                 >
                   {loadingReplies ? "Loading..." : "Load more replies"}
                 </button>
@@ -245,10 +242,10 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
       if (replyTo) {
         payload.parent = replyTo.parent || replyTo._id; 
         payload.reference = (replyTo.authorDetails?._id || replyTo.author?._id || replyTo.author);
+        payload.referenceComment = replyTo._id;
       }
 
       const res = await createComment(payload).unwrap();
-      // notify post card to increment comment count
       window.dispatchEvent(new CustomEvent('commentCountChanged', { detail: { postId: post._id, delta: 1 } }));
 
       setInput("");
@@ -259,18 +256,12 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
       }
     } catch (err) {
       console.error("Error adding comment", err);
-      if (err.response?.data?.message) {
-        setToast({ message: err.response.data.message, type: "error" });
-      } else {
-        setToast({ message: "Failed to post comment.", type: "error" });
-      }
-      alert(err.data?.message || "Failed to post comment.");
+      setToast({ message: err.data?.message || "Failed to post comment.", type: "error" });
     }
   };
 
   const handleReplyClick = useCallback((comment) => {
     setReplyTo(comment);
-    const authorName = comment.authorDetails?.username || comment.author?.username || "user";
     setInput(``);
   }, []);
 
@@ -287,7 +278,10 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
   const comments = commentsData?.comments || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60">
+    <div 
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-[2px] p-0 sm:items-center sm:p-4"
+      onClick={closeModal}
+    >
       {/* TOAST */}
       {toast && (
         <Toast
@@ -297,44 +291,39 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
         />
       )}
 
-      {/* MODAL */}
-      <div className="animate-slideUp flex h-[80vh] w-full max-w-md flex-col rounded-t-3xl bg-black">
-    <div 
-      className="z-100 fixed inset-0 flex items-end justify-center overflow-hidden bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-      onClick={closeModal}
-    >
+      {/* MODAL CONTAINER */}
       <div 
-        className="animate-slideUp sm:animate-zoomIn flex h-[85vh] w-full max-w-xl flex-col overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl sm:h-[70vh] sm:rounded-2xl lg:h-[80vh] lg:max-w-2xl"
+        className="animate-slideUp sm:animate-zoomIn flex h-[85vh] w-full max-w-xl flex-col overflow-hidden bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] sm:h-[70vh] sm:rounded-3xl lg:h-[80vh] lg:max-w-2xl border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* MOBILE HANDLE */}
-        <div className="flex justify-center border-b border-zinc-900 py-3 sm:hidden">
-          <div className="h-1.5 w-12 rounded-full bg-zinc-700" />
+        <div className="flex justify-center py-3 sm:hidden">
+          <div className="h-1.5 w-12 rounded-full bg-gray-200" />
         </div>
 
         {/* HEADER */}
-        <div className="flex items-center justify-between border-b border-zinc-900 bg-zinc-950 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-50 bg-white px-6 py-5">
             <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold tracking-tight text-white">Comments</h2>
-            <div className="rounded bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-400">
+            <h2 className="text-xl font-black tracking-tight text-gray-900">Comments</h2>
+            <div className="rounded-full bg-gray-100 px-3 py-1 text-[11px] font-black text-gray-500 uppercase tracking-wider">
               {typeof commentsCount === 'number' ? commentsCount : (post.totalComments || 0)}
             </div>
           </div>
           <button 
             onClick={closeModal}
-            className="rounded-full p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-white"
+            className="rounded-full p-2 text-gray-400 transition-all hover:bg-gray-50 hover:text-gray-900"
           >
             <X size={20} />
           </button>
         </div>
 
         {/* COMMENTS LIST */}
-        <div className="min-h-0 w-full flex-1 overflow-hidden">
+        <div className="min-h-0 w-full flex-1 overflow-hidden bg-white">
           {isLoading && page === 1 ? (
-            <div className="flex h-full animate-pulse flex-col items-center justify-center gap-3">
-               <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
-               <p className="text-sm font-medium text-zinc-500">Fetching conversation...</p>
+            <div className="flex h-full flex-col items-center justify-center gap-4">
+               <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-gray-100 border-t-blue-500" />
+               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Loading conversation</p>
             </div>
           ) : comments.length > 0 ? (
             <Virtuoso
@@ -344,7 +333,7 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
               endReached={loadMore}
               increaseViewportBy={400}
               itemContent={(index, comment) => (
-                <div className="px-4 pb-6 pt-2 sm:px-6">
+                <div className="px-6 py-4 sm:px-8">
                   <CommentItem 
                     comment={comment} 
                     postId={post._id}
@@ -354,27 +343,27 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
               )}
               components={{
                 Footer: () => isFetching && (
-                  <div className="flex justify-center py-6">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-700 border-t-blue-500" />
+                  <div className="flex justify-center py-8">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-100 border-t-blue-500" />
                   </div>
                 )
               }}
             />
           ) : (
-            <div className="flex h-full flex-col items-center justify-center space-y-4 px-10 text-zinc-500">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-zinc-800/50 bg-zinc-900/50">
-                <MessageCircle size={36} className="text-zinc-700" />
+            <div className="flex h-full flex-col items-center justify-center space-y-6 px-10">
+              <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-gray-50 border border-gray-100 rotate-12 shadow-sm">
+                <MessageCircle size={40} className="text-gray-300 -rotate-12" />
               </div>
-              <div className="space-y-1 text-center">
-                <p className="text-xl font-bold text-white">No comments yet</p>
-                <p className="max-w-62.5 text-sm text-zinc-500">Start the conversation by sharing your thoughts on this post.</p>
+              <div className="space-y-2 text-center">
+                <p className="text-2xl font-black text-gray-900">No comments yet</p>
+                <p className="max-w-[240px] text-sm text-gray-400 font-medium">Be the first to share your thoughts and start the conversation!</p>
               </div>
             </div>
           )}
         </div>
 
         {/* INPUT SECTION */}
-        <div className="border-t border-zinc-900 bg-zinc-950 p-4 sm:rounded-b-2xl sm:p-6">
+        <div className="border-t border-gray-50 bg-white p-4 sm:p-6 mt-auto">
           <CommentInput 
             input={input}
             setInput={setInput}
@@ -385,8 +374,6 @@ export default function CommentsModal({ post, closeModal, commentsCount }) {
           />
         </div>
       </div>
-    </div>
-    </div>
     </div>
   );
 }

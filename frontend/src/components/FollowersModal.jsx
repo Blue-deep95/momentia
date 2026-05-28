@@ -1,139 +1,291 @@
-import React, { useEffect, useState } from "react";
-import { X, User } from "lucide-react";
+/**
+ * FollowersModal.jsx
+ *
+ * Shows the list of people who follow a user.
+ * Logged-in user can:
+ *   - Follow/unfollow each follower (via FollowButton)
+ *   - Remove a follower (DELETE /follow/remove-follower/:id)
+ *   - Search followers by username or name
+ *
+ * Props:
+ *   userId                  – whose followers to load
+ *   onClose()               – close handler
+ *   onFollowersUpdate()     – called after remove (for parent count refresh)
+ *   onFollowersCountUpdate(n) – passes the new list length up
+ *
+ * APIs:
+ *   GET    /profile/get-followers/:userId  → { followers: UserListItem[] }
+ *   DELETE /follow/remove-follower/:id
+ *
+ * UserListItem shape: { userId, username, name, profilePicture, isFollowing? }
+ */
+
+import { useState, useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { Search, X, Users } from "lucide-react";
 import api from "../services/api.js";
 import UserListCard from "./UserListCard.jsx";
+import FollowButton from "./FollowButton.jsx";
+import "../styles/modalStyles.css";
 
-const FollowersModal = ({ userId, onClose, onFollowersUpdate, onFollowersCountUpdate }) => {
+/* ── Spinner ─────────────────────────────────────────────────── */
+const Spinner = () => (
+  <div className="spinner-center">
+    <span className="spinner-ring" />
+    <p className="text-sm text-slate-500">Loading followers…</p>
+  </div>
+);
+
+/* ── Empty state ─────────────────────────────────────────────── */
+const Empty = ({ text, sub }) => (
+  <div className="empty-state">
+    <div className="empty-illustration">
+      <Users size={22} color="#6B7280" />
+    </div>
+    <p className="empty-title">{text}</p>
+    <p className="empty-subtitle">{sub}</p>
+  </div>
+);
+
+/* ── FollowersModal ───────────────────────────────────────────── */
+const FollowersModal = ({
+  userId,
+  onClose,
+  onFollowersUpdate,
+  onFollowersCountUpdate,
+}) => {
+  const { user } = useSelector((state) => state.auth);
   const [followers, setFollowers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [removingId, setRemovingId] = useState(null);
+  const [removeError, setRemoveError] = useState(null);
+  const mountedRef = useRef(true);
 
+  // Lock body scroll when modal opens
   useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
+  // Fetch followers on mount or userId change
+  useEffect(() => {
+    mountedRef.current = true;
     if (!userId) return;
 
-    const fetchFollowers = async () => {
+    const fetch = async () => {
       setLoading(true);
       setError(null);
-
       try {
         const res = await api.get(`/profile/get-followers/${userId}`);
-        const followersList = res.data.followers || [];
-        setFollowers(followersList);
-        if (onFollowersCountUpdate) {
-          onFollowersCountUpdate(followersList.length);
-        }
+        let list = res.data.followers || [];
+
+        if (!mountedRef.current) return;
+        
+        // Avoid duplicates
+        const uniqueList = Array.from(
+          new Map(list.map((item) => [item.userId || item._id, item])).values()
+        );
+        
+        setFollowers(uniqueList);
+        onFollowersCountUpdate?.(uniqueList.length);
       } catch (err) {
-        setError(err.response?.data?.message || "Could not load followers.");
+        if (mountedRef.current) {
+          setError(err.response?.data?.message || "Could not load followers.");
+        }
       } finally {
-        setLoading(false);
+        if (mountedRef.current) setLoading(false);
       }
     };
 
-    fetchFollowers();
-  }, [userId]);
+    fetch();
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [userId, user?.id]);
 
-  const handleRemoveFollower = async (followerId) => {
+  // Handle removing follower with optimistic UI
+  const handleRemove = async (followerId) => {
     setRemovingId(followerId);
+    setRemoveError(null);
+    
+    // Optimistic UI update
+    const updatedList = followers.filter((f) => (f.userId || f._id) !== followerId);
+    
     try {
-      const response = await api.delete(`/follow/remove-follower/${followerId}`);
-      
-      // Only remove from UI if backend confirms success
-      if (response.status === 200) {
-        const updatedFollowers = followers.filter((follower) => follower.userId !== followerId);
-        setFollowers(updatedFollowers);
-
-        // Notify parent to update follower count
-        if (onFollowersUpdate) {
-          onFollowersUpdate();
-        }
-        if (onFollowersCountUpdate) {
-          onFollowersCountUpdate(updatedFollowers.length);
-        }
+      await api.delete(`/follow/remove-follower/${followerId}`);
+      if (mountedRef.current) {
+        setFollowers(updatedList);
+        onFollowersUpdate?.();
+        onFollowersCountUpdate?.(updatedList.length);
       }
     } catch (err) {
-      console.error("Error removing follower:", err);
-      const errorMsg = err.response?.data?.message || "Failed to remove follower";
-      setError(errorMsg);
-      
-      // Clear error after 3 seconds
-      setTimeout(() => setError(null), 3000);
+      if (mountedRef.current) {
+        // Revert optimistic update
+        setFollowers(followers);
+        setRemoveError(err.response?.data?.message || "Failed to remove follower");
+        setTimeout(() => mountedRef.current && setRemoveError(null), 3000);
+      }
     } finally {
-      setRemovingId(null);
+      if (mountedRef.current) setRemovingId(null);
     }
   };
 
+  // Update follow status when follow/unfollow happens
+  const handleFollowStatusChange = (targetUserId, status) => {
+    setFollowers((current) =>
+      current.map((item) => {
+        const id = String(item.userId || item._id);
+        if (id !== String(targetUserId)) return item;
+        return { ...item, isFollowing: status === "followed" };
+      })
+    );
+  };
+
+  // Close on backdrop click
+  const handleBackdrop = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  // Filter followers based on search term
+  const filteredFollowers = followers.filter((follower) => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return true;
+    return [follower.username, follower.name]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(query));
+  });
+
+  const isOwnProfile = String(user?.id) === String(userId);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100">
-              <User size={18} className="text-blue-600" />
-            </div>
-            <h2 className="text-lg font-bold text-gray-900">Followers</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
-        </div>
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={handleBackdrop}
+        className="modal-backdrop"
+      >
+        {/* Modal shell */}
+        <div className="modal-shell">
+          <div className="modal-inner">
 
-        {/* Content */}
-        <div className="max-h-[60vh] overflow-y-auto px-6 py-4">
-          {loading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <div className="flex flex-col items-center gap-3">
-                <div className="h-8 w-8 animate-spin rounded-full border-3 border-blue-100 border-t-blue-600" />
-                <p className="text-sm text-gray-500">Loading followers...</p>
-              </div>
-            </div>
-          ) : error ? (
-            <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-600 border border-red-200">
-              {error}
-            </div>
-          ) : followers.length === 0 ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <div className="text-center">
-                <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                  <User size={20} className="text-gray-400" />
+            {/* Header */}
+            <div className="modal-header">
+              <div className="flex items-center gap-3">
+                <div className="modal-icon-shell">
+                  <Users size={18} />
                 </div>
-                <p className="text-sm font-medium text-gray-600">No followers yet</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  When someone follows you, they'll show up here
-                </p>
+                <div>
+                  <h2 className="modal-title">Followers</h2>
+                  {!loading && (
+                    <p className="modal-subtitle">
+                      {followers.length} {followers.length === 1 ? "person" : "people"}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={onClose}
+                className="modal-close"
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Error banner */}
+            {removeError && (
+              <div className="mx-4 mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+                {removeError}
+              </div>
+            )}
+
+            {/* Search */}
+            <div className="px-4 py-3 border-b border-gray-100">
+              <label htmlFor="follower-search" className="hidden">
+                Search followers
+              </label>
+              <div className="relative">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  id="follower-search"
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search"
+                  className="w-full rounded-full border border-gray-200 bg-gray-50 px-3 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {followers.map((follower) => (
-                <UserListCard
-                  key={follower.userId}
-                  user={follower}
-                  actionLabel="Remove"
-                  onActionClick={handleRemoveFollower}
-                  isLoading={removingId === follower.userId}
-                  onUserClick={onClose}
-                />
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        <div className="border-t border-gray-100 px-6 py-3 text-right">
-          <span className="text-xs text-gray-500">
-            {followers.length} {followers.length === 1 ? "follower" : "followers"}
-          </span>
+            {/* List */}
+            <div className="modal-list-body modal-scroll">
+              {loading ? (
+                <Spinner />
+              ) : error ? (
+                <div className="modal-alert">{error}</div>
+              ) : followers.length === 0 ? (
+                <Empty
+                  text="No followers yet"
+                  sub="When someone follows you, they'll appear here."
+                />
+              ) : filteredFollowers.length === 0 ? (
+                <Empty
+                  text="No results found"
+                  sub="Try searching with a different name or username."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {filteredFollowers.map((follower) => {
+                    const followerId = follower.userId || follower._id;
+                    return (
+                      <UserListCard
+                        key={followerId}
+                        user={follower}
+                        onUserClick={onClose}
+                        actionNode={
+                          <div className="flex items-center gap-2">
+                            {String(followerId) !== String(user?.id) && (
+                              <FollowButton
+                                userId={followerId}
+                                initialFollowing={follower.isFollowing ?? null}
+                                size="sm"
+                                onFollowStatusChange={(status) =>
+                                  handleFollowStatusChange(followerId, status)
+                                }
+                              />
+                            )}
+                          </div>
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {!loading && followers.length > 0 && (
+              <div className="border-t border-gray-100 px-4 py-3 text-right">
+                <span className="text-xs text-gray-500">
+                  {followers.length} {followers.length === 1 ? "follower" : "followers"}
+                </span>
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
 export default FollowersModal;
+               
