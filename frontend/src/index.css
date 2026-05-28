@@ -104,7 +104,9 @@
 }
 
 /* Firefox compatibility */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #27272a transparent;
+@supports (scrollbar-width: thin) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #27272a transparent;
+  }
 }
