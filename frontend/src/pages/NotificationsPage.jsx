@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 
 /* ════════════════════════════════════════════════════════════════
@@ -133,13 +134,16 @@ const TABS = [
 ════════════════════════════════════════════════════════════════ */
 
 const NotifCard = ({ n, onRead, isNew }) => {
+  const navigate = useNavigate();
   const { sentence, icon } = buildAction(n);
 
   const thumb = getThumb(n);
 
-  const avatar = getAvatar(n.actorDetails);
-
-  const name = actorName(n.actorDetails);
+  const actors = n.actorDetails || n.actors || [];
+  const avatar = getAvatar(actors);
+  const name = actorName(actors);
+  const actorId = actors[0]?._id;
+  const profilePath = actorId ? `/profile/${actorId}` : null;
 
   const unread = !n.isRead;
 
@@ -172,7 +176,11 @@ const NotifCard = ({ n, onRead, isNew }) => {
         <img
           src={avatar}
           alt={name}
-          className="w-12 h-12 rounded-full object-cover border-2 border-white shadow"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (profilePath) navigate(profilePath);
+          }}
+          className="w-12 h-12 rounded-full object-cover border-2 border-white shadow cursor-pointer"
         />
 
         <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white shadow flex items-center justify-center text-[10px]">
@@ -183,7 +191,15 @@ const NotifCard = ({ n, onRead, isNew }) => {
       {/* BODY */}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-800 leading-5">
-          <span className="font-bold">{name}</span>{" "}
+          <span
+            className={`font-bold ${profilePath ? "cursor-pointer text-indigo-600 hover:underline" : ""}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (profilePath) navigate(profilePath);
+            }}
+          >
+            {name}
+          </span>{" "}
           <span className="text-gray-600">{sentence}</span>
         </p>
 

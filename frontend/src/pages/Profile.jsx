@@ -9,6 +9,7 @@ import Sidebar from "../components/Sidebar.jsx";
 import FollowersModal from "../components/FollowersModal.jsx";
 import FollowingModal from "../components/FollowingModal.jsx";
 import FollowButton from "../components/FollowButton.jsx";
+import ShareProfileModal from "../components/ShareProfileModal.jsx";
 import { updateUser } from "../slices/authSlice";
 
 import {
@@ -66,6 +67,7 @@ const Profile = () => {
 
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const reelItems = posts.filter((post) => post.mediaType === "video");
   const photoItems = posts.filter((post) => post.mediaType === "image");
@@ -317,24 +319,8 @@ const Profile = () => {
     }
   };
 
-  const handleShareProfile = async () => {
-    if (!profile?.username) return;
-
-    const profileLink = `${window.location.origin}/profile/${profile.username}`;
-
-    try {
-      await navigator.clipboard.writeText(profileLink);
-      toast.success("Profile link copied");
-      navigate("/messages", {
-        state: {
-          shareProfile: profileLink,
-          sharedUsername: profile.username,
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      toast.error("Unable to copy profile link");
-    }
+  const handleShareProfile = () => {
+    setShowShareModal(true);
   };
 
   if (loading) {
@@ -421,22 +407,22 @@ const Profile = () => {
 
                     <div>
 
-                      <div className="flex flex-wrap items-center gap-3">
-
-                        <h1 className="text-3xl font-bold text-gray-900 md:text-5xl">
-                          {profile?.username}
-                        </h1>
-
+                      <h1 className="text-3xl font-bold text-blue-600 md:text-5xl mb-3 flex items-center gap-2">
+                        {profile?.name}
                         <BadgeCheck
                           size={28}
                           className="text-indigo-600"
                         />
 
-                      </div>
+                      </h1>
 
-                      <p className="mt-2 text-lg text-gray-600">
-                        @{profile?.username}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-3">
+
+                        <p className="text-lg font-semibold text-gray-700">
+                          @{profile?.username}
+                        </p>
+
+                      </div>
 
                     </div>
 
@@ -519,47 +505,45 @@ const Profile = () => {
 
                   {/* BIO */}
 
-                  <div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
+{/* BIO */}
 
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {profile?.name}
-                    </h2>
+<div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
 
-                    {profile?.bio && (
-                      <p className="mt-4 text-[15px] leading-8 text-gray-700">
-                        {profile.bio}
-                      </p>
-                    )}
+  {profile?.bio && (
+    <p className="mt-4 whitespace-pre-line text-[15px] leading-8 text-gray-700">
+      {profile.bio}
+    </p>
+  )}
 
-                    <div className="mt-5 flex flex-wrap gap-5">
+  <div className="mt-5 flex flex-wrap gap-5">
 
-                      {profile?.location && (
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <MapPin size={16} />
-                          {profile.location}
-                        </div>
-                      )}
+    {profile?.location && (
+      <div className="flex items-center gap-2 text-gray-600">
+        <MapPin size={16} />
+        {profile.location}
+      </div>
+    )}
 
-                      {profile?.website && (
-                        <a
-                          href={profile.website}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-2 font-medium text-indigo-600"
-                        >
-                          <Link2 size={16} />
-                          Website
-                        </a>
-                      )}
+    {profile?.website && (
+      <a
+        href={profile.website}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center gap-2 font-medium text-indigo-600"
+      >
+        <Link2 size={16} />
+        Website
+      </a>
+    )}
 
-                      <div className="flex items-center gap-2 text-[#6B7280]">
-                        <Calendar size={16} />
-                        Joined 2026
-                      </div>
+    <div className="flex items-center gap-2 text-[#6B7280]">
+      <Calendar size={16} />
+      Joined 2026
+    </div>
 
-                    </div>
+  </div>
 
-                  </div>
+</div>
 
                 </div>
 
@@ -719,6 +703,14 @@ const Profile = () => {
         <FollowingModal
           userId={profileUserId}
           onClose={() => setShowFollowing(false)}
+        />
+      )}
+
+      {/* SHARE PROFILE MODAL */}
+      {showShareModal && profile && (
+        <ShareProfileModal
+          profile={profile}
+          onClose={() => setShowShareModal(false)}
         />
       )}
 

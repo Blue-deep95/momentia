@@ -1,12 +1,14 @@
 ﻿import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
-import { Search,X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function MessagePage() {
 	const user = useSelector((state) => state.auth.user);
 	const navigate = useNavigate();
+	const location = useLocation();
 	const userId = user?._id ? String(user._id) : user?.id ? String(user.id) : null;
 	const [rooms, setRooms] = useState([]);
 	const [followingProfiles, setFollowingProfiles] = useState([]);
@@ -28,6 +30,15 @@ export default function MessagePage() {
 	useEffect(() => {
 		activeRoomRef.current = activeRoom;
 	}, [activeRoom]);
+
+	// Handle shared profile link from Profile page
+	useEffect(() => {
+		if (location.state?.shareProfile) {
+			toast.success(`Profile link ready to share: ${location.state.shareProfile}`);
+			// Clear the location state so it doesn't persist on refresh
+			window.history.replaceState({}, document.title, window.location.pathname);
+		}
+	}, [location.state?.shareProfile]);
 
 	useEffect(() => {
 		if (!userId) return;
