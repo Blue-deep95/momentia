@@ -163,6 +163,8 @@ function UserCard({ item, navigate }) {
           src={profilePic}
           alt={item.username}
           className="w-12 h-12 rounded-full object-cover border border-gray-100"
+          loading="lazy"
+          decoding="async"
         />
         <div>
           <h3 className="font-semibold text-sm text-gray-900">{item.username}</h3>
@@ -184,6 +186,8 @@ function PostGridItem({ item, navigate }) {
         src={item.thumbImage}
         alt="post"
         className="w-full h-full object-cover transition duration-300 group-hover:scale-110"
+        loading="lazy"
+        decoding="async"
       />
       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
         <div className="flex items-center gap-1 text-white font-bold text-sm">

@@ -103,6 +103,8 @@ const PostCard = ({ post }) => {
             }
             alt="profile"
             className="h-11 w-11 rounded-full object-cover"
+            loading="lazy"
+            decoding="async"
           />
 
           {/* USERNAME */}
@@ -156,6 +158,8 @@ const PostCard = ({ post }) => {
           alt="post"
           onClick={() => navigate(`/post/${post._id}`)}
           className="max-h-190 h-auto w-full object-cover cursor-pointer hover:opacity-95 transition"
+          loading="lazy"
+          decoding="async"
         />
       )}
 
@@ -164,6 +168,8 @@ const PostCard = ({ post }) => {
         <video
           src={post.video.url}
           controls
+          preload="none"
+          poster={post.thumbImage || post.images?.[0]?.url || ""}
           onClick={() => navigate(`/post/${post._id}`)}
           className="max-h-190 h-auto w-full object-cover cursor-pointer hover:opacity-95 transition"
         />

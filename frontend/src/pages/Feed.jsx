@@ -7,6 +7,7 @@ import Navbar from "../components/Navbar.jsx";
 import PostCard from "../components/Postcard.jsx";
 import StoryBar from "../components/Storybar.jsx";
 import SuggestedProfiles from "../components/SuggestedProfiles.jsx";
+import CarouselSlideshow from "../components/CarouselSlideshow.jsx";
 
 import { fetchPosts } from "../slices/feedSlice";
 
@@ -69,8 +70,12 @@ const Feed = () => {
 
         {/* RIGHT SIDEBAR (Desktop only) */}
         <div className="hidden w-80 shrink-0 lg:block lg:self-start">
-          <div className="sticky top-24">
+          <div className="sticky top-24 space-y-6">
+            {/* SUGGESTED PROFILES */}
             <SuggestedProfiles />
+            
+            {/* CAROUSEL SLIDESHOW */}
+            <CarouselSlideshow />
           </div>
         </div>
 

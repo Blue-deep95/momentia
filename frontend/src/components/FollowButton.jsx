@@ -171,7 +171,7 @@ const FollowButton = ({
         disabled={loading || fetching}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`follow-button ${sizeClass} ${stateClass} ${hovered && !loading && !fetching ? "-translate-y-[1px]" : "translate-y-0"}`}
+        className={`follow-button ${sizeClass} ${stateClass} ${hovered && !loading && !fetching ? "-translate-y-px" : "translate-y-0"}`}
         title={error || ""}
         aria-label={
           loading || fetching
@@ -185,7 +185,7 @@ const FollowButton = ({
       </button>
 
       {error && (
-        <div className="mt-1 text-xs text-red-600 truncate" title={error}>
+        <div className="mt-1 truncate text-xs text-red-600" title={error}>
           {error}
         </div>
       )}

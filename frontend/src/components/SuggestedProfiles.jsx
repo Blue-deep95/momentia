@@ -25,11 +25,14 @@ const Toast = ({ message, type = "success", onClose }) => {
 };
 
 const SuggestedProfiles = () => {
-  const [profiles, setProfiles] = useState([]);
+  const [allProfiles, setAllProfiles] = useState([]);
+  const [visibleProfiles, setVisibleProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [followed, setFollowed] = useState({});
   const [followLoading, setFollowLoading] = useState({});
   const [toast, setToast] = useState(null);
+  const [nextIndex, setNextIndex] = useState(0);
+  const PAGE_SIZE = 5;
   const navigate = useNavigate();
 
   const handleFollow = async (targetId) => {
@@ -40,10 +43,14 @@ const SuggestedProfiles = () => {
       setFollowed((prev) => ({ ...prev, [targetId]: true }));
       setToast({ message: "User followed successfully!", type: "success" });
 
-      // After 2 seconds, remove the profile from the list
-      setTimeout(() => {
-        setProfiles((prev) => prev.filter((profile) => profile._id !== targetId));
-      }, 2000);
+      // Remove followed profile from visible list and replace with next one from allProfiles
+      setVisibleProfiles((prevVisible) => prevVisible.filter((p) => p._id !== targetId));
+
+      if (nextIndex < allProfiles.length) {
+        const nextProfile = allProfiles[nextIndex];
+        setVisibleProfiles((prev) => [...prev, nextProfile]);
+        setNextIndex((n) => n + 1);
+      }
     } catch (err) {
       console.error("Could not follow user:", err.response?.data || err);
     } finally {
@@ -55,7 +62,10 @@ const SuggestedProfiles = () => {
     const fetchSuggestedProfiles = async () => {
       try {
         const res = await api.get("/profile/get-suggested-users");
-        setProfiles(res.data.users || []);
+        const users = res.data.users || [];
+        setAllProfiles(users);
+        setVisibleProfiles(users.slice(0, PAGE_SIZE));
+        setNextIndex(Math.min(users.length, PAGE_SIZE));
       } catch (err) {
         console.error("Failed to load suggested profiles:", err);
       } finally {
@@ -90,11 +100,11 @@ const SuggestedProfiles = () => {
 
       {loading ? (
         <p className="text-sm text-gray-500">Loading suggestions…</p>
-      ) : profiles.length === 0 ? (
+      ) : visibleProfiles.length === 0 ? (
         <p className="text-sm text-gray-500">No suggestions available.</p>
       ) : (
         <div className="space-y-4">
-          {profiles.map((profile) => {
+          {visibleProfiles.map((profile) => {
             const rawUsername = profile.username || "user";
             const displayName = profile.name || rawUsername.split("@")[0] || "User";
             const displayHandle = rawUsername.includes("@")
@@ -115,6 +125,8 @@ const SuggestedProfiles = () => {
                     src={avatarSrc}
                     alt={displayName}
                     className="h-12 w-12 rounded-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-gray-900">

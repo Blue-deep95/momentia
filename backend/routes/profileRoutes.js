@@ -439,6 +439,7 @@ router.get("/get-followers/:id",
     async (req, res) => {
         try {
             const { id } = req.params // This is the ID of the user whose followers we want to see
+            const currentUserId = new mongoose.Types.ObjectId(req.user._id);
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
                 return res.status(400).json({ message: "Invalid user ID" });
@@ -463,15 +464,42 @@ router.get("/get-followers/:id",
                 },
                 { $unwind: '$followerData' },
                 {
+                    $lookup: {
+                        from: 'follows',
+                        let: { followerId: '$followerData._id' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$host', currentUserId] },
+                                            { $eq: ['$target', '$$followerId'] }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        as: 'followStatus'
+                    }
+                },
+                {
+                    $addFields: {
+                        isFollowing: { $gt: [{ $size: '$followStatus' }, 0] }
+                    }
+                },
+                {
                     $project: {
                         _id: 0,
                         userId: '$followerData._id',
                         username: '$followerData.username',
                         name: '$followerData.name',
-                        profilePicture: '$followerData.profilePicture.commentView'
+                        profilePicture: '$followerData.profilePicture.commentView',
+                        isFollowing: 1
                     }
                 }
             ]);
+
+            //console.log('followers are -->',followers)
 
             return res.status(200).json({
                 followers: followers,
@@ -550,6 +578,8 @@ router.get("/get-following/:id",
                     }
                 }
             ]);
+
+            //console.log("Following are -->",following)
 
             return res.status(200).json({
                 following: following,
