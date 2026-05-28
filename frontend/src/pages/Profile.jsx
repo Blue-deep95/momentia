@@ -88,7 +88,7 @@ const Profile = () => {
   );
 
   const SavedEmptyState = () => (
-    <div className="rounded-4xl flex flex-col items-center jusrounded-4xlrder border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
+    <div className="rounded-4xl jusrounded-4xlrder flex flex-col items-center border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-600 shadow-lg">
         <Bookmark size={32} className="text-indigo-600" />
       </div>
@@ -455,7 +455,7 @@ const Profile = () => {
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="bg-linear-to-r gapbg-linear-to-rrom-indigo-600 flex items-center to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
                           >
                             <Share2 size={18} />
                             Share
