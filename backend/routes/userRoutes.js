@@ -19,6 +19,7 @@ const {
   registerSchema,
   loginSchema,
 } = require("../zodSchema/validationSchema.js");
+const { findByIdAndUpdate } = require("../models/Post.js");
 
 router.post("/send-otp", async (req, res) => {
   try {
@@ -164,8 +165,23 @@ router.post("/login", async (req, res) => {
     }
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    user.refreshToken = refreshToken;
-    await user.save();
+
+    // need to intorduce the atomic refreshToken update here
+    // only keeps the latest two devices here other will get automatic logouts
+    await User.findByIdAndUpdate(user._id,
+      {
+        $push: {
+          newRefreshToken: {
+            $each: [refreshToken],
+            $position: 0,
+            $slice: 2
+          }
+        }
+      },
+      { returnDocument: 'after' })
+
+    // user.refreshToken = refreshToken;
+    // await user.save();
 
     const isProduction = process.env.NODE_ENV === "production";
     res.cookie("refreshToken", refreshToken, {
@@ -258,7 +274,7 @@ router.post("/regenerate-access-token", async (req, res) => {
   }
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
-    const user = await User.findById(decoded.id);
+    const user = await User.find(decoded.id);
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }

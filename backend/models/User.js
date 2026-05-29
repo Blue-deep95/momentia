@@ -27,7 +27,14 @@ const UserSchema = new mongoose.Schema({
     },
 
     password: String,
-    refreshToken: String,
+    refreshToken:String,
+    // need to turn this into array of two devices so two devices again
+    newRefreshToken:[
+        {
+            type:String,
+        }
+    ],
+
     otp: String,
     otpExpiry: Number,
     isEmailVerified: {
