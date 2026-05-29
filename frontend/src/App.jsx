@@ -1,29 +1,55 @@
 import React, { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { useSelector, useDispatch } from "react-redux"
-const Register = lazy(() => import("./pages/Register.jsx"));
-const Login = lazy(() => import("./pages/Login.jsx"));
-const Feed = lazy(() => import("./pages/Feed.jsx"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword.jsx"));
-const Profile = lazy(() => import("./pages/Profile.jsx"));
-const SearchPage = lazy(() => import("./pages/SearchPage.jsx"));
-const Reels = lazy(() => import("./pages/Reels.jsx"));
-const CreatePost = lazy(() => import("./pages/CreatePost.jsx"));
-const SinglePost = lazy(() => import("./pages/SinglePost.jsx"));
-const MessagePage = lazy(() => import("./pages/MessagePage.jsx"));
-const Notifications = lazy(() => import("./pages/NotificationsPage.jsx"));
-const TopStudents = lazy(() => import("./pages/TopStudents.jsx"));
+
+
+// vercel specific changes required to prevent 404 errors when deploying to vercel
+// the reason this happens is because 
+const lazyWithRetry = (componentImport) =>
+  lazy(async () => {
+    const hasReloaded = window.sessionStorage.getItem("chunk-reload");
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.error("Chunk loading failed, reloading page...", error);
+      if (!hasReloaded) {
+        window.sessionStorage.setItem("chunk-reload", "true");
+        window.location.reload();
+        return new Promise(() => {}); // unresolved promise to block rendering during reload
+      }
+      throw error;
+    }
+  });
+
+const Register = lazyWithRetry(() => import("./pages/Register.jsx"));
+const Login = lazyWithRetry(() => import("./pages/Login.jsx"));
+const Feed = lazyWithRetry(() => import("./pages/Feed.jsx"));
+const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword.jsx"));
+const Profile = lazyWithRetry(() => import("./pages/Profile.jsx"));
+const SearchPage = lazyWithRetry(() => import("./pages/SearchPage.jsx"));
+const Reels = lazyWithRetry(() => import("./pages/Reels.jsx"));
+const CreatePost = lazyWithRetry(() => import("./pages/CreatePost.jsx"));
+const SinglePost = lazyWithRetry(() => import("./pages/SinglePost.jsx"));
+const MessagePage = lazyWithRetry(() => import("./pages/MessagePage.jsx"));
+const Notifications = lazyWithRetry(() => import("./pages/NotificationsPage.jsx"));
+const TopStudents = lazyWithRetry(() => import("./pages/TopStudents.jsx"));
 import { initSocket, disconnectSocket } from "./socket.js"
 import { login, logout } from "./slices/authSlice.js"
 import api from "./services/api.js"
 
-const ProtectedRoutes = lazy(() => import('./components/ProtectedRoutes.jsx'));
+const ProtectedRoutes = lazyWithRetry(() => import('./components/ProtectedRoutes.jsx'));
 import NotificationToaster from './components/NotificationToaster.jsx'
 
 export default function App() {
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
+
+  // Clear chunk-reload flag on successful mount
+  // this is mainly for deploying on vercel not anyother place 
+  useEffect(() => {
+    window.sessionStorage.removeItem("chunk-reload");
+  }, []);
 
 
   // socket instance starts here this instance can be used throughout the frontend 
