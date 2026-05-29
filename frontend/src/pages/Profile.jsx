@@ -89,20 +89,6 @@ const Profile = () => {
     </div>
   );
 
-  const SavedEmptyState = () => (
-    <div className="rounded-4xl jusrounded-4xlrder flex flex-col items-center border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-600 shadow-lg">
-        <Bookmark size={32} className="text-indigo-600" />
-      </div>
-      <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-        Nothing saved yet
-      </h2>
-      <p className="mt-3 max-w-md text-center text-sm text-gray-600 dark:text-slate-400">
-        Save posts from your feed to see them here in your saved collection.
-      </p>
-    </div>
-  );
-
   const SavedGridItem = ({ post, onClick }) => {
     const image = post.thumbImage || post.imageUrl || post.images?.[0]?.url;
 
@@ -369,7 +355,7 @@ const Profile = () => {
 
                     <div className="bg-linear-to-br rounded-full from-blue-600 to-indigo-600 p-1 shadow-2xl">
 
-                      <div className="h-40 w-40 overflow-hidden rounded-full border-[6px] border-white bg-white md:h-52 md:w-52">
+                      <div className="h-44 w-44 overflow-hidden rounded-full border-[6px] border-white bg-white md:h-52 md:w-52">
 
                         {previewImage ? (
                           <img
@@ -403,7 +389,7 @@ const Profile = () => {
 
                   {/* USERNAME */}
 
-                  <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+                  <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
 
                     <div>
 
@@ -428,20 +414,20 @@ const Profile = () => {
 
                     {/* ACTIONS */}
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap justify-between gap-3">
 
                       {isOwnProfile ? (
                         <>
                           <button
                             onClick={() => setShowEdit(true)}
-                            className="rounded-2xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-900 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
+                            className="flex-1 min-w-[140px] rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center font-semibold text-gray-900 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
                           >
                             Edit Profile
                           </button>
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="flex-1 min-w-[140px] flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
                           >
                             <Share2 size={18} />
                             Share
@@ -449,11 +435,14 @@ const Profile = () => {
                         </>
                       ) : (
                         <>
-                          <FollowButton userId={profileUserId} />
+                          <FollowButton
+                            userId={profileUserId}
+                            className="flex-1 min-w-[140px]"
+                          />
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="flex-1 min-w-[140px] flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
                           >
                             <Share2 size={18} />
                             Share
@@ -469,7 +458,7 @@ const Profile = () => {
 
                   <div className="mt-8 grid grid-cols-3 gap-4">
 
-                    <div className="rounded-3xl border border-white bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
+                    <div className="rounded-3xl border border-white bg-white/70 p-4 sm:p-5 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
 
                       <h3 className="text-3xl font-bold text-indigo-600">
                         {profile?.totalPosts || 0}
@@ -483,7 +472,7 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowers(true)}
-                      className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
+                      className="rounded-3xl border border-white bg-white/70 p-4 sm:p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-purple-600">
@@ -498,7 +487,7 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowing(true)}
-                      className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
+                      className="rounded-3xl border border-white bg-white/70 p-4 sm:p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-indigo-600">
@@ -593,7 +582,7 @@ const Profile = () => {
           {activeTab === "posts" && (
             <>
               {posts.length > 0 ? (
-                <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {posts.map((post) => (
                     <PostCard
                       key={post._id}
@@ -605,7 +594,11 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <EmptyState />
+                <EmptyState
+                  title="No Posts Yet"
+                  description="Shared posts will appear here."
+                  icon={LayoutGrid}
+                />
               )}
             </>
           )}
@@ -613,41 +606,53 @@ const Profile = () => {
           {/* REELS */}
 
           {activeTab === "reels" && (
-            <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+            <>
               {reelItems.length > 0 ? (
-                reelItems.map((post) => (
-                  <ReelCard
-                    key={post._id}
-                    post={post}
-                    onClick={() => navigate(`/post/${post._id}`)}
-                    showDelete={isOwnProfile}
-                    onDelete={handleDeletePost}
-                  />
-                ))
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+                  {reelItems.map((post) => (
+                    <ReelCard
+                      key={post._id}
+                      post={post}
+                      onClick={() => navigate(`/post/${post._id}`)}
+                      showDelete={isOwnProfile}
+                      onDelete={handleDeletePost}
+                    />
+                  ))}
+                </div>
               ) : (
-                <SavedEmptyState />
+                <EmptyState
+                  title="No Reels Yet"
+                  description="Shared reels will appear here."
+                  icon={Clapperboard}
+                />
               )}
-            </div>
+            </>
           )}
 
           {/* PHOTOS */}
 
           {activeTab === "photos" && (
-            <div className="mt-8 columns-2 gap-5 space-y-5 md:columns-3 xl:columns-4">
+            <>
               {photoItems.length > 0 ? (
-                photoItems.map((post) => (
-                  <PhotoCard
-                    key={post._id}
-                    post={post}
-                    onClick={() => navigate(`/post/${post._id}`)}
-                    showDelete={isOwnProfile}
-                    onDelete={handleDeletePost}
-                  />
-                ))
+                <div className="mt-10 mb-14 columns-2 gap-5 space-y-5 md:columns-3 xl:columns-4">
+                  {photoItems.map((post) => (
+                    <PhotoCard
+                      key={post._id}
+                      post={post}
+                      onClick={() => navigate(`/post/${post._id}`)}
+                      showDelete={isOwnProfile}
+                      onDelete={handleDeletePost}
+                    />
+                  ))}
+                </div>
               ) : (
-                <SavedEmptyState />
+                <EmptyState
+                  title="No Photos Yet"
+                  description="Shared photos will appear here."
+                  icon={ImageIcon}
+                />
               )}
-            </div>
+            </>
           )}
 
           {/* SAVED */}
@@ -657,7 +662,7 @@ const Profile = () => {
               {savedLoading ? (
                 <SavedPostsSkeleton />
               ) : savedItems.length > 0 ? (
-                <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {savedItems.map((post) => (
                     <SavedGridItem
                       key={post._id}
@@ -667,7 +672,11 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <SavedEmptyState />
+                <EmptyState
+                  title="No Saved Posts"
+                  description="Saved posts will appear here."
+                  icon={Bookmark}
+                />
               )}
             </>
           )}
@@ -1310,21 +1319,40 @@ const InputField = ({
 
 /* EMPTY */
 
-const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-24 text-center">
+const EmptyState = ({
+  title,
+  description,
+  icon: Icon,
+}) => (
+  <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
 
-    <div className="bg-linear-to-r flex h-24 w-24 items-center justify-center rounded-full from-[#2F3EDB] to-[#FF7A3D] shadow-xl">
+    {/* ICON */}
 
-      <LayoutGrid size={34} className="text-white" />
+    <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-r from-[#3B49DF] via-[#6C63FF] to-[#FF7A3D] shadow-2xl">
+
+      {/* GLOW */}
+
+      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#3B49DF] to-[#FF7A3D] opacity-40 blur-2xl" />
+
+      {/* ICON */}
+
+      <Icon
+        size={38}
+        className="relative z-10 text-white"
+      />
 
     </div>
 
-    <h2 className="mt-6 text-3xl font-bold text-[#111827]">
-      No Posts Yet
+    {/* TITLE */}
+
+    <h2 className="mt-8 text-4xl font-extrabold tracking-tight text-[#111827]">
+      {title}
     </h2>
 
-    <p className="mt-3 text-base text-[#6B7280]">
-      Shared posts will appear here.
+    {/* DESCRIPTION */}
+
+    <p className="mt-4 text-lg text-[#6B7280]">
+      {description}
     </p>
 
   </div>
