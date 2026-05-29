@@ -135,7 +135,7 @@ const ForgotPassword = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
 
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", ""]);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPass] = useState("");
@@ -190,7 +190,7 @@ const ForgotPassword = () => {
   const handleVerifyOtp = (e) => {
     e.preventDefault();
 
-    if (otp.join("").length < 6) {
+    if (otp.join("").length < 5) {
       setError("Please enter full OTP");
       return;
     }

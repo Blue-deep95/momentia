@@ -107,14 +107,14 @@ router.get("/get-rooms", async (req, res) => {
       if (roomObj.roomType === "dm") {
         // Find the other user in the DM
         const otherMember = roomObj.members.find(
-          (m) => m.memberId._id.toString() !== userId.toString(),
+          (m) => m.memberId && m.memberId._id.toString() !== userId.toString(),
         );
         roomObj.dmUserInfo = otherMember ? otherMember.memberId : null;
       }
 
       // Calculate unread count for the current user
       const myMemberData = roomObj.members.find(
-        (m) => m.memberId._id.toString() === userId.toString(),
+        (m) => m.memberId && m.memberId._id.toString() === userId.toString(),
       );
       roomObj.unreadCount =
         roomObj.currentMessageCount - (myMemberData?.lastSeenMessage || 0);
