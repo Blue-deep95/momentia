@@ -31,7 +31,7 @@ const Toast = ({
 
   return (
     <div
-      className={`fixed right-4 top-4 z-[999] rounded-2xl border px-5 py-4 text-white shadow-2xl backdrop-blur-xl ${
+      className={`fixed right-4 top-4 z-999 rounded-2xl border px-5 py-4 text-white shadow-2xl backdrop-blur-xl ${
         type === "error"
           ? "border-red-400 bg-red-500/90"
           : "border-emerald-400 bg-emerald-500/90"
@@ -214,7 +214,7 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="bg-linear-to-br min-h-screen from-blue-50 via-white to-indigo-50">
 
       {/* TOAST */}
       {toast && (
@@ -235,17 +235,17 @@ const CreatePost = () => {
       {/* pb-28 = bottom mobile space */}
       {/* =============================== */}
 
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 pt-20 pb-28 sm:px-5 sm:pb-20 lg:grid-cols-3 lg:px-6 lg:pt-6 lg:pb-10">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 pb-28 pt-20 sm:px-5 sm:pb-20 lg:grid-cols-3 lg:px-6 lg:pb-10 lg:pt-6">
 
         {/* MAIN */}
         <div className="lg:col-span-2">
 
-          <div className="overflow-hidden rounded-[32px] border border-white/40 bg-white/80 p-4 shadow-2xl backdrop-blur-xl sm:p-6 lg:p-8">
+          <div className="rounded-4xl overflow-hidden border border-white/40 bg-white/80 p-4 shadow-2xl backdrop-blur-xl sm:p-6 lg:p-8">
 
             {/* HEADER */}
             <div className="mb-8 flex items-start gap-4">
 
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg">
+              <div className="bg-linear-to-br flex h-14 w-14 items-center justify-center rounded-2xl from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg">
                 <Sparkles size={26} />
               </div>
 
@@ -276,13 +276,13 @@ const CreatePost = () => {
                     <video
                       src={preview}
                       controls
-                      className="max-h-[500px] w-full object-cover"
+                      className="max-h-125 w-full object-cover"
                     />
                   ) : (
                     <img
                       src={preview}
                       alt="Preview"
-                      className="max-h-[500px] w-full object-cover"
+                      className="max-h-125 w-full object-cover"
                     />
                   )}
                 </div>
@@ -292,11 +292,11 @@ const CreatePost = () => {
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 
                 {/* IMAGE */}
-                <div className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50 to-blue-50 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                <div className="bg-linear-to-br rounded-3xl border border-indigo-100 from-white via-indigo-50 to-blue-50 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
 
                   <div className="mb-5 flex items-center gap-4">
 
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">
+                    <div className="bg-linear-to-br flex h-14 w-14 items-center justify-center rounded-2xl from-blue-600 to-indigo-600 text-white shadow-lg">
                       <ImageIcon size={26} />
                     </div>
 
@@ -319,16 +319,16 @@ const CreatePost = () => {
                       handleImageChange
                     }
                     ref={imageInputRef}
-                    className="block w-full cursor-pointer rounded-2xl border border-indigo-200 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 file:mr-4 file:rounded-xl file:border-0 file:bg-gradient-to-r file:from-blue-600 file:to-indigo-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:opacity-90"
+                    className="file:bg-linear-to-r block w-full cursor-pointer rounded-2xl border border-indigo-200 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm transition file:mr-4 file:rounded-xl file:border-0 file:from-blue-600 file:to-indigo-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:opacity-90 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
 
                 {/* VIDEO */}
-                <div className="rounded-3xl border border-purple-100 bg-gradient-to-br from-white via-purple-50 to-indigo-50 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+                <div className="bg-linear-to-br rounded-3xl border border-purple-100 from-white via-purple-50 to-indigo-50 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
 
                   <div className="mb-5 flex items-center gap-4">
 
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg">
+                    <div className="bg-linear-to-br flex h-14 w-14 items-center justify-center rounded-2xl from-indigo-600 to-purple-600 text-white shadow-lg">
                       <Video size={26} />
                     </div>
 
@@ -351,7 +351,7 @@ const CreatePost = () => {
                       handleVideoChange
                     }
                     ref={videoInputRef}
-                    className="block w-full cursor-pointer rounded-2xl border border-purple-200 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 file:mr-4 file:rounded-xl file:border-0 file:bg-gradient-to-r file:from-indigo-600 file:to-purple-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:opacity-90"
+                    className="file:bg-linear-to-r block w-full cursor-pointer rounded-2xl border border-purple-200 bg-white px-4 py-3 text-sm text-gray-600 shadow-sm transition file:mr-4 file:rounded-xl file:border-0 file:from-indigo-600 file:to-purple-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:opacity-90 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
               </div>
@@ -388,7 +388,7 @@ const CreatePost = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 py-4 text-lg font-bold text-white shadow-2xl shadow-indigo-300/40 transition-all duration-300 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
+                className="bg-linear-to-r group flex w-full items-center justify-center gap-3 rounded-2xl from-blue-600 via-indigo-600 to-purple-600 py-4 text-lg font-bold text-white shadow-2xl shadow-indigo-300/40 transition-all duration-300 hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Send
                   size={20}
