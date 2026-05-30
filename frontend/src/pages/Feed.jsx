@@ -70,7 +70,7 @@ const Feed = () => {
 
         {/* RIGHT SIDEBAR (Desktop only) */}
         <div className="hidden lg:flex lg:basis-[40%] lg:justify-end lg:self-start">
-          <div className="w-md fixed right-4 top-20 z-10 hidden flex-col space-y-6 lg:flex lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
+          <div className="fixed right-4 top-20 z-10 hidden h-[calc(100vh-6rem)] w-[calc(44vw-2rem)] flex-col lg:flex">
             {/* CAROUSEL SLIDESHOW */}
             <CarouselSlideshow />
 
