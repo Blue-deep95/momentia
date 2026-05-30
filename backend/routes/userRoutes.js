@@ -35,11 +35,14 @@ router.post("/send-otp", async (req, res) => {
     if (!user) {
       user = new User({ email });
     }
-    // ok here i will implement safeguard so that for production, 
-    // we get 12345 for normal development mode we set it to 
+    // ok here i will implement safeguard so that for production,
+    // we get 12345 for normal development mode we set it to
     let otp = Math.floor(90000 * Math.random() + 10000);
     // only for production we use a simple otp
-    user.otp = process.env.NODE_ENV === 'production' ? (process.env.PRODUCTION_OTP || "80215") : otp;
+    user.otp =
+      process.env.NODE_ENV === "production"
+        ? process.env.PRODUCTION_OTP || "80215"
+        : otp;
     user.otpExpiry = 5 * 60 * 1000 + Date.now();
     user.username = email;
     await user.save();
@@ -67,12 +70,10 @@ router.post("/verify-otp", async (req, res) => {
       otp: req.body.otp,
     });
     if (!validation.success) {
-      return res
-        .status(400)
-        .json({
-          message: "Invalid email or otp",
-          errors: validation.error.errors.map((err) => err.message),
-        });
+      return res.status(400).json({
+        message: "Invalid email or otp",
+        errors: validation.error.errors.map((err) => err.message),
+      });
     }
     const { email, otp } = validation.data;
     const user = await User.findOne({ email });
@@ -164,8 +165,15 @@ router.post("/login", async (req, res) => {
     }
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    user.refreshToken = refreshToken;
-    await user.save();
+    await User.findByIdAndUpdate(user._id, {
+      $push: {
+        newRefreshToken: {
+          $each: [refreshToken],
+          $position: 0,
+          $slice: 2,
+        },
+      },
+    });
 
     const isProduction = process.env.NODE_ENV === "production";
     res.cookie("refreshToken", refreshToken, {
@@ -205,7 +213,10 @@ router.post("/forgot-password", async (req, res) => {
 
     const otp = Math.floor(10000 + Math.random() * 90000);
 
-    user.otp = process.env.NODE_ENV === "production" ? (process.env.PRODUCTION_OTP || "80215") : otp;
+    user.otp =
+      process.env.NODE_ENV === "production"
+        ? process.env.PRODUCTION_OTP || "80215"
+        : otp;
     user.otpExpiry = Date.now() + 5 * 60 * 1000;
 
     if (process.env.NODE_ENV !== "production") {
@@ -258,10 +269,16 @@ router.post("/regenerate-access-token", async (req, res) => {
   }
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
-    const user = await User.findById(decoded.id);
+    const user = await User.findOne({
+      _id: decoded.id,
+      newRefreshToken: { $in: [refreshToken] },
+    });
+
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ message: "Invalid Session" });
     }
+
+
     const newAccessToken = generateAccessToken(user);
     return res.status(200).json({ accessToken: newAccessToken });
   } catch (err) {
@@ -276,30 +293,40 @@ router.post("/logout", async (req, res) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
     if (refreshToken) {
+      let userId = null;
       try {
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
-        const user = await User.findById(decoded.id);
-        if (user) {
-          user.refreshToken = null;
-          await user.save();
-        }
+        userId = decoded.id;
       } catch (jwtErr) {
-        // If token is invalid or expired, we still clear the cookie on the browser
-        console.log("JWT verify failed during logout:", jwtErr.message);
+        console.log("JWT verify failed during logout (checking for decode):", jwtErr.message);
+        try {
+          const decoded = jwt.decode(refreshToken);
+          userId = decoded?.id;
+        } catch (decErr) {
+          console.log("Failed to decode token:", decErr.message);
+        }
+      }
+
+      if (userId) {
+        await User.findByIdAndUpdate(userId, {
+          $pull: { newRefreshToken: refreshToken },
+        });
       }
     }
   } catch (err) {
     console.error("Logout database error:", err);
+  } 
+  finally {
+    // no matter what happens log out the user
+    const isProduction = process.env.NODE_ENV === "production";
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      sameSite: isProduction ? "none" : "lax",
+      secure: isProduction,
+      path: "/",
+    });
+    return res.status(200).json({ message: "Logout successful" });
   }
-
-  const isProduction = process.env.NODE_ENV === "production";
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    sameSite: isProduction ? "none" : "lax",
-    secure: isProduction,
-    path: "/",
-  });
-  return res.status(200).json({ message: "Logout successful" });
 });
 
 module.exports = router;

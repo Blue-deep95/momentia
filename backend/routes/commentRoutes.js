@@ -10,6 +10,7 @@ const Comment = require('../models/Comment');
 const Like = require('../models/Like');
 
 const { notificationBus } = require('../events/event');
+const { commentSchema } = require('../zodSchema/validationSchema');
 
 
 
@@ -229,15 +230,24 @@ router.post("/create-comment",
             const { content, postid, parent, reference,referenceComment } = req.body;
             const user = req.user;
 
-            if (!postid || !content) {
+            if (!postid) {
                 return res.status(400).json({ message: "Invalid comment" });
             }
+
+            const validation = commentSchema.safeParse(content);
+            if (!validation.success) {
+                return res.status(400).json({
+                    message: "Validation failed",
+                    errors: validation.error.errors.map((err) => err.message),
+                });
+            }
+            const validatedContent = validation.data;
 
             // Prepare the base comment data
             const commentData = {
                 author: user._id,
                 post: postid,
-                content: content
+                content: validatedContent
             };
 
             // here we have to prevent the ability of the user to reply to himself
@@ -301,9 +311,19 @@ router.put("/update-comment",
             const user = req.user
             const { content, commentId } = req.body
 
-            if (!content || !commentId) {
+            if (!commentId) {
                 return res.status(400).json({ message: "Invalid operation" })
             }
+
+            const validation = commentSchema.safeParse(content);
+            if (!validation.success) {
+                return res.status(400).json({
+                    message: "Validation failed",
+                    errors: validation.error.errors.map((err) => err.message),
+                });
+            }
+            const validatedContent = validation.data;
+
             // get the comment 
             const comment = await Comment.findById(commentId)
             if (!comment) {
@@ -314,7 +334,7 @@ router.put("/update-comment",
                 return res.status(403).json({ message: 'Unauthorized to edit this comment' })
             }
 
-            comment.content = content
+            comment.content = validatedContent
             await comment.save()
 
             return res.status(200).json({ message: "Comment edit succesful" })
