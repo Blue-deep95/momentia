@@ -1,3 +1,6 @@
+// This file is to limit how many requests a user can make to the server 
+// within a specific time period
+
 const rateLimit = require("express-rate-limit")
 
 
