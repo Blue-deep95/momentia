@@ -19,6 +19,7 @@ const {
   registerSchema,
   loginSchema,
 } = require("../zodSchema/validationSchema.js");
+const { findByIdAndUpdate } = require("../models/Post.js");
 
 router.post("/send-otp", async (req, res) => {
   try {
