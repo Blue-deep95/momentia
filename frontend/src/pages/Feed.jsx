@@ -6,7 +6,7 @@ import { Virtuoso } from "react-virtuoso";
 import Navbar from "../components/Navbar.jsx";
 import PostCard from "../components/Postcard.jsx";
 import StoryBar from "../components/Storybar.jsx";
-import SuggestedProfiles from "../components/SuggestedProfiles.jsx";
+// import SuggestedProfiles from "../components/SuggestedProfiles.jsx";
 import CarouselSlideshow from "../components/CarouselSlideshow.jsx";
 
 import { fetchPosts } from "../slices/feedSlice";
@@ -69,13 +69,13 @@ const Feed = () => {
         </div>
 
         {/* RIGHT SIDEBAR (Desktop only) */}
-        <div className="mt-10 hidden lg:flex lg:basis-[40%] lg:justify-end lg:self-start">
+        <div className="hidden lg:flex lg:basis-[40%] lg:justify-end lg:self-start">
           <div className="w-md fixed right-4 top-20 z-10 hidden flex-col space-y-6 lg:flex lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
             {/* CAROUSEL SLIDESHOW */}
             <CarouselSlideshow />
 
             {/* SUGGESTED PROFILES */}
-            <SuggestedProfiles />
+            {/* <SuggestedProfiles /> */}
           </div>
         </div>
 
