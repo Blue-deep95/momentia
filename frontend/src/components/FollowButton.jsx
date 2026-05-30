@@ -39,6 +39,7 @@ const FollowButton = ({
   size = "md",
   variant = "default",
   className = "",
+  unstyled = false,
 }) => {
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
@@ -172,7 +173,9 @@ const FollowButton = ({
         disabled={loading || fetching}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`follow-button ${sizeClass} ${stateClass} ${hovered && !loading && !fetching ? "-translate-y-px" : "translate-y-0"} ${className}`}
+        className={unstyled
+          ? `${className}`
+          : `follow-button ${sizeClass} ${stateClass} ${hovered && !loading && !fetching ? "-translate-y-px" : "translate-y-0"} ${className}`}
         title={error || ""}
         aria-label={
           loading || fetching
