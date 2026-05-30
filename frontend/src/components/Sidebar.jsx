@@ -124,7 +124,7 @@ export default function Sidebar({ profile }) {
 
       {/* ================= DESKTOP / TABLET SIDEBAR ================= */}
       <div
-        className={`z-50 fixed left-0 top-0 hidden h-screen flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-300 ease-in-out lg:flex ${
+        className={`z-50 fixed left-0 top-14 hidden h-screen flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-300 ease-in-out lg:flex ${
           isExpanded ? 'w-65' : 'w-18'
         }`}
         onMouseEnter={() => setIsExpanded(true)}
