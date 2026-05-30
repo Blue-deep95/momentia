@@ -159,6 +159,13 @@ const Profile = () => {
     }
   }, [location.state]);
 
+  // Prevent non-owners from opening the saved tab (saved is only for own profile)
+  useEffect(() => {
+    if (activeTab === "saved" && !isOwnProfile) {
+      setActiveTab("posts");
+    }
+  }, [activeTab, isOwnProfile]);
+
   useEffect(() => {
     if (!profileUserId) return;
 
@@ -414,20 +421,20 @@ const Profile = () => {
 
                     {/* ACTIONS */}
 
-                    <div className="flex flex-wrap justify-between gap-3">
+                    <div className="flex flex-wrap items-center justify-center gap-3">
 
                       {isOwnProfile ? (
                         <>
                           <button
                             onClick={() => setShowEdit(true)}
-                            className="flex-1 min-w-[140px] rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center font-semibold text-gray-900 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-white text-gray-900 font-semibold border border-gray-200 shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg"
                           >
                             Edit Profile
                           </button>
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex-1 min-w-[140px] flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-xl transition-transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-2"
                           >
                             <Share2 size={18} />
                             Share
@@ -437,12 +444,13 @@ const Profile = () => {
                         <>
                           <FollowButton
                             userId={profileUserId}
-                            className="flex-1 min-w-[140px]"
+                            unstyled={true}
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-white text-gray-900 font-semibold border border-gray-200 shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg"
                           />
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex-1 min-w-[140px] flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-xl transition-transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-2"
                           >
                             <Share2 size={18} />
                             Share
@@ -458,13 +466,13 @@ const Profile = () => {
 
                   <div className="mt-8 grid grid-cols-3 gap-4">
 
-                    <div className="rounded-3xl border border-white bg-white/70 p-4 sm:p-5 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
+                    <div className="flex flex-col items-center justify-center rounded-3xl border border-white bg-white/85 p-6 sm:p-5 text-center shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
 
                       <h3 className="text-3xl font-bold text-indigo-600">
                         {profile?.totalPosts || 0}
                       </h3>
 
-                      <p className="mt-1 text-gray-600">
+                      <p className="mt-2 text-gray-600">
                         Posts
                       </p>
 
@@ -472,14 +480,14 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowers(true)}
-                      className="rounded-3xl border border-white bg-white/70 p-4 sm:p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
+                      className="flex flex-col items-center justify-center rounded-3xl border border-white bg-white/85 p-6 sm:p-5 text-center shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-purple-600">
                         {profile?.followers || 0}
                       </h3>
 
-                      <p className="mt-1 text-gray-600">
+                      <p className="mt-2 text-gray-600">
                         Followers
                       </p>
 
@@ -487,14 +495,14 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowing(true)}
-                      className="rounded-3xl border border-white bg-white/70 p-4 sm:p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
+                      className="flex flex-col items-center justify-center rounded-3xl border border-white bg-white/85 p-6 sm:p-5 text-center shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-indigo-600">
                         {profile?.following || 0}
                       </h3>
 
-                      <p className="mt-1 text-gray-600">
+                      <p className="mt-2 text-gray-600">
                         Following
                       </p>
 
@@ -558,7 +566,7 @@ const Profile = () => {
 
             <div className="flex items-center justify-center overflow-x-auto">
 
-              {TABS.map(({ key, label, Icon }) => (
+              {TABS.filter(({ key }) => (key !== "saved" || isOwnProfile)).map(({ key, label, Icon }) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
@@ -634,7 +642,7 @@ const Profile = () => {
           {activeTab === "photos" && (
             <>
               {photoItems.length > 0 ? (
-                <div className="mt-10 mb-14 columns-2 gap-5 space-y-5 md:columns-3 xl:columns-4">
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {photoItems.map((post) => (
                     <PhotoCard
                       key={post._id}
