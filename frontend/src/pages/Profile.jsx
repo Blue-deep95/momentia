@@ -14,8 +14,6 @@ import { updateUser } from "../slices/authSlice";
 
 import {
   Heart,
-  MapPin,
-  Link2,
   Calendar,
   BadgeCheck,
   LayoutGrid,
@@ -48,7 +46,7 @@ const Profile = () => {
   const profileUserId = userId || user?.id;
   const isOwnProfile = !userId || userId === user?.id;
   const navigate = useNavigate();
-  const location = useLocation();
+
 
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -270,9 +268,6 @@ const Profile = () => {
         return alert("Only jpg, jpeg, png and webp allowed");
       }
 
-      const localPreview = URL.createObjectURL(file);
-
-      setPreviewImage(localPreview);
 
       const formData = new FormData();
 
@@ -512,45 +507,26 @@ const Profile = () => {
 
                   {/* BIO */}
 
-{/* BIO */}
+                  {/* BIO */}
 
-<div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
+                  <div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
 
-  {profile?.bio && (
-    <p className="mt-4 whitespace-pre-line text-[15px] leading-8 text-gray-700">
-      {profile.bio}
-    </p>
-  )}
+                    {profile?.bio && (
+                      <p className="mt-4 whitespace-pre-line text-[15px] leading-8 text-gray-700">
+                        {profile.bio}
+                      </p>
+                    )}
 
-  <div className="mt-5 flex flex-wrap gap-5">
+                    <div className="mt-5 flex flex-wrap gap-5">
 
-    {profile?.location && (
-      <div className="flex items-center gap-2 text-gray-600">
-        <MapPin size={16} />
-        {profile.location}
-      </div>
-    )}
+                      <div className="flex items-center gap-2 text-[#6B7280]">
+                        <Calendar size={16} />
+                        Joined 2026
+                      </div>
 
-    {profile?.website && (
-      <a
-        href={profile.website}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-2 font-medium text-indigo-600"
-      >
-        <Link2 size={16} />
-        Website
-      </a>
-    )}
+                    </div>
 
-    <div className="flex items-center gap-2 text-[#6B7280]">
-      <Calendar size={16} />
-      Joined 2026
-    </div>
-
-  </div>
-
-</div>
+                  </div>
 
                 </div>
 
@@ -570,11 +546,10 @@ const Profile = () => {
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`flex items-center gap-2 px-4 py-4 md:px-6 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
-                    activeTab === key
+                  className={`flex items-center gap-2 px-4 py-4 md:px-6 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === key
                       ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   <Icon size={18} />
                   <span className="hidden sm:inline">{label}</span>
@@ -1114,8 +1089,7 @@ const EditProfileModal = ({
     name: profile?.name || "",
     username: profile?.username || "",
     bio: profile?.bio || "",
-    website: profile?.website || "",
-    location: profile?.location || "",
+
   });
   const dispatch = useDispatch();
   const [saving, setSaving] = useState(false);
@@ -1257,28 +1231,6 @@ const EditProfileModal = ({
             />
 
           </div>
-
-          <InputField
-            label="Website"
-            value={formData.website}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                website: e.target.value,
-              })
-            }
-          />
-
-          <InputField
-            label="Location"
-            value={formData.location}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                location: e.target.value,
-              })
-            }
-          />
 
           <button
             onClick={handleSave}
