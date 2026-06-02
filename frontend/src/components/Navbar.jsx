@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../slices/authSlice";
 import {
   Home,
@@ -9,6 +9,7 @@ import {
   Send,
   UserCircle,
   LogOut,
+  Bell,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -21,11 +22,26 @@ export default function Navbar() {
     navigate("/login");
   };
 
+  const unreadCount = useSelector((state) => state.notification?.unreadCount || 0);
+
   const navItems = [
     { path: "/", icon: <Home size={26} /> },
     { path: "/search", icon: <Search size={26} /> },
     { path: "/create-post", icon: <Plus size={26} /> },
     { path: "/messages", icon: <Send size={26} /> },
+    {
+      path: "/notifications",
+      icon: (
+        <div className="relative">
+          <Bell size={26} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </div>
+      ),
+    },
     { path: "/profile", icon: <UserCircle size={26} /> },
   ];
 

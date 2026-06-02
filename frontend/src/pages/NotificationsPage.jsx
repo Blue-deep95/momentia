@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import api from "../services/api.js";
+import { setUnreadCount, clearUnreadCount } from "../slices/notificationSlice";
 
 /* ════════════════════════════════════════════════════════════════
    HELPERS
@@ -92,11 +94,11 @@ const buildAction = (n) => {
         icon: "👤",
       };
 
-    case "mention":
-      return {
-        sentence: `mentioned you`,
-        icon: "@",
-      };
+    // case "mention":
+    //   return {
+    //     sentence: `mentioned you`,
+    //     icon: "@",
+    //   };
 
     default:
       return {
@@ -126,7 +128,7 @@ const TABS = [
   { label: "Likes", type: "post" },
   { label: "Comments", type: "comment" },
   { label: "Follows", type: "follow" },
-  { label: "Mentions", type: "mention" },
+ // { label: "Mentions", type: "mention" },
 ];
 
 /* ════════════════════════════════════════════════════════════════
@@ -254,6 +256,7 @@ const NotifCard = ({ n, onRead, isNew }) => {
 
 export default function NotificationsPage() {
   const [notifs, setNotifs] = useState([]);
+  const dispatch = useDispatch();
   const [newIds, setNewIds] = useState(new Set());
 
   const [page, setPage] = useState(1);
@@ -281,7 +284,15 @@ export default function NotificationsPage() {
 
       const data = res.data.notifications || [];
 
-      setNotifs((prev) => (replace ? data : [...prev, ...data]));
+      setNotifs((prev) => {
+        const updated = replace ? data : [...prev, ...data];
+
+        const unread = updated.filter((n) => !n.isRead).length;
+
+        dispatch(setUnreadCount(unread));
+
+        return updated;
+      });
 
       setHasMore(data.length === 20);
     } catch (err) {
@@ -290,7 +301,7 @@ export default function NotificationsPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, []);
+  }, [dispatch]);
 
   /* INITIAL */
   useEffect(() => {
@@ -307,7 +318,16 @@ export default function NotificationsPage() {
       if (!socket) return;
 
       socketHandler = (newNotif) => {
-        setNotifs((prev) => [newNotif, ...prev]);
+        setNotifs((prev) => {
+          const updated = [newNotif, ...prev];
+
+          const unread = updated.filter((n) => !n.isRead).length;
+
+          dispatch(setUnreadCount(unread));
+
+          return updated;
+        });
+
         setNewIds((prev) => new Set([...prev, newNotif._id]));
 
         setTimeout(() => {
@@ -364,6 +384,8 @@ export default function NotificationsPage() {
           isRead: true,
         }))
       );
+
+      dispatch(clearUnreadCount());
     } catch (err) {
       console.log(err);
     } finally {
@@ -373,16 +395,22 @@ export default function NotificationsPage() {
 
   /* MARK ONE */
   const handleReadOne = async (id) => {
-    setNotifs((prev) =>
-      prev.map((n) =>
+    setNotifs((prev) => {
+      const updated = prev.map((n) =>
         n._id === id
           ? {
               ...n,
               isRead: true,
             }
           : n
-      )
-    );
+      );
+
+      const unread = updated.filter((n) => !n.isRead).length;
+
+      dispatch(setUnreadCount(unread));
+
+      return updated;
+    });
 
     if (!markedRef.current.has(id)) {
       markedRef.current.add(id);
