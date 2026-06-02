@@ -26,7 +26,7 @@ const Feed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 lg:pl-20">
+    <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 lg:pl-20">
 
       {/* 🔝 NAVBAR */}
       <Navbar />
