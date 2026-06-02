@@ -28,6 +28,14 @@ const UserSchema = new mongoose.Schema({
 
     password: String,
     refreshToken: String,
+
+    // the new refreshToken field is only for supporting migrations for my teammates from 
+    // who still hold older code the new here does not mean anything at all.
+    newRefreshToken: [
+        {
+            type: String,
+        }
+    ],
     otp: String,
     otpExpiry: Number,
     isEmailVerified: {
