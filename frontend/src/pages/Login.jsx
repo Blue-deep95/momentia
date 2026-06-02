@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import api from "../services/api";
 import { login } from "../slices/authSlice";
+import CarouselSlideshow from "../components/CarouselSlideshow";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -52,69 +53,19 @@ const Login = () => {
   };
 
   return (
-    <div className="grid min-h-screen font-sans lg:grid-cols-2">
+    <div className="grid min-h-screen font-sans lg:grid-cols-[44%_56%]">
       
       {/* LEFT SIDE */}
-      <div className="bg-linear-to-br relative hidden flex-col justify-center overflow-hidden from-blue-600 via-indigo-600 to-purple-700 px-16 py-14 lg:flex">
-        
-        {/* Glow */}
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-3xl"></div>
-
-        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-white/10 blur-3xl"></div>
-
-        {/* Logo */}
-        <div className="z-10 mb-8 flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/20 bg-white/10 text-5xl font-bold text-white backdrop-blur-xl">
-          M
-        </div>
-
-        {/* Badge */}
-        <div className="z-10 mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-indigo-100 backdrop-blur-xl">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-purple-200"></span>
-          Welcome to Momentia
-        </div>
-
-        {/* Heading */}
-        <h1 className="z-10 mb-6 text-6xl font-bold leading-tight text-white">
-          Share your <br />
-          <span className="text-purple-200">
-            moments
-          </span>{" "}
-          with <br />
-          the world
-        </h1>
-
-        {/* Text */}
-        <p className="z-10 max-w-lg text-[16px] leading-8 text-white/75">
-          Connect with friends, upload stories,
-          explore reels and create your own
-          social experience with Momentia.
-        </p>
-
-        {/* Stats */}
-        <div className="z-10 mt-12 flex gap-5">
-          {[
-            ["2.1M", "Users"],
-            ["14M", "Posts"],
-            ["99%", "Active"],
-          ].map(([num, text]) => (
-            <div
-              key={text}
-              className="texmin-w-30drop-blur-xl min-w-30 rounded-3xl border border-white/20 bg-white/10 px-8 py-5"
-            >
-              <h2 className="text-2xl font-bold text-white">
-                {num}
-              </h2>
-
-              <p className="mt-1 text-sm text-white/70">
-                {text}
-              </p>
-            </div>
-          ))}
+      <div className="relative hidden overflow-hidden bg-slate-50 p-10 lg:flex lg:items-center lg:justify-center">
+        <div className="absolute top-[-120px] left-[-100px] h-80 w-80 rounded-full bg-blue-200/20 blur-3xl"></div>
+        <div className="absolute bottom-[-120px] right-[-100px] h-80 w-80 rounded-full bg-slate-200/60 blur-3xl"></div>
+        <div className="relative z-10 h-[calc(100vh-3.5rem)] w-full max-w-[32rem]">
+          <CarouselSlideshow />
         </div>
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex items-center justify-center bg-white px-6 py-10 lg:px-16">
+      <div className="flex items-center justify-center bg-white px-6 py-10 lg:px-10">
         
         <form
           onSubmit={handleSubmit}
