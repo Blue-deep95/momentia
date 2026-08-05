@@ -56,55 +56,6 @@ router.get("/get-mainpage",async(req,res) =>{
     }
 })
 
-// this route is mainly for getting the posts uploaded by secret users and display them on the main screen
-// this too will not have any protection from authmiddleware
-router.get("/get-carousel",async(req,res) => {
-    try{
-        // let's include pagination later if the posts themselves are good for now just send everything
-        const carouselItems = await User.aggregate([
-            {$match:{userType:'cdg'}},
-            // try to lookup all the posts by someone with userType:cdg
-            {
-                $lookup:{
-                    from:'posts',
-                    localField:'_id',
-                    foreignField:'author',
-                    as:'postDetails'
-                }
-            },
-            {$unwind:'$postDetails'},
-            // Sort to show the latest secret/carousel posts first
-            {$sort:{'postDetails.createdAt':-1}},
-            {$project:{
-                _id: '$postDetails._id',
-                caption: '$postDetails.caption',
-                mediaType: '$postDetails.mediaType',
-                thumbImage: '$postDetails.thumbImage',
-                images: '$postDetails.images',
-                video: '$postDetails.video',
-                totalLikes: '$postDetails.totalLikes',
-                totalComments: '$postDetails.totalComments',
-                createdAt: '$postDetails.createdAt',
-                authorDetails:{
-                    _id: '$_id',
-                    username: '$username',
-                    name: '$name',
-                    profilePicture: '$profilePicture',
-                    email: '$email'
-                }
-            }}
-
-        ])
-
-        return res.status(200).json({message:"Carousel items fetched succesfully",carouselItems})
-
-    }
-    catch(err){
-        console.log("Error in get-carousel route",err)
-        return res.status(500).json({message:"Internal server error"})
-    }
-})
-
 // the main route that sends posts to the frontend
 router.get("/get-posts",protect,
     async (req, res) => {

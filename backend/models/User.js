@@ -12,9 +12,7 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    // a new userType for implementing carousel like system
-    // in main page
-    userType:String,
+    userType: String,
     name: String,
     
     bio: {

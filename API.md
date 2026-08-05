@@ -380,37 +380,7 @@ Retrieves the top 10 most liked posts. This endpoint is **public** and does not 
     }
     ```
 
-### 2. Get Carousel Items
-Retrieves posts uploaded by secret/creator users (`userType: 'cdg'`). This endpoint is **public** and does not require authentication.
-*   **URL:** `/feed/get-carousel`
-*   **Method:** `GET`
-*   **Success Response (200):**
-    ```json
-    {
-      "carouselItems": [
-        {
-          "_id": "post_id_here",
-          "caption": "...",
-          "mediaType": "image",
-          "thumbImage": "...",
-          "images": [ { "url": "...", "public_id": "..." } ],
-          "video": null,
-          "totalLikes": 10,
-          "totalComments": 2,
-          "createdAt": "...",
-          "authorDetails": {
-            "_id": "user_id_here",
-            "username": "secret_creator",
-            "profilePicture": "...",
-            "email": "secret@example.com"
-          }
-        }
-      ],
-      "message": "Carousel items fetched succesfully"
-    }
-    ```
-
-### 3. Get Feed Posts
+### 2. Get Feed Posts
 Retrieves posts for the main feed using **cursor-based pagination** with a split-timeline (social graph priority) algorithm and interaction metadata. Requires a valid Bearer Token.
 *   **URL:** `/feed/get-posts`
 *   **Method:** `GET`

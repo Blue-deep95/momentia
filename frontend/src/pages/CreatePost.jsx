@@ -27,13 +27,7 @@ const Toast = ({
   }, [onClose]);
 
   return (
-    <div
-      className={`fixed right-4 top-4 z-999 rounded-2xl border px-5 py-4 text-white shadow-2xl backdrop-blur-xl ${
-        type === "error"
-          ? "border-red-400 bg-red-500/90"
-          : "border-emerald-400 bg-emerald-500/90"
-      }`}
-    >
+    <div className="fixed right-4 top-4 z-[999] rounded-2xl border border-slate-700/80 bg-slate-900/95 px-5 py-4 text-white shadow-2xl backdrop-blur-xl">
       <div className="flex items-center gap-3">
         <span className="text-sm font-semibold">
           {message}
@@ -211,7 +205,7 @@ const CreatePost = () => {
   };
 
   return (
-    <div className="bg-linear-to-br min-h-screen from-blue-50 via-white to-indigo-50">
+    <div className="bg-linear-to-br min-h-screen from-blue-50 via-white to-indigo-50 md:pl-20 lg:pl-64">
 
       {/* TOAST */}
       {toast && (
@@ -224,15 +218,11 @@ const CreatePost = () => {
         />
       )}
 
-      <Navbar />
-
       {/* =============================== */}
       {/* UPDATED SPACING HERE 👇 */}
-      {/* pt-20 = navbar top space */}
-      {/* pb-28 = bottom mobile space */}
       {/* =============================== */}
 
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-3 pb-28 pt-20 sm:px-5 sm:pb-20 lg:grid-cols-3 lg:px-6 lg:pb-10 lg:pt-6">
+      <div className="mx-auto max-w-4xl px-3 pb-28 pt-8 sm:px-5 sm:pb-20 lg:px-6 lg:pb-10">
 
         {/* MAIN */}
         <div className="lg:col-span-2">
@@ -397,13 +387,6 @@ const CreatePost = () => {
                   : "Share Post"}
               </button>
             </form>
-          </div>
-        </div>
-
-        {/* SIDEBAR */}
-        <div className="hidden lg:block">
-          <div className="sticky top-24">
-            <Sidebar />
           </div>
         </div>
       </div>
