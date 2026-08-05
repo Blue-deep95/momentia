@@ -12,8 +12,6 @@ const multer = require('multer')
 const router = express.Router()
 const uploadToCloudinary = require('../utils/uploadToCloudinary')
 const deleteFromCloudinary = require('../utils/deleteFromCloudinary')
-const { uploadToGridFS, deleteFromGridFS } = require('../utils/gridfs')
-const { processAvatar } = require('../utils/imageProcessor')
 
 // prepare multer
 const upload = multer({
@@ -265,50 +263,14 @@ router.post("/upload-avatar",
                 return res.status(400).json({ message: "invalid user" })
             }
 
-            // 1. Delete old images from Cloudinary & GridFS in parallel
-            const deletePromises = []
+            // Delete old avatar from Cloudinary
             const old_public_id = user.profilePicture?.original?.public_id
             if (old_public_id) {
-                deletePromises.push(deleteFromCloudinary(old_public_id, 'image'))
-            }
-            if (user.gridFSProfilePicture) {
-                if (user.gridFSProfilePicture.original?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.original.fileId))
-                if (user.gridFSProfilePicture.profileView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.profileView.fileId))
-                if (user.gridFSProfilePicture.commentView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.commentView.fileId))
-            }
-            if (deletePromises.length > 0) {
-                await Promise.all(deletePromises).catch(err => console.error("Error deleting old avatar files:", err))
+                await deleteFromCloudinary(old_public_id, 'image').catch(err => console.error("Error deleting old avatar:", err))
             }
 
-            // 2. Upload to Cloudinary (Primary) and GridFS (Backup) in parallel
-            const cloudinaryPromise = uploadToCloudinary(req.file.buffer, 'momentia/profiles', 'avatar', 'image')
-
-            const gridFSPromise = (async () => {
-                try {
-                    const { original, profileView, commentView } = await processAvatar(req.file.buffer)
-                    const filenameBase = `${userId}_avatar_${Date.now()}`
-                    const [origRes, profRes, commRes] = await Promise.all([
-                        uploadToGridFS(original, `${filenameBase}_original.webp`, 'image/webp'),
-                        uploadToGridFS(profileView, `${filenameBase}_profile.webp`, 'image/webp'),
-                        uploadToGridFS(commentView, `${filenameBase}_comment.webp`, 'image/webp')
-                    ])
-
-                    const getGridFSUrl = (fileId) => `${req.protocol}://${req.get('host')}/api/media/gridfs/${fileId}`
-                    return {
-                        original: { url: getGridFSUrl(origRes.fileId), fileId: origRes.fileId },
-                        profileView: { url: getGridFSUrl(profRes.fileId), fileId: profRes.fileId },
-                        commentView: { url: getGridFSUrl(commRes.fileId), fileId: commRes.fileId }
-                    }
-                } catch (gridfsErr) {
-                    console.error("[GridFS Backup] Avatar upload failed:", gridfsErr)
-                    return null
-                }
-            })()
-
-            const [cloudinaryResult, gridFSResult] = await Promise.all([
-                cloudinaryPromise,
-                gridFSPromise
-            ])
+            // Upload new avatar to Cloudinary
+            const cloudinaryResult = await uploadToCloudinary(req.file.buffer, 'momentia/profiles', 'avatar', 'image')
 
             const profileViewUrl = cloudinaryResult.secure_url.replace('/upload/', '/upload/w_400,h_400,c_fill,g_face,q_auto/')
             const commentViewUrl = cloudinaryResult.secure_url.replace('/upload/', '/upload/w_50,h_50,c_fill,g_face,q_auto/')
@@ -324,10 +286,6 @@ router.post("/upload-avatar",
                 }
             }
 
-            if (gridFSResult) {
-                updateData.gridFSProfilePicture = gridFSResult
-            }
-
             await User.findByIdAndUpdate(userId, updateData)
             return res.status(200).json({ message: 'Profile picture updated succesfully' })
         }
@@ -338,7 +296,7 @@ router.post("/upload-avatar",
     }
 )
 
-// per frontend teams request write a new remove-profile-picture route
+// Route for removing profile picture
 router.delete("/remove-avatar", async (req, res) => {
     try {
         const user = await User.findById(req.user._id)
@@ -347,35 +305,19 @@ router.delete("/remove-avatar", async (req, res) => {
             return res.status(404).json({ message: "User not found" })
         }
 
-        const hasCloudinary = !!user.profilePicture?.original?.public_id
-        const hasGridFS = !!(user.gridFSProfilePicture?.original?.fileId)
+        const publicId = user.profilePicture?.original?.public_id
 
-        if (!hasCloudinary && !hasGridFS) {
+        if (!publicId) {
             return res.status(400).json({ message: "User profile picture does not exist" })
         }
 
-        // Delete from Cloudinary & GridFS in parallel
-        const deletePromises = []
-        if (user.profilePicture?.original?.public_id) {
-            deletePromises.push(deleteFromCloudinary(user.profilePicture.original.public_id, 'image'))
-        }
-        if (user.gridFSProfilePicture) {
-            if (user.gridFSProfilePicture.original?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.original.fileId))
-            if (user.gridFSProfilePicture.profileView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.profileView.fileId))
-            if (user.gridFSProfilePicture.commentView?.fileId) deletePromises.push(deleteFromGridFS(user.gridFSProfilePicture.commentView.fileId))
-        }
+        // Delete from Cloudinary
+        await deleteFromCloudinary(publicId, 'image').catch(err => console.error("Error removing avatar file:", err))
 
-        await Promise.all(deletePromises).catch(err => console.error("Error removing avatar files:", err))
-
-        user.profilePicture.original.public_id = null
-        user.profilePicture.original.url = null
-        user.profilePicture.commentView = null
-        user.profilePicture.profileView = null
-
-        user.gridFSProfilePicture = {
-            original: { url: null, fileId: null },
-            profileView: { url: null, fileId: null },
-            commentView: { url: null, fileId: null }
+        user.profilePicture = {
+            original: { url: null, public_id: null },
+            profileView: null,
+            commentView: null
         }
 
         await user.save()

@@ -54,9 +54,10 @@ const notificationSchema = new mongoose.Schema(
     expiresAt: {
       type: Date,
       index: { expires: 0 },
-    },
-  },
-  { timestamps: true },
-);
+    }},
+  { timestamps: true })
+
+notificationSchema.index({ recipient: 1, isRead: 1, updatedAt: -1 });
+notificationSchema.index({ recipient: 1, targetEntityId: 1, notificationType: 1 });
 
 module.exports = mongoose.model("notification", notificationSchema);

@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const Room = require("../models/Room");
 const Message = require("../models/Message");
 const { messageBus } = require("../events/event");
-const { findByIdAndDelete } = require("../models/User");
 // import the comment schema for validation
 const { contentSchema } = require("../zodSchema/validationSchema");
 

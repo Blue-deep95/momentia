@@ -12,8 +12,6 @@ const Comment = require('../models/Comment')
 
 const uploadToCloudinary = require('../utils/uploadToCloudinary')
 const deleteFromCloudinary = require('../utils/deleteFromCloudinary')
-const { uploadToGridFS, deleteFromGridFS } = require('../utils/gridfs')
-const { processPostImage } = require('../utils/imageProcessor')
 
 // import the notification service here to send notifications
 const {notificationBus} = require('../events/event')
@@ -177,51 +175,10 @@ router.post("/upload-post",
             let post
 
             if (imageFiles.length > 0) {
-                // 1. Upload to Cloudinary (Primary)
-                const cloudinaryPromise = (async () => {
-                    const uploadPromises = imageFiles.map((file) => {
-                        return uploadToCloudinary(file.buffer, 'momentia/posts', 'post', 'image')
-                    })
-                    return await Promise.all(uploadPromises)
-                })()
-
-                // 2. Upload to GridFS (Backup)
-                const gridFSPromise = (async () => {
-                    try {
-                        const uploadGridFSPromises = imageFiles.map(async (file, idx) => {
-                            const { postImage, thumbnail } = await processPostImage(file.buffer)
-                            const filenameBase = `${user._id}_post_${Date.now()}_${idx}`
-                            const imgRes = await uploadToGridFS(postImage, `${filenameBase}_post.webp`, 'image/webp')
-                            
-                            let thumbRes = null
-                            if (idx === 0) {
-                                thumbRes = await uploadToGridFS(thumbnail, `${filenameBase}_thumb.webp`, 'image/webp')
-                            }
-                            return { imgRes, thumbRes }
-                        })
-
-                        const uploadGridFSResults = await Promise.all(uploadGridFSPromises)
-                        const getGridFSUrl = (fileId) => `${req.protocol}://${req.get('host')}/api/media/gridfs/${fileId}`
-
-                        const media = uploadGridFSResults.map(res => ({
-                            url: getGridFSUrl(res.imgRes.fileId),
-                            fileId: res.imgRes.fileId
-                        }))
-
-                        const firstResult = uploadGridFSResults[0]
-                        const thumbUrl = firstResult.thumbRes ? getGridFSUrl(firstResult.thumbRes.fileId) : null
-
-                        return { media, thumbUrl }
-                    } catch (gridfsErr) {
-                        console.error("[GridFS Backup] Image post upload failed:", gridfsErr)
-                        return null
-                    }
-                })()
-
-                const [cloudinaryResults, gridFSResult] = await Promise.all([
-                    cloudinaryPromise,
-                    gridFSPromise
-                ])
+                const uploadPromises = imageFiles.map((file) => {
+                    return uploadToCloudinary(file.buffer, 'momentia/posts', 'post', 'image')
+                })
+                const cloudinaryResults = await Promise.all(uploadPromises)
 
                 post = new Post({ author: user._id, mediaType: 'image', caption: caption, images: [] })
                 cloudinaryResults.forEach(item => {
@@ -230,36 +187,9 @@ router.post("/upload-post",
 
                 const thumbUrl = cloudinaryResults[0].secure_url.replace('/upload/', '/upload/w_250,h_250,c_fill,q_auto,f_auto/')
                 post.thumbImage = thumbUrl
-
-                if (gridFSResult) {
-                    post.gridFsMedia = gridFSResult.media
-                    post.gridFsThumbImage = gridFSResult.thumbUrl
-                }
             }
             else {
-                // 1. Upload to Cloudinary (Primary)
-                const cloudinaryPromise = uploadToCloudinary(videoFile.buffer, 'momentia/posts', 'post', 'video')
-
-                // 2. Upload to GridFS (Backup)
-                const gridFSPromise = (async () => {
-                    try {
-                        const filename = `${user._id}_post_${Date.now()}_video`
-                        const result = await uploadToGridFS(videoFile.buffer, filename, videoFile.mimetype)
-                        const getGridFSUrl = (fileId) => `${req.protocol}://${req.get('host')}/api/media/gridfs/${fileId}`
-                        return {
-                            url: getGridFSUrl(result.fileId),
-                            fileId: result.fileId
-                        }
-                    } catch (gridfsErr) {
-                        console.error("[GridFS Backup] Video post upload failed:", gridfsErr)
-                        return null
-                    }
-                })()
-
-                const [cloudinaryResult, gridFSResult] = await Promise.all([
-                    cloudinaryPromise,
-                    gridFSPromise
-                ])
+                const cloudinaryResult = await uploadToCloudinary(videoFile.buffer, 'momentia/posts', 'post', 'video')
 
                 post = new Post({
                     author: req.user._id, mediaType: 'video', caption: caption,
@@ -269,14 +199,6 @@ router.post("/upload-post",
                 post.thumbImage = cloudinaryResult.secure_url
                     .replace(/\.[^/.]+$/, ".jpg")
                     .replace('/upload/', '/upload/w_250,h_250,c_fill,q_auto,f_auto/')
-
-                if (gridFSResult) {
-                    post.gridFsMedia = [{
-                        url: gridFSResult.url,
-                        fileId: gridFSResult.fileId
-                    }]
-                    post.gridFsThumbImage = post.thumbImage
-                }
             }
 
             await post.save()
@@ -307,7 +229,7 @@ router.delete("/delete-post/:id",
 
             const deletePromises = []
 
-            // 1. Queue Cloudinary deletes
+            // Queue Cloudinary deletes
             if (post.mediaType === 'image') {
                 post.images.forEach(item => {
                     if (item.public_id) {
@@ -316,26 +238,6 @@ router.delete("/delete-post/:id",
                 })
             } else if (post.mediaType === 'video' && post.video?.public_id) {
                 deletePromises.push(deleteFromCloudinary(post.video.public_id, 'video'))
-            }
-
-            // 2. Queue GridFS deletes
-            if (post.gridFsMedia && post.gridFsMedia.length > 0) {
-                post.gridFsMedia.forEach(item => {
-                    if (item.fileId) {
-                        deletePromises.push(deleteFromGridFS(item.fileId))
-                    }
-                })
-            }
-            if (post.gridFsThumbImage) {
-                const extractFileIdFromUrl = (url) => {
-                    if (!url || !url.includes('/api/media/gridfs/')) return null
-                    const parts = url.split('/api/media/gridfs/')
-                    return parts[parts.length - 1]
-                }
-                const thumbFileId = extractFileIdFromUrl(post.gridFsThumbImage)
-                if (thumbFileId) {
-                    deletePromises.push(deleteFromGridFS(thumbFileId))
-                }
             }
 
             // Delete all in parallel
@@ -389,7 +291,6 @@ router.post("/update-post",
             const videoFile = req.files['video'] ? req.files['video'][0] : null
 
             if (imageFiles.length > 0 || videoFile) {
-                // Delete old media from Cloudinary and GridFS in parallel
                 const deletePromises = []
                 if (post.mediaType === 'image') {
                     post.images.forEach(item => {
@@ -403,78 +304,16 @@ router.post("/update-post",
                     post.video = undefined
                 }
 
-                if (post.gridFsMedia && post.gridFsMedia.length > 0) {
-                    post.gridFsMedia.forEach(item => {
-                        if (item.fileId) {
-                            deletePromises.push(deleteFromGridFS(item.fileId))
-                        }
-                    })
-                    post.gridFsMedia = []
-                }
-                if (post.gridFsThumbImage) {
-                    const extractFileIdFromUrl = (url) => {
-                        if (!url || !url.includes('/api/media/gridfs/')) return null
-                        const parts = url.split('/api/media/gridfs/')
-                        return parts[parts.length - 1]
-                    }
-                    const thumbFileId = extractFileIdFromUrl(post.gridFsThumbImage)
-                    if (thumbFileId) {
-                        deletePromises.push(deleteFromGridFS(thumbFileId))
-                    }
-                    post.gridFsThumbImage = undefined
-                }
-
                 if (deletePromises.length > 0) {
                     await Promise.all(deletePromises).catch(err => console.error("Error deleting old media on update:", err))
                 }
 
                 // Upload new media
                 if (imageFiles.length > 0) {
-                    // Cloudinary Upload
-                    const cloudinaryPromise = (async () => {
-                        const uploadPromises = imageFiles.map((file) => {
-                            return uploadToCloudinary(file.buffer, 'momentia/posts', 'post', 'image')
-                        })
-                        return await Promise.all(uploadPromises)
-                    })()
-
-                    // GridFS Upload (Backup)
-                    const gridFSPromise = (async () => {
-                        try {
-                            const uploadGridFSPromises = imageFiles.map(async (file, idx) => {
-                                const { postImage, thumbnail } = await processPostImage(file.buffer)
-                                const filenameBase = `${user._id}_post_${Date.now()}_${idx}`
-                                const imgRes = await uploadToGridFS(postImage, `${filenameBase}_post.webp`, 'image/webp')
-                                
-                                let thumbRes = null
-                                if (idx === 0) {
-                                    thumbRes = await uploadToGridFS(thumbnail, `${filenameBase}_thumb.webp`, 'image/webp')
-                                }
-                                return { imgRes, thumbRes }
-                            })
-
-                            const uploadGridFSResults = await Promise.all(uploadGridFSPromises)
-                            const getGridFSUrl = (fileId) => `${req.protocol}://${req.get('host')}/api/media/gridfs/${fileId}`
-
-                            const media = uploadGridFSResults.map(res => ({
-                                url: getGridFSUrl(res.imgRes.fileId),
-                                fileId: res.imgRes.fileId
-                            }))
-
-                            const firstResult = uploadGridFSResults[0]
-                            const thumbUrl = firstResult.thumbRes ? getGridFSUrl(firstResult.thumbRes.fileId) : null
-
-                            return { media, thumbUrl }
-                        } catch (gridfsErr) {
-                            console.error("[GridFS Backup] Image post update failed:", gridfsErr)
-                            return null
-                        }
-                    })()
-
-                    const [cloudinaryResults, gridFSResult] = await Promise.all([
-                        cloudinaryPromise,
-                        gridFSPromise
-                    ])
+                    const uploadPromises = imageFiles.map((file) => {
+                        return uploadToCloudinary(file.buffer, 'momentia/posts', 'post', 'image')
+                    })
+                    const cloudinaryResults = await Promise.all(uploadPromises)
 
                     post.mediaType = 'image'
                     cloudinaryResults.forEach(item => {
@@ -484,35 +323,8 @@ router.post("/update-post",
                     const thumbUrl = cloudinaryResults[0].secure_url.replace('/upload/', '/upload/w_250,h_250,c_fill,q_auto,f_auto/')
                     post.thumbImage = thumbUrl
                     post.video = undefined
-
-                    if (gridFSResult) {
-                        post.gridFsMedia = gridFSResult.media
-                        post.gridFsThumbImage = gridFSResult.thumbUrl
-                    }
                 } else if (videoFile) {
-                    // Cloudinary Upload
-                    const cloudinaryPromise = uploadToCloudinary(videoFile.buffer, 'momentia/posts', 'post', 'video')
-
-                    // GridFS Upload (Backup)
-                    const gridFSPromise = (async () => {
-                        try {
-                            const filename = `${user._id}_post_${Date.now()}_video`
-                            const result = await uploadToGridFS(videoFile.buffer, filename, videoFile.mimetype)
-                            const getGridFSUrl = (fileId) => `${req.protocol}://${req.get('host')}/api/media/gridfs/${fileId}`
-                            return {
-                                url: getGridFSUrl(result.fileId),
-                                fileId: result.fileId
-                            }
-                        } catch (gridfsErr) {
-                            console.error("[GridFS Backup] Video post update failed:", gridfsErr)
-                            return null
-                        }
-                    })()
-
-                    const [cloudinaryResult, gridFSResult] = await Promise.all([
-                        cloudinaryPromise,
-                        gridFSPromise
-                    ])
+                    const cloudinaryResult = await uploadToCloudinary(videoFile.buffer, 'momentia/posts', 'post', 'video')
 
                     post.mediaType = 'video'
                     post.video = { url: cloudinaryResult.secure_url, public_id: cloudinaryResult.public_id }
@@ -521,14 +333,6 @@ router.post("/update-post",
                         .replace(/\.[^/.]+$/, ".jpg")
                         .replace('/upload/', '/upload/w_250,h_250,c_fill,q_auto,f_auto/')
                     post.images = []
-
-                    if (gridFSResult) {
-                        post.gridFsMedia = [{
-                            url: gridFSResult.url,
-                            fileId: gridFSResult.fileId
-                        }]
-                        post.gridFsThumbImage = post.thumbImage
-                    }
                 }
             }
 
