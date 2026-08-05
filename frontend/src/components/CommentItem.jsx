@@ -117,7 +117,7 @@ const CommentItem = ({ comment, postId, onReply }) => {
             src={
               author?.profilePicture?.commentView || 
               author?.profilePicture?.profileView || 
-              "https://i.pravatar.cc/150?img=50"
+              "/default-avatar.svg"
             }
             alt=""
             className="w-9 h-9 rounded-full object-cover border border-gray-100 flex-shrink-0"

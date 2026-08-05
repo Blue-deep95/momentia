@@ -10,9 +10,6 @@ import {
 import api from "../services/api.js";
 import { useNavigate } from "react-router-dom";
 
-import Navbar from "../components/Navbar.jsx";
-import Sidebar from "../components/Sidebar.jsx";
-
 // TOAST COMPONENT
 const Toast = ({
   message,

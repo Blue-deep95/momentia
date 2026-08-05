@@ -16,10 +16,10 @@ export default function Topbar() {
           </Link>
         </div>
 
-        {/* Center: Instagram Text */}
-        <h1 className="text-2xl font-bold font-serif italic tracking-tight">
+        {/* Center: App Title */}
+        <h1 className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
           <Link to="/">
-          CG Media
+            Momentia
           </Link>
         </h1>
 

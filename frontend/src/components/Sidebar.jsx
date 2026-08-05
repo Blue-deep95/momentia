@@ -12,8 +12,8 @@ import {
   Send,
   Heart,
   Settings,
+  User,
   LogOut,
-  Trophy,
 } from "lucide-react";
 
 export default function Sidebar({ profile }) {
@@ -47,7 +47,9 @@ export default function Sidebar({ profile }) {
     (effectiveProfile?.email ? effectiveProfile.email.split("@")[0] : "username");
   const displayImage =
     effectiveProfile?.profilePicture?.profileView ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`;
+    effectiveProfile?.profilePicture?.commentView ||
+    effectiveProfile?.profilePicture?.url ||
+    (typeof effectiveProfile?.profilePicture === "string" && effectiveProfile.profilePicture ? effectiveProfile.profilePicture : "/default-avatar.svg");
 
   const handleLogout = () => {
     dispatch(logout());
@@ -75,11 +77,6 @@ export default function Sidebar({ profile }) {
       icon: <Film size={24} />,
     },
     {
-        path: "/top-placed",
-        label: "Top Placed",
-        icon: <Trophy size={24} />,
-      },
-    {
       path: "/messages",
       label: "Messages",
       icon: <Send size={24} />,
@@ -90,31 +87,48 @@ export default function Sidebar({ profile }) {
       icon: <Heart size={24} />,
     },
     {
-      path: "/settings",
-      label: "Settings",
-      icon: <Settings size={24} />,
+      path: "/profile",
+      label: "Profile",
+      icon: <User size={24} />,
     },
+  ];
+
+  const mobileNavItems = [
+    navItems[0], // Home
+    navItems[1], // Search
+    navItems[2], // Reels
+    navItems[3], // Messages
+    navItems[5], // Profile
   ];
 
   return (
     <>
       {/* ================= MOBILE NAVBAR ================= */}
       {!hideMobileNav && (
-        <div className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white px-2 py-3 shadow-md md:hidden">
-
-          {navItems.slice(0, 5).map((item) => (
+        <div className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white px-2 py-2.5 shadow-md md:hidden">
+          {mobileNavItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
               className={`flex flex-col items-center ${
                 location.pathname === item.path
-                  ? "text-pink-500"
-                  : "text-gray-500"
+                  ? "text-indigo-600 font-semibold"
+                  : "text-gray-500 hover:text-gray-800"
               }`}
             >
-              {item.icon}
+              {item.path === "/profile" && displayImage ? (
+                <img
+                  src={displayImage}
+                  alt="Profile"
+                  className={`h-6 w-6 rounded-full object-cover border ${
+                    location.pathname === "/profile" ? "border-indigo-600 ring-2 ring-indigo-200" : "border-gray-300"
+                  }`}
+                />
+              ) : (
+                item.icon
+              )}
 
-              <span className="mt-1 text-[11px] font-medium">
+              <span className="mt-1 text-[10px]">
                 {item.label}
               </span>
             </Link>

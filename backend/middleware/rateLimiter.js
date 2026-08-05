@@ -7,7 +7,7 @@ const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
 
     // limit each IP
-    max: 200,
+    max: 20000,
 
     message: {
         message:

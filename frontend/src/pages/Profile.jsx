@@ -5,9 +5,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
-import Sidebar from "../components/Sidebar.jsx";
-import FollowersModal from "../components/FollowersModal.jsx";
-import FollowingModal from "../components/FollowingModal.jsx";
+import UserListModal from "../components/UserListModal.jsx";
 import FollowButton from "../components/FollowButton.jsx";
 import ShareProfileModal from "../components/ShareProfileModal.jsx";
 import { updateUser } from "../slices/authSlice";
@@ -324,17 +322,9 @@ const Profile = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-blue-50 text-gray-900">
-
-      {/* SIDEBAR */}
-
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
-
+    <div className="min-h-screen bg-blue-50 text-gray-900 lg:pl-20">
       {/* MAIN */}
-
-      <div className="flex-1 overflow-y-auto">
+      <div className="w-full">
 
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
 
@@ -691,20 +681,26 @@ const Profile = () => {
       )}
 
       {/* FOLLOWERS */}
-
       {showFollowers && (
-        <FollowersModal
+        <UserListModal
           userId={profileUserId}
+          type="followers"
           onClose={() => setShowFollowers(false)}
+          onCountUpdate={(count) =>
+            setProfile((prev) => (prev ? { ...prev, followers: count } : prev))
+          }
         />
       )}
 
       {/* FOLLOWING */}
-
       {showFollowing && (
-        <FollowingModal
+        <UserListModal
           userId={profileUserId}
+          type="following"
           onClose={() => setShowFollowing(false)}
+          onCountUpdate={(count) =>
+            setProfile((prev) => (prev ? { ...prev, following: count } : prev))
+          }
         />
       )}
 
