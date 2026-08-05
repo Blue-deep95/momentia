@@ -69,6 +69,48 @@ export default function MessagePage() {
     }
   }, [location.state?.shareProfile]);
 
+  // Fetch Following Users for New Chat Modal
+  const fetchFollowing = async () => {
+    if (!userId) return;
+    try {
+      const res = await api.get(`/profile/get-following/${userId}`);
+      setFollowingProfiles(res.data?.following || []);
+    } catch (err) {
+      console.error("Error fetching following profiles:", err);
+    }
+  };
+
+  // Fetch User Rooms
+  const fetchRooms = async () => {
+    try {
+      setLoadingRooms(true);
+      const res = await api.get("/message/get-rooms");
+      setRooms(res.data?.rooms || res.data?.userRooms || []);
+    } catch (err) {
+      console.error("Error fetching rooms:", err);
+      toast.error("Could not load conversations");
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
+  // Mark Room Read
+  const markRead = async (roomId, latestMessageNumber) => {
+    try {
+      await api.put("/message/mark-message-read", {
+        roomId,
+        latestMessageNumber,
+      });
+      setRooms((prev) =>
+        prev.map((r) =>
+          String(r._id) === String(roomId) ? { ...r, unreadCount: 0 } : r
+        )
+      );
+    } catch {
+      // non-fatal
+    }
+  };
+
   // Initial Data Fetch & Real-time Socket Setup
   useEffect(() => {
     if (!userId) return;
@@ -153,31 +195,6 @@ export default function MessagePage() {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages.length, loadingMessages]);
-
-  // Fetch Following Users for New Chat Modal
-  const fetchFollowing = async () => {
-    if (!userId) return;
-    try {
-      const res = await api.get(`/profile/get-following/${userId}`);
-      setFollowingProfiles(res.data?.following || []);
-    } catch (err) {
-      console.error("Error fetching following profiles:", err);
-    }
-  };
-
-  // Fetch User Rooms
-  const fetchRooms = async () => {
-    try {
-      setLoadingRooms(true);
-      const res = await api.get("/message/get-rooms");
-      setRooms(res.data?.userRooms || []);
-    } catch (err) {
-      console.error("Error fetching rooms:", err);
-      toast.error("Could not load conversations");
-    } finally {
-      setLoadingRooms(false);
-    }
-  };
 
   // Create Room (DM or Group)
   const handleCreateRoom = async ({ participants, roomType, roomName }) => {
@@ -361,22 +378,7 @@ export default function MessagePage() {
     }
   };
 
-  // Mark Room Read
-  const markRead = async (roomId, latestMessageNumber) => {
-    try {
-      await api.put("/message/mark-message-read", {
-        roomId,
-        latestMessageNumber,
-      });
-      setRooms((prev) =>
-        prev.map((r) =>
-          String(r._id) === String(roomId) ? { ...r, unreadCount: 0 } : r
-        )
-      );
-    } catch (err) {
-      // non-fatal
-    }
-  };
+
 
   // Leave Group Room
   const handleLeaveGroup = async () => {

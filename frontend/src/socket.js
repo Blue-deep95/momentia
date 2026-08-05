@@ -7,7 +7,7 @@ const getSocketUrl = (apiUrl) => {
   try {
     const url = new URL(apiUrl);
     return url.origin;
-  } catch (e) {
+  } catch {
     return apiUrl;
   }
 };

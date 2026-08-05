@@ -55,9 +55,14 @@ app.use("/api/search", protect, searchRoutes)
 app.use("/api/notifications",protect,notificationRoutes)
 app.use("/api/message",protect,messageRoutes)
 
+const errorHandler = require('./middleware/errorHandler.js')
+
 // event listeners
 require('./services/notificationService.js') // for sending notifications
 require('./services/messageService.js') // for sending chat messages to the frontend
+
+// Global error handler middleware - MUST be mounted after all routes
+app.use(errorHandler)
 
 
 // newer listen that handles both http and web socket connections

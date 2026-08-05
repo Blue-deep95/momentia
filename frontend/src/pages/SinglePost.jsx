@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import api from "../services/api";
@@ -12,8 +12,6 @@ import {
   Share2,
   Trash2,
   Loader2,
-  UserPlus,
-  UserCheck,
 } from "lucide-react";
 import {
   useGetCommentsQuery,
@@ -44,7 +42,6 @@ export default function SinglePost() {
   const {
     data: commentsData,
     isLoading: loadingComments,
-    isFetching: fetchingComments,
   } = useGetCommentsQuery({ postId, page: 1 }, { skip: !postId });
 
   const [createComment, { isLoading: isPostingComment }] =
@@ -335,7 +332,7 @@ export default function SinglePost() {
                 {post.caption}
               </p>
               <p className="mt-1 text-[10px] text-gray-400 uppercase font-semibold">
-                {new Date(post.createdAt || Date.now()).toLocaleDateString("en-US", {
+                {new Date(post.createdAt || 0).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",

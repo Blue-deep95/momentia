@@ -42,7 +42,7 @@ export default function MessageItem({ message, currentUserId, onEdit, onDelete }
     setIsEditing(false);
   };
 
-  const formattedTime = new Date(message.createdAt || Date.now()).toLocaleTimeString([], {
+  const formattedTime = new Date(message.createdAt || 0).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });

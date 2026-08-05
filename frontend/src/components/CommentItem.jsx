@@ -208,9 +208,9 @@ const CommentItem = ({ comment, postId, onReply }) => {
           {/* Render replies recursively */}
           {showReplies && (
             <div className="mt-4 space-y-4 border-l-2 border-gray-50 pl-4">
-              {repliesData?.replies?.map((reply) => (
+              {repliesData?.replies?.map((reply, index) => (
                 <CommentItem 
-                  key={reply._id || Math.random()} 
+                  key={reply._id || index} 
                   comment={reply} 
                   postId={postId} 
                   onReply={onReply}

@@ -135,7 +135,7 @@ const FollowButton = ({
   // Not following -> GREEN
   // Following -> YELLOW
   // Hovering Following (Unfollow action) -> RED
-  let colorStyle = "";
+  let colorStyle;
   if (loading || fetching) {
     colorStyle = "bg-gray-100 text-gray-500 border border-gray-200 cursor-wait";
   } else if (isFollowing) {

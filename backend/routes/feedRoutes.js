@@ -20,47 +20,42 @@ const decodeCursor = (cursorStr) => {
     }
 };
 
+const asyncHandler = require('../middleware/asyncHandler')
+
 // this route is only for getting the first 10 most liked posts on the feed page.
 // users can see this page even if they are not logged in but any interaction with the posts 
 // ask the user to login 
-router.get("/get-mainpage",async(req,res) =>{
-    try{
-        // since this page does not need any user we just get the top 10 most liked posts 
-        const postsToSend = await Post.aggregate([
-            {$sort:{totalLikes:-1} },
-            {$limit:10},
-            // join the author data
-            {
-                $lookup:{
-                    from:'users',
-                    localField:'author',
-                    foreignField:'_id',
-                    pipeline:[{$project:{_id:1,username:1,profilePicture:1}}],
-                    as:'authorDetails'
-                }
-            },
-            {$unwind:'$authorDetails'},
-            {
-                $addFields:{
-                    isLiked:false,
-                    isFollowing:false,
-                    isSaved:false
-                }
+router.get("/get-mainpage", asyncHandler(async (req, res) => {
+    // since this page does not need any user we just get the top 10 most liked posts 
+    const postsToSend = await Post.aggregate([
+        { $sort: { totalLikes: -1 } },
+        { $limit: 10 },
+        // join the author data
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: '_id',
+                pipeline: [{ $project: { _id: 1, username: 1, profilePicture: 1 } }],
+                as: 'authorDetails'
+            }
+        },
+        { $unwind: '$authorDetails' },
+        {
+            $addFields: {
+                isLiked: false,
+                isFollowing: false,
+                isSaved: false
+            }
         }
-        ])
-        return res.status(200).json({message:"Posts fetched succesfully",posts:postsToSend})
-    }
-    catch(err){
-        console.log("Error in get-mainpage route",err)
-        return res.status(500).json({message:"Internal server error"})
-    }
-})
+    ])
+    return res.status(200).json({ message: "Posts fetched succesfully", posts: postsToSend })
+}))
 
 // the main route that sends posts to the frontend
-router.get("/get-posts",protect,
-    async (req, res) => {
-        try {
-            const user = req.user
+router.get("/get-posts", protect,
+    asyncHandler(async (req, res) => {
+        const user = req.user
             const limitCount = 20
             const cursorStr = req.query.cursor
             const cursor = cursorStr ? decodeCursor(cursorStr) : null
@@ -359,18 +354,12 @@ router.get("/get-posts",protect,
                 hasNextPage, 
                 message: "posts retreived successfully" 
             })
-        }
-        catch (err) {
-            console.log("error in feedroutes get-posts", err)
-            return res.status(500).json({ message: "Internal server error" })
-        }
-    }
+    })
 )
 
-router.get("/get-reels",protect,
-    async (req, res) => {
-        try {
-            const user = req.user
+router.get("/get-reels", protect,
+    asyncHandler(async (req, res) => {
+        const user = req.user
             const limit = 20
             const cursorStr = req.query.cursor
             const cursor = cursorStr ? decodeCursor(cursorStr) : null
@@ -505,12 +494,7 @@ router.get("/get-reels",protect,
                 hasNextPage,
                 message: "reels retrieved successfully" 
             })
-        }
-        catch (err) {
-            console.log('error in get-reels route', err)
-            return res.status(500).json({ message: "Internal server Error" })
-        }
-    }
+    })
 )
 
 
