@@ -12,9 +12,7 @@ const UserSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    // a new userType for implementing carousel like system
-    // in main page
-    userType:String,
+    userType: String,
     name: String,
     
     bio: {
@@ -28,6 +26,14 @@ const UserSchema = new mongoose.Schema({
 
     password: String,
     refreshToken: String,
+
+    // the new refreshToken field is only for supporting migrations for my teammates from 
+    // who still hold older code the new here does not mean anything at all.
+    newRefreshToken: [
+        {
+            type: String,
+        }
+    ],
     otp: String,
     otpExpiry: Number,
     isEmailVerified: {
@@ -45,21 +51,6 @@ const UserSchema = new mongoose.Schema({
         },
         profileView: String,
         commentView: String
-    },
-
-    gridFSProfilePicture: {
-        original: {
-            url: String,
-            fileId: mongoose.Schema.Types.ObjectId
-        },
-        profileView: {
-            url: String,
-            fileId: mongoose.Schema.Types.ObjectId
-        },
-        commentView: {
-            url: String,
-            fileId: mongoose.Schema.Types.ObjectId
-        }
     },
 
     // for saved posts instead of creating seperate schema we can simply use 

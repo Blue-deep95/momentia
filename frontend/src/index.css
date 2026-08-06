@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@100..900&display=swap');
 @import "tailwindcss";
 
+/* * {
+  border: 1px solid red !important;
+} */
+
 @theme {
   /* --- Colors --- */
   --color-surface: #f9f9ff;

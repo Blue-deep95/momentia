@@ -50,15 +50,6 @@ const PostSchema = new mongoose.Schema({
         public_id:String
     },
 
-    gridFsMedia: [
-        {
-            url: String,
-            fileId: mongoose.Schema.Types.ObjectId
-        }
-    ],
-
-    gridFsThumbImage: String,
-
     // hashtags for future use 
     hashtags: [
         {
@@ -78,8 +69,10 @@ const PostSchema = new mongoose.Schema({
 
 }, { timestamps: true })
 
-// similar to user.js we index text here to make searches faster
-PostSchema.index({caption:'text',hashtags:'text'})
+// Indexing for faster feed generation and profile post queries
+PostSchema.index({ caption: 'text', hashtags: 'text' });
+PostSchema.index({ author: 1, createdAt: -1 });
+PostSchema.index({ createdAt: -1 });
 
 
 module.exports = mongoose.model('post', PostSchema)

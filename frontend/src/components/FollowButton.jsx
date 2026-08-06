@@ -1,6 +1,7 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import api from "../services/api.js";
 import toast from "react-hot-toast";
+import { Loader2 } from "lucide-react";
 
 const FOLLOW_EVENT = "momentia:follow-changed";
 
@@ -14,10 +15,6 @@ export const onFollowChange = (handler) => {
   window.addEventListener(FOLLOW_EVENT, handler);
   return () => window.removeEventListener(FOLLOW_EVENT, handler);
 };
-
-const Spinner = ({ className = "" }) => (
-  <span className={`spinner-ring ${className}`} />
-);
 
 const PlusIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
@@ -37,7 +34,8 @@ const FollowButton = ({
   initialFollowing = null,
   onFollowStatusChange,
   size = "md",
-  variant = "default",
+  className = "",
+  unstyled = false,
 }) => {
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
@@ -56,6 +54,7 @@ const FollowButton = ({
     }
 
     const fetchStatus = async () => {
+      if (!userId) return;
       setFetching(true);
       try {
         const res = await api.get(`/profile/get-profile/${userId}`);
@@ -86,7 +85,7 @@ const FollowButton = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (loading || fetching) return;
+    if (loading || fetching || !userId) return;
 
     const nextFollowing = !following;
     const status = nextFollowing ? "followed" : "unfollowed";
@@ -104,12 +103,11 @@ const FollowButton = ({
       if (!mountedRef.current) return;
       emitFollowChange(userId, status);
       onFollowStatusChange?.(status);
-      
-      // Show success toast
+
       toast.success(
         nextFollowing ? "User followed!" : "User unfollowed!",
         {
-          duration: 2,
+          duration: 2000,
           position: "bottom-center",
         }
       );
@@ -118,60 +116,69 @@ const FollowButton = ({
       setFollowing(following);
       const msg = err.response?.data?.message || "Something went wrong";
       setError(msg);
-      
-      // Show error toast
+
       toast.error(msg, {
-        duration: 3,
+        duration: 3000,
         position: "bottom-center",
       });
-      
+
       setTimeout(() => mountedRef.current && setError(null), 3000);
     } finally {
       if (mountedRef.current) setLoading(false);
     }
   };
 
-  const sizeClass = size === "sm" ? "follow-button-sm" : "follow-button-md";
   const isFollowing = following === true;
   const showUnfollow = isFollowing && hovered;
 
-  const stateClass = loading || fetching
-    ? "follow-button-loading"
-    : isFollowing
-      ? showUnfollow
-        ? "follow-button-danger"
-        : "follow-button-muted"
-      : variant === "outline"
-        ? "follow-button-outline"
-        : "follow-button-primary";
+  // Determine button colors:
+  // Not following -> GREEN
+  // Following -> YELLOW
+  // Hovering Following (Unfollow action) -> RED
+  let colorStyle;
+  if (loading || fetching) {
+    colorStyle = "bg-gray-100 text-gray-500 border border-gray-200 cursor-wait";
+  } else if (isFollowing) {
+    if (showUnfollow) {
+      colorStyle = "bg-rose-600 hover:bg-rose-700 text-white shadow-xs";
+    } else {
+      colorStyle = "bg-amber-400 hover:bg-amber-500 text-amber-950 font-bold shadow-xs";
+    }
+  } else {
+    colorStyle = "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-xs";
+  }
 
-  const label = loading || fetching
-    ? <Spinner className={isFollowing ? "text-slate-400" : "text-white"} />
-    : showUnfollow
-      ? "Unfollow"
-      : isFollowing
-        ? (
-          <span className="inline-flex items-center gap-1">
-            <CheckIcon />
-            Following
-          </span>
-        )
-        : (
-          <span className="inline-flex items-center gap-1">
-            <PlusIcon />
-            Follow
-          </span>
-        );
+  const paddingStyle = size === "sm" ? "px-3 py-1 text-xs" : "px-4 py-1.5 text-xs";
+
+  const label = loading || fetching ? (
+    <Loader2 className="animate-spin" size={14} />
+  ) : showUnfollow ? (
+    "Unfollow"
+  ) : isFollowing ? (
+    <span className="inline-flex items-center gap-1">
+      <CheckIcon />
+      Following
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1">
+      <PlusIcon />
+      Follow
+    </span>
+  );
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
+    <div onClick={(e) => e.stopPropagation()} className="inline-block">
       <button
         type="button"
         onClick={handleToggle}
         disabled={loading || fetching}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`follow-button ${sizeClass} ${stateClass} ${hovered && !loading && !fetching ? "-translate-y-px" : "translate-y-0"}`}
+        className={
+          unstyled
+            ? className
+            : `inline-flex items-center justify-center rounded-full font-semibold transition-all duration-150 active:scale-95 ${paddingStyle} ${colorStyle} ${className}`
+        }
         title={error || ""}
         aria-label={
           loading || fetching
@@ -185,7 +192,7 @@ const FollowButton = ({
       </button>
 
       {error && (
-        <div className="mt-1 truncate text-xs text-red-600" title={error}>
+        <div className="mt-1 truncate text-xs text-rose-600" title={error}>
           {error}
         </div>
       )}

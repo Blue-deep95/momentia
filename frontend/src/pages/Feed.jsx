@@ -3,11 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { Virtuoso } from "react-virtuoso";
 
 // Components
-import Navbar from "../components/Navbar.jsx";
 import PostCard from "../components/Postcard.jsx";
-import StoryBar from "../components/Storybar.jsx";
 import SuggestedProfiles from "../components/SuggestedProfiles.jsx";
-import CarouselSlideshow from "../components/CarouselSlideshow.jsx";
 
 import { fetchPosts } from "../slices/feedSlice";
 
@@ -26,22 +23,15 @@ const Feed = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 lg:pl-20">
-
-      {/* 🔝 NAVBAR */}
-      <Navbar />
-
+    <div className="min-h-screen bg-gray-100 pb-16 md:pb-0 lg:pl-20">
       {/* MAIN CONTENT */}
       <div className="flex w-full justify-between gap-6 px-4 py-6">
 
         {/* LEFT / CENTER FEED */}
         <div className="w-full space-y-6 md:mx-auto lg:mx-0 lg:basis-[60%]">
 
-          {/* STORIES */}
-          <StoryBar />
-
           {/* POSTS */}
-          <div className="mt-10">
+          <div className="mt-4">
             {loading ? (
               <p className="text-center text-gray-500">Loading...</p>
             ) : posts.length === 0 ? (
@@ -69,12 +59,8 @@ const Feed = () => {
         </div>
 
         {/* RIGHT SIDEBAR (Desktop only) */}
-        <div className="mt-10 hidden lg:flex lg:basis-[40%] lg:justify-end lg:self-start">
-          <div className="w-md fixed right-4 top-20 z-10 hidden flex-col space-y-6 lg:flex lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
-            {/* CAROUSEL SLIDESHOW */}
-            <CarouselSlideshow />
-
-            {/* SUGGESTED PROFILES */}
+        <div className="hidden lg:flex lg:basis-[35%] lg:justify-end lg:self-start">
+          <div className="fixed right-8 top-20 z-10 hidden w-80 flex-col lg:flex">
             <SuggestedProfiles />
           </div>
         </div>

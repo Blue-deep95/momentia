@@ -46,7 +46,7 @@ export const commentApi = createApi({
       forceRefetch({ currentArg, previousArg }) {
         return currentArg !== previousArg;
       },
-      providesTags: (result, error, { postId }) => 
+      providesTags: (result) => 
         result 
           ? [...result.comments.map(({ _id }) => ({ type: 'Comment', id: _id })), { type: 'Comment', id: 'LIST' }]
           : [{ type: 'Comment', id: 'LIST' }],
@@ -90,25 +90,52 @@ export const commentApi = createApi({
         url: `/comment/toggle-like/${commentId}`,
         method: 'POST',
       }),
-      async onQueryStarted({ commentId, postId }, { dispatch, queryFulfilled }) {
-        // Optimistically update getComments cache
-        const patchResult = dispatch(
-          commentApi.util.updateQueryData('getComments', { postId }, (draft) => {
-            const comment = draft.comments.find(c => c._id === commentId);
-            if (comment) {
-              comment.isLiked = !comment.isLiked;
-              comment.totalLikes += comment.isLiked ? 1 : -1;
-            }
-          })
-        );
+      // onQueryStarted executes as soon as the mutation is triggered, before the request finishes.
+      // This allows us to perform an 'optimistic update' for immediate UI response.
+      async onQueryStarted({ commentId, postId, parentId }, { dispatch, queryFulfilled }) {
+        let patchComments = null;
+        let patchReplies = null;
+
+        // 1. Optimistically patch the top-level comment cache (getComments query) if postId is provided
+        if (postId) {
+          patchComments = dispatch(
+            commentApi.util.updateQueryData('getComments', { postId }, (draft) => {
+              if (draft && draft.comments) {
+                const comment = draft.comments.find(c => c._id === commentId);
+                if (comment) {
+                  comment.isLiked = !comment.isLiked;
+                  comment.totalLikes += comment.isLiked ? 1 : -1;
+                }
+              }
+            })
+          );
+        }
+
+        // 2. Optimistically patch the nested replies cache (getReplies query) if both postId and parentId are provided
+        if (postId && parentId) {
+          patchReplies = dispatch(
+            commentApi.util.updateQueryData('getReplies', { postId, parentId }, (draft) => {
+              if (draft && draft.replies) {
+                const reply = draft.replies.find(r => r._id === commentId);
+                if (reply) {
+                  reply.isLiked = !reply.isLiked;
+                  reply.totalLikes += reply.isLiked ? 1 : -1;
+                }
+              }
+            })
+          );
+        }
 
         try {
+          // Wait for the actual network request to succeed
           await queryFulfilled;
         } catch {
-          patchResult.undo();
+          // If the mutation fails, rollback our optimistic updates to ensure UI consistency
+          if (patchComments) patchComments.undo();
+          if (patchReplies) patchReplies.undo();
         }
       },
-      // Removed invalidatesTags: No more GET request after a Like!
+      // Removed invalidatesTags: We use optimistic updates instead of full list refetches to save network bandwidth.
     }),
     deleteComment: builder.mutation({
       query: ({ commentId }) => ({

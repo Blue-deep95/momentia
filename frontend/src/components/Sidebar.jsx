@@ -11,26 +11,41 @@ import {
   Film,
   Send,
   Heart,
-  Settings,
+  User,
   LogOut,
-  Trophy,
+  Sparkles,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 
 export default function Sidebar({ profile }) {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const hideMobileNav = location.pathname.startsWith("/messages");
   const { user } = useSelector((state) => state.auth);
   const [sidebarProfile, setSidebarProfile] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Read initial collapsed state from localStorage
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
+
+  const toggleSidebar = () => {
+    setIsCollapsed((prev) => {
+      const nextState = !prev;
+      localStorage.setItem("sidebar_collapsed", String(nextState));
+      return nextState;
+    });
+  };
 
   useEffect(() => {
     const fetchSidebarProfile = async () => {
       if (!profile && user?.id) {
         try {
           const res = await api.get(`/profile/get-profile/${user.id}`);
-          setSidebarProfile(res.data.profile || null);
+          setSidebarProfile(res.data?.profile || null);
         } catch (err) {
           console.error("Failed to load sidebar profile:", err);
         }
@@ -41,232 +56,232 @@ export default function Sidebar({ profile }) {
   }, [profile, user]);
 
   const effectiveProfile = profile || sidebarProfile || user || {};
-  const displayName = effectiveProfile?.name || "User";
+  const displayName = effectiveProfile?.name || effectiveProfile?.username || "User";
   const displayUsername =
     effectiveProfile?.username ||
     (effectiveProfile?.email ? effectiveProfile.email.split("@")[0] : "username");
+
   const displayImage =
     effectiveProfile?.profilePicture?.profileView ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`;
+    effectiveProfile?.profilePicture?.commentView ||
+    effectiveProfile?.profilePicture?.url ||
+    (typeof effectiveProfile?.profilePicture === "string" && effectiveProfile.profilePicture
+      ? effectiveProfile.profilePicture
+      : "/default-avatar.svg");
 
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
   };
 
-  const postsCount = effectiveProfile?.totalPosts || 0;
-  const followersCount = effectiveProfile?.followers || 0;
-  const followingCount = effectiveProfile?.following || 0;
-
   const navItems = [
     {
       path: "/",
       label: "Home",
-      icon: <Home size={24} />,
+      icon: <Home size={20} />,
     },
     {
       path: "/search",
-      label: "Explore",
-      icon: <Search size={24} />,
+      label: "Search",
+      icon: <Search size={20} />,
     },
     {
       path: "/reels",
       label: "Reels",
-      icon: <Film size={24} />,
+      icon: <Film size={20} />,
     },
-    {
-        path: "/top-placed",
-        label: "Top Placed",
-        icon: <Trophy size={24} />,
-      },
     {
       path: "/messages",
       label: "Messages",
-      icon: <Send size={24} />,
+      icon: <Send size={20} />,
     },
     {
       path: "/notifications",
       label: "Notifications",
-      icon: <Heart size={24} />,
+      icon: <Heart size={20} />,
     },
     {
-      path: "/settings",
-      label: "Settings",
-      icon: <Settings size={24} />,
+      path: "/create-post",
+      label: "Create",
+      icon: <PlusSquare size={20} />,
     },
+    {
+      path: "/profile",
+      label: "Profile",
+      icon: <User size={20} />,
+    },
+  ];
+
+  const mobileNavItems = [
+    navItems[0], // Home
+    navItems[1], // Search
+    navItems[2], // Reels
+    navItems[3], // Messages
+    navItems[6], // Profile
   ];
 
   return (
     <>
-      {/* ================= MOBILE NAVBAR ================= */}
-      {!hideMobileNav && (
-        <div className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white px-2 py-3 shadow-md md:hidden">
-
-          {navItems.slice(0, 5).map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center ${
-                location.pathname === item.path
-                  ? "text-pink-500"
-                  : "text-gray-500"
-              }`}
-            >
-              {item.icon}
-
-              <span className="mt-1 text-[11px] font-medium">
-                {item.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* ================= DESKTOP / TABLET SIDEBAR ================= */}
-      <div
-        className={`z-50 fixed left-0 top-0 hidden h-screen flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-300 ease-in-out lg:flex ${
-          isExpanded ? 'w-65' : 'w-18'
-        }`}
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
-      >
-
-        {/* COLLAPSED PROFILE IMAGE - Only show when collapsed */}
-        {!isExpanded && (
-          <div className="mx-auto mb-4 mt-8">
-            <Link to="/profile" className="cursor-pointer">
-              <img
-                src={displayImage}
-                alt="profile"
-                className="h-12 w-12 rounded-full border-2 border-indigo-500 object-cover transition-transform hover:scale-105"
-              />
-            </Link>
-          </div>
-        )}
-
-        {/* EXPANDED CONTENT - Only show when hovering */}
-        {isExpanded && (
-          <>
-            {/* LOGO */}
-            <div className="px-8 pb-6 pt-8">
-              <h1 className="bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-3xl font-bold text-transparent">
-                Momentia
-              </h1>
-            </div>
-
-            {/* PROFILE CARD */}
-            <div className="mx-6 rounded-2xl border border-gray-100 bg-gray-50 p-5 shadow-sm">
-
-              <div className="flex flex-col items-center">
-
-                {/* PROFILE IMAGE */}
-                <Link to="/profile" className="cursor-pointer">
+      {/* ================= MOBILE BOTTOM BAR ================= */}
+      <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-gray-200 bg-white/95 backdrop-blur-md px-2 py-2 shadow-sm md:hidden">
+          {mobileNavItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 transition-all ${
+                  isActive
+                    ? "text-indigo-600 font-bold scale-105"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                {item.path === "/profile" ? (
                   <img
                     src={displayImage}
-                    alt="profile"
-                    className="h-20 w-20 rounded-full border-4 border-indigo-500 object-cover transition-transform hover:scale-105"
+                    alt="Profile"
+                    onError={(e) => {
+                      e.target.src = "/default-avatar.svg";
+                    }}
+                    className={`h-6 w-6 rounded-full object-cover border ${
+                      isActive ? "border-indigo-600 ring-2 ring-indigo-200" : "border-gray-300"
+                    }`}
                   />
-                </Link>
-
-                {/* USERNAME */}
-                <Link to="/profile" className="cursor-pointer">
-                  <h2 className="mt-4 text-lg font-semibold text-gray-800 transition-colors hover:text-indigo-600">
-                    {displayName}
-                  </h2>
-                </Link>
-
-                <p className="text-sm text-gray-500">
-                  @{displayUsername}
-                </p>
-
-                {/* STATS */}
-                <div className="mt-5 flex w-full justify-between text-center">
-
-                  <div>
-                    <h3 className="font-semibold text-gray-800">
-                      {postsCount}
-                    </h3>
-
-                    <p className="text-xs text-gray-500">
-                      Posts
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-gray-800">
-                      {followersCount}
-                    </h3>
-
-                    <p className="text-xs text-gray-500">
-                      Followers
-                    </p>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-gray-800">
-                      {followingCount}
-                    </h3>
-
-                    <p className="text-xs text-gray-500">
-                      Following
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CREATE POST BUTTON */}
-            <div className="px-6 py-6 mt-1">
-              <Link
-                to="/create-post"
-                className="bg-linear-to-r flex items-center justify-center gap-2 rounded-full from-blue-600 via-indigo-600 to-purple-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
-              >
-                <PlusSquare size={18} />
-                Create a post
+                ) : (
+                  item.icon
+                )}
+                <span className="text-[10px] font-medium">{item.label}</span>
               </Link>
+            );
+          })}
+        </nav>
+
+      {/* ================= DESKTOP SHADCN-STYLE COLLAPSIBLE SIDEBAR ================= */}
+      <aside
+        className={`fixed left-0 top-0 z-40 hidden md:flex h-screen flex-col justify-between border-r border-gray-200/80 bg-white/95 backdrop-blur-xs font-sans transition-all duration-300 ease-in-out ${
+          isCollapsed ? "w-18" : "w-64"
+        }`}
+      >
+        {/* TOP BRAND HEADER + TOGGLE BUTTON */}
+        <div>
+          <div
+            className={`flex h-16 items-center border-b border-gray-100 px-4 ${
+              isCollapsed ? "justify-center" : "justify-between"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-xs flex-shrink-0"
+                title="Momentia Home"
+              >
+                <Sparkles size={20} />
+              </Link>
+
+              {!isCollapsed && (
+                <Link
+                  to="/"
+                  className="text-lg font-black tracking-tight text-gray-900 hover:opacity-80 transition truncate"
+                >
+                  Momentia
+                </Link>
+              )}
             </div>
-          </>
-        )}
 
-        {/* NAVIGATION - Icons always visible, text only when expanded */}
-        <div className="mt-8 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4">
-
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              title={!isExpanded ? item.label : ""}
-              className={`flex items-center ${isExpanded ? 'gap-4 px-5' : 'justify-center px-0'} rounded-xl py-4 text-[15px] font-medium transition-all duration-200 ${
-                location.pathname === item.path
-                  ? "bg-indigo-50 text-indigo-600"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-black"
-              }`}
-            >
-              {item.icon}
-
-              <span className={`transition-all duration-300 ${isExpanded ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}>
-                {item.label}
-              </span>
-            </Link>
-          ))}
-        </div>
-
-        {/* LOGOUT - Only show when expanded at the bottom */}
-        {isExpanded && (
-          <div className="border-t border-gray-200 p-4">
+            {/* COLLAPSE / EXPAND TOGGLE BUTTON */}
             <button
-              onClick={handleLogout}
-              className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-gray-600 transition hover:bg-gray-100 hover:text-red-500"
+              onClick={toggleSidebar}
+              className={`rounded-xl p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition ${
+                isCollapsed ? "mt-2" : ""
+              }`}
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label="Toggle sidebar"
             >
-              <LogOut size={22} />
-              <span className="font-medium">
-                Logout
-              </span>
+              {isCollapsed ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}
             </button>
           </div>
-        )}
-      </div>
-    </>
-  )
-}
 
+          {/* MAIN NAVIGATION LIST */}
+          <div className="p-3 space-y-1">
+            {!isCollapsed && (
+              <p className="px-3 pb-2 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+                Menu
+              </p>
+            )}
+
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  title={isCollapsed ? item.label : ""}
+                  className={`flex items-center rounded-xl transition-all duration-150 ${
+                    isCollapsed
+                      ? "justify-center h-11 w-11 mx-auto"
+                      : "gap-3.5 px-3.5 py-2.5 text-sm"
+                  } ${
+                    isActive
+                      ? "bg-indigo-50 text-indigo-600 shadow-2xs font-bold"
+                      : "text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 font-semibold"
+                  }`}
+                >
+                  <span className={isActive ? "text-indigo-600" : "text-gray-500"}>
+                    {item.icon}
+                  </span>
+
+                  {!isCollapsed && <span className="truncate">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* BOTTOM USER FOOTER */}
+        <div className="border-t border-gray-100 p-3 bg-gray-50/50">
+          <div
+            className={`flex items-center gap-3 rounded-2xl transition hover:bg-gray-100/60 ${
+              isCollapsed ? "justify-center p-1" : "justify-between p-2"
+            }`}
+          >
+            <Link
+              to="/profile"
+              className="flex items-center gap-3 min-w-0 flex-1"
+              title={isCollapsed ? displayName : ""}
+            >
+              <img
+                src={displayImage}
+                alt={displayName}
+                onError={(e) => {
+                  e.target.src = "/default-avatar.svg";
+                }}
+                className="h-9 w-9 rounded-full object-cover border border-gray-200 flex-shrink-0"
+              />
+
+              {!isCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-gray-900 truncate">
+                    {displayName}
+                  </p>
+                  <p className="text-[11px] text-gray-400 truncate">
+                    @{displayUsername}
+                  </p>
+                </div>
+              )}
+            </Link>
+
+            {!isCollapsed && (
+              <button
+                onClick={handleLogout}
+                className="rounded-xl p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                title="Logout"
+              >
+                <LogOut size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}

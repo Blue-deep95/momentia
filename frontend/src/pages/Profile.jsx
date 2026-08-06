@@ -5,17 +5,13 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
-import Sidebar from "../components/Sidebar.jsx";
-import FollowersModal from "../components/FollowersModal.jsx";
-import FollowingModal from "../components/FollowingModal.jsx";
+import UserListModal from "../components/UserListModal.jsx";
 import FollowButton from "../components/FollowButton.jsx";
 import ShareProfileModal from "../components/ShareProfileModal.jsx";
 import { updateUser } from "../slices/authSlice";
 
 import {
   Heart,
-  MapPin,
-  Link2,
   Calendar,
   BadgeCheck,
   LayoutGrid,
@@ -48,7 +44,7 @@ const Profile = () => {
   const profileUserId = userId || user?.id;
   const isOwnProfile = !userId || userId === user?.id;
   const navigate = useNavigate();
-  const location = useLocation();
+
 
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -86,20 +82,6 @@ const Profile = () => {
           className="aspect-square animate-pulse rounded-[28px] bg-slate-200 dark:bg-slate-700"
         />
       ))}
-    </div>
-  );
-
-  const SavedEmptyState = () => (
-    <div className="rounded-4xl jusrounded-4xlrder flex flex-col items-center border-dashed border-gray-300 bg-white/80 p-12 shadow-xl dark:border-slate-600 dark:bg-slate-950/80">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-600 shadow-lg">
-        <Bookmark size={32} className="text-indigo-600" />
-      </div>
-      <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
-        Nothing saved yet
-      </h2>
-      <p className="mt-3 max-w-md text-center text-sm text-gray-600 dark:text-slate-400">
-        Save posts from your feed to see them here in your saved collection.
-      </p>
     </div>
   );
 
@@ -172,6 +154,13 @@ const Profile = () => {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state]);
+
+  // Prevent non-owners from opening the saved tab (saved is only for own profile)
+  useEffect(() => {
+    if (activeTab === "saved" && !isOwnProfile) {
+      setActiveTab("posts");
+    }
+  }, [activeTab, isOwnProfile]);
 
   useEffect(() => {
     if (!profileUserId) return;
@@ -277,9 +266,6 @@ const Profile = () => {
         return alert("Only jpg, jpeg, png and webp allowed");
       }
 
-      const localPreview = URL.createObjectURL(file);
-
-      setPreviewImage(localPreview);
 
       const formData = new FormData();
 
@@ -336,17 +322,9 @@ const Profile = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-blue-50 text-gray-900">
-
-      {/* SIDEBAR */}
-
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
-
+    <div className="min-h-screen bg-blue-50 text-gray-900 lg:pl-20">
       {/* MAIN */}
-
-      <div className="flex-1 overflow-y-auto">
+      <div className="w-full">
 
         <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
 
@@ -369,7 +347,7 @@ const Profile = () => {
 
                     <div className="bg-linear-to-br rounded-full from-blue-600 to-indigo-600 p-1 shadow-2xl">
 
-                      <div className="h-40 w-40 overflow-hidden rounded-full border-[6px] border-white bg-white md:h-52 md:w-52">
+                      <div className="h-44 w-44 overflow-hidden rounded-full border-[6px] border-white bg-white md:h-52 md:w-52">
 
                         {previewImage ? (
                           <img
@@ -403,7 +381,7 @@ const Profile = () => {
 
                   {/* USERNAME */}
 
-                  <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+                  <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
 
                     <div>
 
@@ -428,20 +406,20 @@ const Profile = () => {
 
                     {/* ACTIONS */}
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap items-center justify-center gap-3">
 
                       {isOwnProfile ? (
                         <>
                           <button
                             onClick={() => setShowEdit(true)}
-                            className="rounded-2xl border border-gray-200 bg-white px-6 py-3 font-semibold text-gray-900 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-white text-gray-900 font-semibold border border-gray-200 shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg"
                           >
                             Edit Profile
                           </button>
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-xl transition-transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-2"
                           >
                             <Share2 size={18} />
                             Share
@@ -449,11 +427,15 @@ const Profile = () => {
                         </>
                       ) : (
                         <>
-                          <FollowButton userId={profileUserId} />
+                          <FollowButton
+                            userId={profileUserId}
+                            unstyled={true}
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-white text-gray-900 font-semibold border border-gray-200 shadow-sm transition transform hover:-translate-y-0.5 hover:shadow-lg"
+                          />
 
                           <button
                             onClick={handleShareProfile}
-                            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-3 font-semibold text-white shadow-xl transition-all hover:scale-105"
+                            className="min-w-[150px] px-6 py-3 h-12 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-xl transition-transform hover:scale-105 hover:shadow-2xl flex items-center justify-center gap-2"
                           >
                             <Share2 size={18} />
                             Share
@@ -469,13 +451,13 @@ const Profile = () => {
 
                   <div className="mt-8 grid grid-cols-3 gap-4">
 
-                    <div className="rounded-3xl border border-white bg-white/70 p-5 shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
+                    <div className="flex flex-col items-center justify-center rounded-3xl border border-white bg-white/85 p-6 sm:p-5 text-center shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1">
 
                       <h3 className="text-3xl font-bold text-indigo-600">
                         {profile?.totalPosts || 0}
                       </h3>
 
-                      <p className="mt-1 text-gray-600">
+                      <p className="mt-2 text-gray-600">
                         Posts
                       </p>
 
@@ -483,14 +465,14 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowers(true)}
-                      className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
+                      className="flex flex-col items-center justify-center rounded-3xl border border-white bg-white/85 p-6 sm:p-5 text-center shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-purple-600">
                         {profile?.followers || 0}
                       </h3>
 
-                      <p className="mt-1 text-gray-600">
+                      <p className="mt-2 text-gray-600">
                         Followers
                       </p>
 
@@ -498,14 +480,14 @@ const Profile = () => {
 
                     <button
                       onClick={() => setShowFollowing(true)}
-                      className="rounded-3xl border border-white bg-white/70 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
+                      className="flex flex-col items-center justify-center rounded-3xl border border-white bg-white/85 p-6 sm:p-5 text-center shadow-lg backdrop-blur-xl transition-all hover:-translate-y-1"
                     >
 
                       <h3 className="text-3xl font-bold text-indigo-600">
                         {profile?.following || 0}
                       </h3>
 
-                      <p className="mt-1 text-gray-600">
+                      <p className="mt-2 text-gray-600">
                         Following
                       </p>
 
@@ -515,45 +497,26 @@ const Profile = () => {
 
                   {/* BIO */}
 
-{/* BIO */}
+                  {/* BIO */}
 
-<div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
+                  <div className="mt-8 rounded-3xl border border-white bg-white/60 p-6 shadow-lg backdrop-blur-xl">
 
-  {profile?.bio && (
-    <p className="mt-4 whitespace-pre-line text-[15px] leading-8 text-gray-700">
-      {profile.bio}
-    </p>
-  )}
+                    {profile?.bio && (
+                      <p className="mt-4 whitespace-pre-line text-[15px] leading-8 text-gray-700">
+                        {profile.bio}
+                      </p>
+                    )}
 
-  <div className="mt-5 flex flex-wrap gap-5">
+                    <div className="mt-5 flex flex-wrap gap-5">
 
-    {profile?.location && (
-      <div className="flex items-center gap-2 text-gray-600">
-        <MapPin size={16} />
-        {profile.location}
-      </div>
-    )}
+                      <div className="flex items-center gap-2 text-[#6B7280]">
+                        <Calendar size={16} />
+                        Joined 2026
+                      </div>
 
-    {profile?.website && (
-      <a
-        href={profile.website}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-2 font-medium text-indigo-600"
-      >
-        <Link2 size={16} />
-        Website
-      </a>
-    )}
+                    </div>
 
-    <div className="flex items-center gap-2 text-[#6B7280]">
-      <Calendar size={16} />
-      Joined 2026
-    </div>
-
-  </div>
-
-</div>
+                  </div>
 
                 </div>
 
@@ -569,15 +532,14 @@ const Profile = () => {
 
             <div className="flex items-center justify-center overflow-x-auto">
 
-              {TABS.map(({ key, label, Icon }) => (
+              {TABS.filter(({ key }) => (key !== "saved" || isOwnProfile)).map(({ key, label, Icon }) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`flex items-center gap-2 px-4 py-4 md:px-6 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${
-                    activeTab === key
+                  className={`flex items-center gap-2 px-4 py-4 md:px-6 rounded-2xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === key
                       ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
                       : "text-gray-600 hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   <Icon size={18} />
                   <span className="hidden sm:inline">{label}</span>
@@ -593,7 +555,7 @@ const Profile = () => {
           {activeTab === "posts" && (
             <>
               {posts.length > 0 ? (
-                <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {posts.map((post) => (
                     <PostCard
                       key={post._id}
@@ -605,7 +567,11 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <EmptyState />
+                <EmptyState
+                  title="No Posts Yet"
+                  description="Shared posts will appear here."
+                  icon={LayoutGrid}
+                />
               )}
             </>
           )}
@@ -613,41 +579,53 @@ const Profile = () => {
           {/* REELS */}
 
           {activeTab === "reels" && (
-            <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+            <>
               {reelItems.length > 0 ? (
-                reelItems.map((post) => (
-                  <ReelCard
-                    key={post._id}
-                    post={post}
-                    onClick={() => navigate(`/post/${post._id}`)}
-                    showDelete={isOwnProfile}
-                    onDelete={handleDeletePost}
-                  />
-                ))
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-5">
+                  {reelItems.map((post) => (
+                    <ReelCard
+                      key={post._id}
+                      post={post}
+                      onClick={() => navigate(`/post/${post._id}`)}
+                      showDelete={isOwnProfile}
+                      onDelete={handleDeletePost}
+                    />
+                  ))}
+                </div>
               ) : (
-                <SavedEmptyState />
+                <EmptyState
+                  title="No Reels Yet"
+                  description="Shared reels will appear here."
+                  icon={Clapperboard}
+                />
               )}
-            </div>
+            </>
           )}
 
           {/* PHOTOS */}
 
           {activeTab === "photos" && (
-            <div className="mt-8 columns-2 gap-5 space-y-5 md:columns-3 xl:columns-4">
+            <>
               {photoItems.length > 0 ? (
-                photoItems.map((post) => (
-                  <PhotoCard
-                    key={post._id}
-                    post={post}
-                    onClick={() => navigate(`/post/${post._id}`)}
-                    showDelete={isOwnProfile}
-                    onDelete={handleDeletePost}
-                  />
-                ))
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                  {photoItems.map((post) => (
+                    <PhotoCard
+                      key={post._id}
+                      post={post}
+                      onClick={() => navigate(`/post/${post._id}`)}
+                      showDelete={isOwnProfile}
+                      onDelete={handleDeletePost}
+                    />
+                  ))}
+                </div>
               ) : (
-                <SavedEmptyState />
+                <EmptyState
+                  title="No Photos Yet"
+                  description="Shared photos will appear here."
+                  icon={ImageIcon}
+                />
               )}
-            </div>
+            </>
           )}
 
           {/* SAVED */}
@@ -657,7 +635,7 @@ const Profile = () => {
               {savedLoading ? (
                 <SavedPostsSkeleton />
               ) : savedItems.length > 0 ? (
-                <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+                <div className="mt-10 mb-14 grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
                   {savedItems.map((post) => (
                     <SavedGridItem
                       key={post._id}
@@ -667,7 +645,11 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <SavedEmptyState />
+                <EmptyState
+                  title="No Saved Posts"
+                  description="Saved posts will appear here."
+                  icon={Bookmark}
+                />
               )}
             </>
           )}
@@ -699,20 +681,26 @@ const Profile = () => {
       )}
 
       {/* FOLLOWERS */}
-
       {showFollowers && (
-        <FollowersModal
+        <UserListModal
           userId={profileUserId}
+          type="followers"
           onClose={() => setShowFollowers(false)}
+          onCountUpdate={(count) =>
+            setProfile((prev) => (prev ? { ...prev, followers: count } : prev))
+          }
         />
       )}
 
       {/* FOLLOWING */}
-
       {showFollowing && (
-        <FollowingModal
+        <UserListModal
           userId={profileUserId}
+          type="following"
           onClose={() => setShowFollowing(false)}
+          onCountUpdate={(count) =>
+            setProfile((prev) => (prev ? { ...prev, following: count } : prev))
+          }
         />
       )}
 
@@ -1097,8 +1085,7 @@ const EditProfileModal = ({
     name: profile?.name || "",
     username: profile?.username || "",
     bio: profile?.bio || "",
-    website: profile?.website || "",
-    location: profile?.location || "",
+
   });
   const dispatch = useDispatch();
   const [saving, setSaving] = useState(false);
@@ -1241,28 +1228,6 @@ const EditProfileModal = ({
 
           </div>
 
-          <InputField
-            label="Website"
-            value={formData.website}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                website: e.target.value,
-              })
-            }
-          />
-
-          <InputField
-            label="Location"
-            value={formData.location}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                location: e.target.value,
-              })
-            }
-          />
-
           <button
             onClick={handleSave}
             disabled={saving}
@@ -1310,21 +1275,40 @@ const InputField = ({
 
 /* EMPTY */
 
-const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-24 text-center">
+const EmptyState = ({
+  title,
+  description,
+  icon: Icon,
+}) => (
+  <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
 
-    <div className="bg-linear-to-r flex h-24 w-24 items-center justify-center rounded-full from-[#2F3EDB] to-[#FF7A3D] shadow-xl">
+    {/* ICON */}
 
-      <LayoutGrid size={34} className="text-white" />
+    <div className="relative flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-r from-[#3B49DF] via-[#6C63FF] to-[#FF7A3D] shadow-2xl">
+
+      {/* GLOW */}
+
+      <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#3B49DF] to-[#FF7A3D] opacity-40 blur-2xl" />
+
+      {/* ICON */}
+
+      <Icon
+        size={38}
+        className="relative z-10 text-white"
+      />
 
     </div>
 
-    <h2 className="mt-6 text-3xl font-bold text-[#111827]">
-      No Posts Yet
+    {/* TITLE */}
+
+    <h2 className="mt-8 text-4xl font-extrabold tracking-tight text-[#111827]">
+      {title}
     </h2>
 
-    <p className="mt-3 text-base text-[#6B7280]">
-      Shared posts will appear here.
+    {/* DESCRIPTION */}
+
+    <p className="mt-4 text-lg text-[#6B7280]">
+      {description}
     </p>
 
   </div>

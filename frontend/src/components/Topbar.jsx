@@ -1,35 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { SquarePlus, Heart } from "lucide-react";
-import {Link} from "react-router-dom"
+import React from "react";
+import { SquarePlus, Bell } from "lucide-react";
+import { Link } from "react-router-dom"
+import { useSelector } from "react-redux";
 
 export default function Topbar() {
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        // Scrolling down
-        setIsVisible(false);
-      } else {
-        // Scrolling up
-        setIsVisible(true);
-      }
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  const unreadCount = useSelector((state) => state.notification?.unreadCount || 0);
 
   return (
-    <div
-      className={`fixed top-0 left-0 w-full bg-white border-b z-50 transition-transform duration-300  ${
-        isVisible ? "translate-y-0" : "-translate-y-full"
-      }`}
-    >
+    <div className="fixed top-0 left-0 w-full bg-white z-50 md:hidden">
       <div className="flex justify-between items-center px-4 h-14">
         {/* Left: Plus Symbol */}
         <div className="cursor-pointer hover:opacity-70 transition">
@@ -38,17 +16,24 @@ export default function Topbar() {
           </Link>
         </div>
 
-        {/* Center: Instagram Text */}
-        <h1 className="text-2xl font-bold font-serif italic tracking-tight">
+        {/* Center: App Title */}
+        <h1 className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
           <Link to="/">
-          Momentia
+            Momentia
           </Link>
         </h1>
 
-        {/* Right: Heart Symbol */}
-        <div className="cursor-pointer hover:opacity-70 transition">
-          <Heart size={26} />
-        </div>
+        {/* Right: Notifications */}
+            <Link to="/notifications" aria-label="Open notifications" className="cursor-pointer hover:opacity-70 transition">
+              <div className="relative">
+                <Bell size={26} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4.5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </div>
+            </Link>
       </div>
     </div>
   );

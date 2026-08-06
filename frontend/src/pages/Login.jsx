@@ -4,6 +4,22 @@ import { useDispatch } from "react-redux";
 import api from "../services/api";
 import { login } from "../slices/authSlice";
 
+/* ───────────────── FLOAT CARD ───────────────── */
+const FloatCard = ({ title, sub }) => (
+  <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 shadow-lg backdrop-blur-xl">
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500 font-bold text-white">
+        M
+      </div>
+
+      <div>
+        <h4 className="text-sm font-semibold text-white">{title}</h4>
+        <p className="text-xs text-blue-100/70">{sub}</p>
+      </div>
+    </div>
+  </div>
+);
+
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -54,67 +70,57 @@ const Login = () => {
   return (
     <div className="grid min-h-screen font-sans lg:grid-cols-2">
       
-      {/* LEFT SIDE */}
-      <div className="bg-linear-to-br relative hidden flex-col justify-center overflow-hidden from-blue-600 via-indigo-600 to-purple-700 px-16 py-14 lg:flex">
-        
-        {/* Glow */}
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/10 blur-3xl"></div>
+      {/* ───────────────── LEFT SIDE ───────────────── */}
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-blue-700 via-indigo-700 to-purple-700 p-10 lg:flex">
+        {/* glow */}
+        <div className="absolute -left-25 -top-30 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl"></div>
+        <div className="absolute -bottom-30 -right-25 h-80 w-80 rounded-full bg-purple-400/20 blur-3xl"></div>
 
-        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-white/10 blur-3xl"></div>
+        <div className="relative z-10 flex w-full flex-col justify-between">
+          <FloatCard
+            title="Welcome back"
+            sub="Connect with your friends"
+          />
 
-        {/* Logo */}
-        <div className="z-10 mb-8 flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/20 bg-white/10 text-5xl font-bold text-white backdrop-blur-xl">
-          M
-        </div>
-
-        {/* Badge */}
-        <div className="z-10 mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-indigo-100 backdrop-blur-xl">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-purple-200"></span>
-          Welcome to Momentia
-        </div>
-
-        {/* Heading */}
-        <h1 className="z-10 mb-6 text-6xl font-bold leading-tight text-white">
-          Share your <br />
-          <span className="text-purple-200">
-            moments
-          </span>{" "}
-          with <br />
-          the world
-        </h1>
-
-        {/* Text */}
-        <p className="z-10 max-w-lg text-[16px] leading-8 text-white/75">
-          Connect with friends, upload stories,
-          explore reels and create your own
-          social experience with Momentia.
-        </p>
-
-        {/* Stats */}
-        <div className="z-10 mt-12 flex gap-5">
-          {[
-            ["2.1M", "Users"],
-            ["14M", "Posts"],
-            ["99%", "Active"],
-          ].map(([num, text]) => (
-            <div
-              key={text}
-              className="texmin-w-30drop-blur-xl min-w-30 rounded-3xl border border-white/20 bg-white/10 px-8 py-5"
-            >
-              <h2 className="text-2xl font-bold text-white">
-                {num}
-              </h2>
-
-              <p className="mt-1 text-sm text-white/70">
-                {text}
-              </p>
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 backdrop-blur-lg">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-blue-300"></div>
+              <span className="text-xs uppercase tracking-[3px] text-blue-100">
+                Momentia Social
+              </span>
             </div>
-          ))}
+
+            <h1 className="text-6xl font-black leading-tight text-white">
+              Capture your
+              <span className="block text-blue-200">best moments</span>
+            </h1>
+
+            <p className="mt-6 max-w-md leading-7 text-blue-100/80">
+              Share posts, explore reels, talk with friends, and discover endless creative stories.
+            </p>
+
+            <div className="mt-10 grid grid-cols-3 overflow-hidden rounded-3xl border border-white/10 bg-white/10 backdrop-blur-xl">
+              {[
+                ["2.1M", "Creators"],
+                ["14M", "Posts"],
+                ["98%", "Happy"],
+              ].map(([num, text]) => (
+                <div key={text} className="p-5 text-center">
+                  <h3 className="text-2xl font-bold text-white">{num}</h3>
+                  <p className="mt-1 text-xs uppercase tracking-widest text-blue-100/70">
+                    {text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <FloatCard title="@momentia community" sub="Explore & Share" />
         </div>
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="flex items-center justify-center bg-white px-6 py-10 lg:px-16">
+      <div className="flex items-center justify-center bg-white px-6 py-10 lg:px-10">
         
         <form
           onSubmit={handleSubmit}

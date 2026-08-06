@@ -19,7 +19,6 @@ const feedRoutes = require('./routes/feedRoutes.js')
 const searchRoutes = require('./routes/searchRoutes.js')
 const notificationRoutes = require('./routes/notificationRoutes.js')
 const messageRoutes = require('./routes/messageRoutes.js')
-const mediaRoutes = require('./routes/mediaRoutes.js')
 const globalLimiter = require("./middleware/rateLimiter.js")
 
 // import db 
@@ -27,18 +26,6 @@ const connectDB = require('./db/db.js')
 
 
 const PORT = process.env.PORT || 2000
-
-
-// change this for production 
-// app.use(cors(
-//     {
-//         origin: "http://localhost:5173",
-//         credentials: true
-//     }
-// ))
-
-
-
 
 app.use(cors({
     origin: process.env.NODE_ENV === 'development' ? true : process.env.FRONTEND_URL,
@@ -56,7 +43,7 @@ app.use(globalLimiter)
 
 // trying to connect db
 connectDB(app)
-//console.log('request reached server')
+
 // routes
 app.use("/api/user", userRoutes)
 app.use("/api/profile", protect, profileRoutes) // call the middleware right here
@@ -67,11 +54,15 @@ app.use("/api/feed",feedRoutes)
 app.use("/api/search", protect, searchRoutes)
 app.use("/api/notifications",protect,notificationRoutes)
 app.use("/api/message",protect,messageRoutes)
-app.use("/api/media", mediaRoutes)
+
+const errorHandler = require('./middleware/errorHandler.js')
 
 // event listeners
 require('./services/notificationService.js') // for sending notifications
 require('./services/messageService.js') // for sending chat messages to the frontend
+
+// Global error handler middleware - MUST be mounted after all routes
+app.use(errorHandler)
 
 
 // newer listen that handles both http and web socket connections

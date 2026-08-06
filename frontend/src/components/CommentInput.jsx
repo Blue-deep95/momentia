@@ -18,7 +18,7 @@ const CommentInput = ({ input, setInput, onSend, replyTo, onClearReply, isDisabl
       
       <div className="flex items-center gap-3">
         <img
-          src={user?.profilePicture?.commentView || user?.profilePicture?.profileView || "https://i.pravatar.cc/150?img=60"}
+          src={user?.profilePicture?.commentView || user?.profilePicture?.profileView || "/default-avatar.svg"}
           alt=""
           className="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-sm"
         />
