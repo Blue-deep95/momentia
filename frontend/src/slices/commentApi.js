@@ -46,7 +46,7 @@ export const commentApi = createApi({
       forceRefetch({ currentArg, previousArg }) {
         return currentArg !== previousArg;
       },
-      providesTags: (result, error, { postId }) => 
+      providesTags: (result) => 
         result 
           ? [...result.comments.map(({ _id }) => ({ type: 'Comment', id: _id })), { type: 'Comment', id: 'LIST' }]
           : [{ type: 'Comment', id: 'LIST' }],

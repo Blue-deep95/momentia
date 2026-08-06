@@ -113,7 +113,7 @@ const SuggestedProfiles = () => {
             const avatarSrc =
               profile.profilePicture?.commentView ||
               profile.profilePicture?.profileView ||
-              "https://via.placeholder.com/150";
+              "/default-avatar.svg";
 
             return (
               <div

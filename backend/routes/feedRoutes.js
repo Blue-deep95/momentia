@@ -3,10 +3,8 @@ const express = require('express')
 const mongoose = require('mongoose')
 const router = express.Router()
 
-const User = require('../models/User')
 const Follow = require('../models/Follow')
 const Post = require('../models/Post')
-const Like = require('../models/Like')
 const {protect}  = require('../middleware/authMiddleware')
 const encodeCursor = (obj) => {
     return Buffer.from(JSON.stringify(obj)).toString('base64');
@@ -15,101 +13,47 @@ const encodeCursor = (obj) => {
 const decodeCursor = (cursorStr) => {
     try {
         return JSON.parse(Buffer.from(cursorStr, 'base64').toString('utf-8'));
-    } catch (err) {
+    } catch (_err) {
         return null;
     }
 };
 
+const asyncHandler = require('../middleware/asyncHandler')
+
 // this route is only for getting the first 10 most liked posts on the feed page.
 // users can see this page even if they are not logged in but any interaction with the posts 
 // ask the user to login 
-router.get("/get-mainpage",async(req,res) =>{
-    try{
-        // since this page does not need any user we just get the top 10 most liked posts 
-        const postsToSend = await Post.aggregate([
-            {$sort:{totalLikes:-1} },
-            {$limit:10},
-            // join the author data
-            {
-                $lookup:{
-                    from:'users',
-                    localField:'author',
-                    foreignField:'_id',
-                    pipeline:[{$project:{_id:1,username:1,profilePicture:1}}],
-                    as:'authorDetails'
-                }
-            },
-            {$unwind:'$authorDetails'},
-            {
-                $addFields:{
-                    isLiked:false,
-                    isFollowing:false,
-                    isSaved:false
-                }
+router.get("/get-mainpage", asyncHandler(async (req, res) => {
+    // since this page does not need any user we just get the top 10 most liked posts 
+    const postsToSend = await Post.aggregate([
+        { $sort: { totalLikes: -1 } },
+        { $limit: 10 },
+        // join the author data
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'author',
+                foreignField: '_id',
+                pipeline: [{ $project: { _id: 1, username: 1, profilePicture: 1 } }],
+                as: 'authorDetails'
+            }
+        },
+        { $unwind: '$authorDetails' },
+        {
+            $addFields: {
+                isLiked: false,
+                isFollowing: false,
+                isSaved: false
+            }
         }
-        ])
-        return res.status(200).json({message:"Posts fetched succesfully",posts:postsToSend})
-    }
-    catch(err){
-        console.log("Error in get-mainpage route",err)
-        return res.status(500).json({message:"Internal server error"})
-    }
-})
-
-// this route is mainly for getting the posts uploaded by secret users and display them on the main screen
-// this too will not have any protection from authmiddleware
-router.get("/get-carousel",async(req,res) => {
-    try{
-        // let's include pagination later if the posts themselves are good for now just send everything
-        const carouselItems = await User.aggregate([
-            {$match:{userType:'cdg'}},
-            // try to lookup all the posts by someone with userType:cdg
-            {
-                $lookup:{
-                    from:'posts',
-                    localField:'_id',
-                    foreignField:'author',
-                    as:'postDetails'
-                }
-            },
-            {$unwind:'$postDetails'},
-            // Sort to show the latest secret/carousel posts first
-            {$sort:{'postDetails.createdAt':-1}},
-            {$project:{
-                _id: '$postDetails._id',
-                caption: '$postDetails.caption',
-                mediaType: '$postDetails.mediaType',
-                thumbImage: '$postDetails.thumbImage',
-                images: '$postDetails.images',
-                video: '$postDetails.video',
-                totalLikes: '$postDetails.totalLikes',
-                totalComments: '$postDetails.totalComments',
-                createdAt: '$postDetails.createdAt',
-                authorDetails:{
-                    _id: '$_id',
-                    username: '$username',
-                    name: '$name',
-                    profilePicture: '$profilePicture',
-                    email: '$email'
-                }
-            }}
-
-        ])
-
-        return res.status(200).json({message:"Carousel items fetched succesfully",carouselItems})
-
-    }
-    catch(err){
-        console.log("Error in get-carousel route",err)
-        return res.status(500).json({message:"Internal server error"})
-    }
-})
+    ])
+    return res.status(200).json({ message: "Posts fetched succesfully", posts: postsToSend })
+}))
 
 // the main route that sends posts to the frontend
-router.get("/get-posts",protect,
-    async (req, res) => {
-        try {
-            const user = req.user
+router.get("/get-posts", protect,
+    asyncHandler(async (req, res) => {
+        const user = req.user
             const limitCount = 20
             const cursorStr = req.query.cursor
             const cursor = cursorStr ? decodeCursor(cursorStr) : null
@@ -125,7 +69,7 @@ router.get("/get-posts",protect,
             // Include the logged-in user so their own recent posts are prioritized too
             const priorityAuthors = [...followedIds, new mongoose.Types.ObjectId(user._id)]
 
-            let postsToSend = []
+            let postsToSend
 
             if (cursor && cursor.feedGroup === 2) {
                 // STREAM 2 ONLY (past feedGroup 1)
@@ -408,18 +352,12 @@ router.get("/get-posts",protect,
                 hasNextPage, 
                 message: "posts retreived successfully" 
             })
-        }
-        catch (err) {
-            console.log("error in feedroutes get-posts", err)
-            return res.status(500).json({ message: "Internal server error" })
-        }
-    }
+    })
 )
 
-router.get("/get-reels",protect,
-    async (req, res) => {
-        try {
-            const user = req.user
+router.get("/get-reels", protect,
+    asyncHandler(async (req, res) => {
+        const user = req.user
             const limit = 20
             const cursorStr = req.query.cursor
             const cursor = cursorStr ? decodeCursor(cursorStr) : null
@@ -554,12 +492,7 @@ router.get("/get-reels",protect,
                 hasNextPage,
                 message: "reels retrieved successfully" 
             })
-        }
-        catch (err) {
-            console.log('error in get-reels route', err)
-            return res.status(500).json({ message: "Internal server Error" })
-        }
-    }
+    })
 )
 
 

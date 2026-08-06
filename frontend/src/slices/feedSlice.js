@@ -3,7 +3,7 @@ import api from "../services/api";
 
 export const fetchPosts = createAsyncThunk(
   "feed/fetchPosts",
-  async ({ cursor = null } = {}, thunkAPI) => {
+  async ({ cursor = null } = {}) => {
     const url = cursor ? `/feed/get-posts?cursor=${encodeURIComponent(cursor)}` : "/feed/get-posts";
     const response = await api.get(url);
     return { ...response.data, cursor };

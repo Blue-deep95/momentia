@@ -32,7 +32,6 @@ const CreatePost = lazyWithRetry(() => import("./pages/CreatePost.jsx"));
 const SinglePost = lazyWithRetry(() => import("./pages/SinglePost.jsx"));
 const MessagePage = lazyWithRetry(() => import("./pages/MessagePage.jsx"));
 const Notifications = lazyWithRetry(() => import("./pages/NotificationsPage.jsx"));
-const TopStudents = lazyWithRetry(() => import("./pages/TopStudents.jsx"));
 import { initSocket, disconnectSocket } from "./socket.js"
 import { login, logout } from "./slices/authSlice.js"
 import api from "./services/api.js"
@@ -123,7 +122,6 @@ export default function App() {
               <Route path="/messages" element={<MessagePage />} />
               <Route path="/create-post" element={<CreatePost />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/top-placed" element={<TopStudents />} />
             </Route>
 
           </Routes>

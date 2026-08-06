@@ -1,109 +1,71 @@
-﻿import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const UserListCard = ({
   user,
   onUserClick,
   actionNode = null,
   showOnline = false,
-  animationDelay = 0,
 }) => {
   const navigate = useNavigate();
 
-  // Safely get profile picture from different possible locations
   const avatarSrc =
     user?.profilePicture?.commentView ||
     user?.profilePicture?.profileView ||
     user?.profilePicture?.url ||
-    (typeof user?.profilePicture === "string" ? user.profilePicture : null);
+    (typeof user?.profilePicture === "string" && user.profilePicture ? user.profilePicture : "/default-avatar.svg");
 
   const username = user?.username || user?.name || "Unknown";
   const realName = user?.username && user?.name ? user.name : null;
-  
-  // Determine status label
-  const statusLabel =
-    user?.isFollowing === false
-      ? "Follow"
-      : user?.isFollowing === true
-      ? "Following"
-      : null;
-  
-  const initial = username[0]?.toUpperCase() || "U";
 
-  // Handle user card click - navigate to profile
   const handleUserClick = () => {
     onUserClick?.();
     const profileId = user?.userId || user?._id;
-    
+
     if (profileId) {
-      navigate(`/profile/${profileId}`, { replace: false });
+      navigate(`/profile/${profileId}`);
     }
   };
 
-  // Handle image load error - hide broken images
   const handleImageError = (e) => {
-    e.target.style.display = "none";
+    e.target.src = "/default-avatar.svg";
   };
 
   return (
-    <div
-      className="user-card"
-      style={animationDelay ? { animationDelay: `${animationDelay}s` } : {}}
-    >
-      <div className="card-main" onClick={handleUserClick}>
-        <div className="avatar-ring">
-          <div className="avatar-inner">
-            <div className="avatar-content">
-              {avatarSrc ? (
-                <img
-                  src={avatarSrc}
-                  alt={username}
-                  className="h-full w-full object-cover"
-                  onError={handleImageError}
-                  loading="lazy"
-                />
-              ) : (
-                <span className="avatar-initial">{initial}</span>
-              )}
-            </div>
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-xs hover:border-indigo-100 hover:bg-gray-50/50 transition">
+      <div
+        className="flex items-center gap-3 cursor-pointer min-w-0 flex-1"
+        onClick={handleUserClick}
+      >
+        {/* Avatar */}
+        <div className="relative flex-shrink-0">
+          <div className="h-11 w-11 overflow-hidden rounded-full border-2 border-indigo-500/20 bg-indigo-50">
+            <img
+              src={avatarSrc}
+              alt={username}
+              className="h-full w-full object-cover"
+              onError={handleImageError}
+              loading="lazy"
+            />
           </div>
-          {showOnline && <span className="online-dot" />}
+          {showOnline && (
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+          )}
         </div>
 
-        <div className="user-details">
-          <div className="user-name">
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap block">
+        {/* User Info */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate text-sm font-semibold text-gray-900 hover:text-indigo-600">
               {username}
             </span>
-            {statusLabel && (
-              <span className={`status-pill ${statusLabel === "Follow" ? "follow" : "following"}`}>
-                {statusLabel}
-              </span>
-            )}
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="flex-shrink-0"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="10" fill="#2F3EDB" opacity="0.15" />
-              <circle cx="12" cy="12" r="10" stroke="#2F3EDB" strokeWidth="1.5" fill="none" />
-              <polyline
-                points="8 12 11 15 16 9"
-                stroke="#2F3EDB"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
           </div>
-          <p className="user-handle" title={realName ? `@${user?.username}` : ""}>
+          <p className="truncate text-xs text-gray-500">
             {realName ? realName : `@${user?.username || "user"}`}
           </p>
         </div>
       </div>
 
+      {/* Action button container */}
       {actionNode && (
         <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           {actionNode}

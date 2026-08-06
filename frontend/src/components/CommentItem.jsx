@@ -117,7 +117,7 @@ const CommentItem = ({ comment, postId, onReply }) => {
             src={
               author?.profilePicture?.commentView || 
               author?.profilePicture?.profileView || 
-              "https://i.pravatar.cc/150?img=50"
+              "/default-avatar.svg"
             }
             alt=""
             className="w-9 h-9 rounded-full object-cover border border-gray-100 flex-shrink-0"
@@ -208,9 +208,9 @@ const CommentItem = ({ comment, postId, onReply }) => {
           {/* Render replies recursively */}
           {showReplies && (
             <div className="mt-4 space-y-4 border-l-2 border-gray-50 pl-4">
-              {repliesData?.replies?.map((reply) => (
+              {repliesData?.replies?.map((reply, index) => (
                 <CommentItem 
-                  key={reply._id || Math.random()} 
+                  key={reply._id || index} 
                   comment={reply} 
                   postId={postId} 
                   onReply={onReply}

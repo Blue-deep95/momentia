@@ -18,7 +18,7 @@ const authSocketMiddleware = (socket,next) => {
         socket.userId = decoded.id
         next() // call the next 
     }
-    catch(err){
+    catch (_err) {
         return next( new Error('Authentication error: Invalid token'))
     }
 }

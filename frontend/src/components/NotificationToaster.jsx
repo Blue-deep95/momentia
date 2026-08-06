@@ -366,8 +366,26 @@ const NotificationToaster = () => {
         toastOptions={{
           duration: 4000,
           style: {
-            background: "transparent",
-            boxShadow: "none",
+            background: "#0f172a",
+            color: "#ffffff",
+            borderRadius: "16px",
+            border: "1px solid rgba(255, 255, 255, 0.15)",
+            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2)",
+            padding: "12px 18px",
+            fontWeight: "600",
+            fontSize: "14px",
+          },
+          success: {
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#0f172a",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#f43f5e",
+              secondary: "#0f172a",
+            },
           },
         }}
       />
