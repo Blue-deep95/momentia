@@ -14,8 +14,6 @@ const asyncHandler = require("../middleware/asyncHandler");
 // import the zod schema here
 const {
   emailSchema,
-  otpSchema,
-  usernameSchema,
   otpEmailValidation,
   registerSchema,
   loginSchema,
@@ -235,7 +233,7 @@ router.post("/regenerate-access-token", asyncHandler(async (req, res) => {
 
     const newAccessToken = generateAccessToken(user);
     return res.status(200).json({ accessToken: newAccessToken });
-  } catch (err) {
+  } catch (_err) {
     return res
       .status(401)
       .json({ message: "Invalid or expired refresh token" });
@@ -249,11 +247,11 @@ router.post("/logout", asyncHandler(async (req, res) => {
     try {
       const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN);
       userId = decoded.id;
-    } catch (jwtErr) {
+    } catch (_jwtErr) {
       try {
         const decoded = jwt.decode(refreshToken);
         userId = decoded?.id;
-      } catch (decErr) {
+      } catch (_decErr) {
         // silent fallback
       }
     }

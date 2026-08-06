@@ -3,10 +3,8 @@ const express = require('express')
 const mongoose = require('mongoose')
 const router = express.Router()
 
-const User = require('../models/User')
 const Follow = require('../models/Follow')
 const Post = require('../models/Post')
-const Like = require('../models/Like')
 const {protect}  = require('../middleware/authMiddleware')
 const encodeCursor = (obj) => {
     return Buffer.from(JSON.stringify(obj)).toString('base64');
@@ -15,7 +13,7 @@ const encodeCursor = (obj) => {
 const decodeCursor = (cursorStr) => {
     try {
         return JSON.parse(Buffer.from(cursorStr, 'base64').toString('utf-8'));
-    } catch (err) {
+    } catch (_err) {
         return null;
     }
 };
@@ -71,7 +69,7 @@ router.get("/get-posts", protect,
             // Include the logged-in user so their own recent posts are prioritized too
             const priorityAuthors = [...followedIds, new mongoose.Types.ObjectId(user._id)]
 
-            let postsToSend = []
+            let postsToSend
 
             if (cursor && cursor.feedGroup === 2) {
                 // STREAM 2 ONLY (past feedGroup 1)

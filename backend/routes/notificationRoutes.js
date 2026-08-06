@@ -127,7 +127,6 @@ router.get("/get-notifications/:page", asyncHandler(async (req, res) => {
 // as soon as the user opens the page
 router.put("/mark-as-read", asyncHandler(async (req, res) => {
   // The body should conatain all the notifications that are seen
-  const user = req.user;
   const { seenNotifications } = req.body;
 
   // Set expiry date to 2 days from now

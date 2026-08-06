@@ -1,5 +1,4 @@
-const jwt=require("jsonwebtoken")
-const User=require("../models/User.js")
+const jwt = require("jsonwebtoken")
 
 const protect = async (req, res, next) => {
     let token
@@ -8,16 +7,10 @@ const protect = async (req, res, next) => {
             token = req.headers.authorization.split(" ")[1]
             const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN)
 
-            // const user = await User.findById(decoded.id)
-            //     .select("-password -refreshToken -otp -otpExpiry -savedPosts -blockedUsers")
-            // if (!user) {
-            //     return res.status(401).json({ message: "Invalid token" })
-            // }
-            
-            req.user = {_id:decoded.id}
+            req.user = { _id: decoded.id }
             next()
         }
-        catch (err) {
+        catch (_err) {
             return res.status(401).json({ message: "Invalid access token" })
         }
     } else {
