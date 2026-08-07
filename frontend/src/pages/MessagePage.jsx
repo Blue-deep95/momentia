@@ -300,8 +300,8 @@ export default function MessagePage() {
         content: messageContent,
       });
 
-      const newMsg = res.data.message;
-      if (newMsg) {
+      const newMsg = res.data.messageData || res.data.message;
+      if (newMsg && typeof newMsg === "object") {
         setMessages((prev) => {
           if (prev.some((m) => String(m._id) === String(newMsg._id))) return prev;
           return [...prev, newMsg];
