@@ -41,10 +41,10 @@ const Profile = () => {
   const { user } = useSelector((s) => s.auth);
   const { userId } = useParams();
 
-  const profileUserId = userId || user?.id;
-  const isOwnProfile = !userId || userId === user?.id;
+  const currentUserId = user?._id || user?.id;
+  const profileUserId = userId || currentUserId;
+  const isOwnProfile = !userId || (currentUserId && String(userId) === String(currentUserId));
   const navigate = useNavigate();
-
 
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -70,8 +70,8 @@ const Profile = () => {
   const savedItems = savedPosts.filter(
     (post) =>
       !!post?._id &&
-      post.author !== user?.id &&
-      post.author?._id !== user?.id
+      post.author !== currentUserId &&
+      post.author?._id !== currentUserId
   );
 
   const SavedPostsSkeleton = () => (
@@ -129,10 +129,11 @@ const Profile = () => {
 
   const fetchPosts = async () => {
     try {
-      const res = await api.get(`/profile/get-userposts/${profileUserId}`);
+      const res = await api.get(`/profile/get-posts/${profileUserId}`);
       setPosts(res.data.posts || []);
     } catch (err) {
-      console.log(err);
+      console.error("Error fetching user posts:", err);
+      setPosts([]);
     }
   };
 
@@ -140,9 +141,9 @@ const Profile = () => {
     try {
       setSavedLoading(true);
       const res = await api.get(`/profile/get-savedposts/${profileUserId}`);
-      setSavedPosts(res.data.savedPosts || []);
+      setSavedPosts(res.data.posts || res.data.savedPosts || []);
     } catch (err) {
-      console.log("Error fetching saved posts", err);
+      console.error("Error fetching saved posts:", err);
       setSavedPosts([]);
     } finally {
       setSavedLoading(false);
@@ -193,7 +194,7 @@ const Profile = () => {
           if (next.followers < 0) next.followers = 0;
         }
         // If the logged-in user's profile is open, update their following count
-        if (user?.id && prev._id === user.id) {
+        if (currentUserId && prev._id === currentUserId) {
           next.following = (next.following || 0) + (status === "followed" ? 1 : -1);
           if (next.following < 0) next.following = 0;
         }

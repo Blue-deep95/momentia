@@ -6,18 +6,24 @@ export default function MessageItem({ message, currentUserId, onEdit, onDelete }
   const [editContent, setEditContent] = useState(message.content || "");
   const [isSaving, setIsSaving] = useState(false);
 
-  const senderId = message.sender?._id
-    ? String(message.sender._id)
+  const senderObj =
+    typeof message.sender === "object" && message.sender !== null
+      ? message.sender
+      : message.senderDetails || {};
+
+  const senderId = senderObj._id
+    ? String(senderObj._id)
     : message.sender
     ? String(message.sender)
     : null;
 
   const isOwn = currentUserId && senderId && String(currentUserId) === senderId;
-  const senderName = message.sender?.username || message.sender?.name || "User";
+  const senderName = senderObj.username || senderObj.name || "User";
   const senderAvatar =
-    message.sender?.profilePicture?.commentView ||
-    message.sender?.profilePicture?.profileView ||
-    message.sender?.profilePicture?.url ||
+    senderObj.profilePicture?.commentView ||
+    senderObj.profilePicture?.profileView ||
+    senderObj.profilePicture?.original?.url ||
+    senderObj.profilePicture?.url ||
     "/default-avatar.svg";
 
   const handleSaveEdit = async () => {
@@ -42,10 +48,37 @@ export default function MessageItem({ message, currentUserId, onEdit, onDelete }
     setIsEditing(false);
   };
 
-  const formattedTime = new Date(message.createdAt || 0).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formatTimestamp = (dateInput) => {
+    if (!dateInput) return "";
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return "";
+
+    const now = new Date();
+
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    const timeStr = date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    if (isToday) {
+      return timeStr;
+    }
+
+    const dateStr = date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    return `${dateStr}, ${timeStr}`;
+  };
+
+  const formattedTime = formatTimestamp(message.createdAt);
 
   return (
     <div

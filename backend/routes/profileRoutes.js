@@ -50,6 +50,7 @@ router.get("/get-savedposts/:id",
         return res.status(200).json({
             message: "Saved posts fetched successfully",
             posts,
+            savedPosts: posts,
             currentPage: page,
             totalPages: Math.ceil(user.savedPosts.length / limit),
             totalSavedPosts: user.savedPosts.length,
@@ -57,82 +58,86 @@ router.get("/get-savedposts/:id",
     })
 );
 
+const getUserPostsHandler = asyncHandler(async (req, res) => {
+    let { id } = req.params;
+    const userId = req.user._id;
+
+    if (!id) {
+        id = userId;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const totalUserPosts = await Post.countDocuments({ author: id });
+
+    const posts = await Post.find({ author: id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .select("caption thumbImage mediaType totalLikes totalComments totalShares createdAt")
+        .populate("author", "username profilePicture");
+
+    return res.status(200).json({
+        message: "User posts fetched successfully",
+        posts,
+        currentPage: page,
+        totalPages: Math.ceil(totalUserPosts / limit),
+        totalPosts: totalUserPosts,
+    });
+});
+
 // route for getting posts of a specific user
-router.get("/get-posts/:id",
-    asyncHandler(async (req, res) => {
-        let { id } = req.params;
-        const userId = req.user._id;
-
-        if (!id) {
-            id = userId;
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: "Invalid user ID" });
-        }
-
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const skip = (page - 1) * limit;
-
-        const totalUserPosts = await Post.countDocuments({ author: id });
-
-        const posts = await Post.find({ author: id })
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
-            .select("caption thumbImage mediaType totalLikes totalComments totalShares createdAt")
-            .populate("author", "username profilePicture");
-
-        return res.status(200).json({
-            message: "User posts fetched successfully",
-            posts,
-            currentPage: page,
-            totalPages: Math.ceil(totalUserPosts / limit),
-            totalPosts: totalUserPosts,
-        });
-    })
-);
+router.get("/get-posts/:id", getUserPostsHandler);
+router.get("/get-posts", getUserPostsHandler);
+router.get("/get-userposts/:id", getUserPostsHandler);
+router.get("/get-userposts", getUserPostsHandler);
 
 // route for getting general profile details
-router.get("/get-profile/:id",
-    asyncHandler(async (req, res) => {
-        let { id } = req.params;
-        const currentUserId = req.user._id;
+const getProfileHandler = asyncHandler(async (req, res) => {
+    let { id } = req.params;
+    const currentUserId = req.user._id;
 
-        if (!id) {
-            id = currentUserId;
-        }
+    if (!id) {
+        id = currentUserId;
+    }
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: "Invalid user ID" });
-        }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+    }
 
-        const userProfile = await User.findById(id).select(
-            "-password -refreshToken -newRefreshToken -otp -otpExpiry"
-        );
+    const userProfile = await User.findById(id).select(
+        "-password -refreshToken -newRefreshToken -otp -otpExpiry"
+    );
 
-        if (!userProfile) {
-            return res.status(404).json({ message: "User profile not found" });
-        }
+    if (!userProfile) {
+        return res.status(404).json({ message: "User profile not found" });
+    }
 
-        const isFollowing = await Follow.exists({
-            host: currentUserId,
-            target: id,
-        });
+    const isFollowing = await Follow.exists({
+        host: currentUserId,
+        target: id,
+    });
 
-        const isSelf = currentUserId.toString() === id.toString();
+    const isSelf = currentUserId.toString() === id.toString();
 
-        return res.status(200).json({
-            message: "Profile fetched successfully",
-            profile: {
-                ...userProfile.toObject(),
-                isFollowing: Boolean(isFollowing),
-                isSelf,
-            },
-        });
-    })
-);
+    return res.status(200).json({
+        message: "Profile fetched successfully",
+        profile: {
+            ...userProfile.toObject(),
+            isFollowing: Boolean(isFollowing),
+            isSelf,
+        },
+    });
+});
+
+router.get("/get-profile/:id", getProfileHandler);
+router.get("/get-profile", getProfileHandler);
 
 // route for suggested profiles
 router.get("/get-suggested-users",
