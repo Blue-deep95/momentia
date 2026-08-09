@@ -222,6 +222,7 @@ router.post("/send-message", asyncHandler(async (req, res) => {
   });
 
   await newMessage.save();
+  await newMessage.populate("sender", "_id username profilePicture name");
 
   const now = new Date();
   room.currentMessageCount = nextMessageNumber;
